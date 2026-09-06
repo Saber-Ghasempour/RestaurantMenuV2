@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RestaurantMenu.Api/RestaurantMenu.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/RestaurantMenu.SharedKernel/RestaurantMenu.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RestaurantMenu.ArchitectureTests/RestaurantMenu.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>
