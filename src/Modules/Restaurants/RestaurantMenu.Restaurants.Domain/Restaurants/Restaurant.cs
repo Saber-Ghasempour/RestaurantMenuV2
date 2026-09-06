@@ -21,6 +21,8 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
 
     public DateTimeOffset CreatedAtUtc { get; }
 
+    public long Version { get; private set; } = 1;
+
     public static Result<Restaurant> Create(
         RestaurantId id,
         string? name,
@@ -49,5 +51,35 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
             new RestaurantCreatedDomainEvent(id));
 
         return Result.Success(restaurant);
+    }
+
+    public Result<Restaurant> Rename(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result.Failure<Restaurant>(
+                RestaurantErrors.NameRequired);
+        }
+
+        var normalizedName = name.Trim();
+
+        if (normalizedName.Length > MaxNameLength)
+        {
+            return Result.Failure<Restaurant>(
+                RestaurantErrors.NameTooLong);
+        }
+
+        if (Name == normalizedName)
+        {
+            return Result.Success(this);
+        }
+
+        Name = normalizedName;
+        Version++;
+
+        RaiseDomainEvent(
+            new RestaurantRenamedDomainEvent(Id));
+
+        return Result.Success(this);
     }
 }

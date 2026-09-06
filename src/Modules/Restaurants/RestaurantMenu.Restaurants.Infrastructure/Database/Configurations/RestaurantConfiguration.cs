@@ -34,6 +34,12 @@ internal sealed class RestaurantConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
+        builder.Property(restaurant => restaurant.Version)
+            .HasColumnName("version")
+            .HasDefaultValue(1L)
+            .IsConcurrencyToken()
+            .IsRequired();
+
         builder.Ignore(restaurant => restaurant.DomainEvents);
     }
 }
