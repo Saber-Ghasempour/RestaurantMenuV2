@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
@@ -47,6 +48,16 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces<UpdateMenuItemResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        endpoints.MapPatch(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}/availability",
+                ChangeMenuItemAvailabilityAsync)
+            .WithName("ChangeMenuItemAvailability")
+            .WithTags("Catalog")
+            .Produces<ChangeMenuItemAvailabilityResponse>(
+                StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
@@ -176,6 +187,37 @@ public static class MenuItemEndpoints
                     menuItemId,
                     result.Value));
     }
+
+    private static async Task<IResult> ChangeMenuItemAvailabilityAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        ChangeMenuItemAvailabilityRequest request,
+        ICommandHandler<
+            ChangeMenuItemAvailabilityCommand,
+            Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var result = await handler.Handle(
+            new ChangeMenuItemAvailabilityCommand(
+                restaurantId,
+                new(categoryId),
+                new(menuItemId),
+                request.IsAvailable,
+                request.ExpectedVersion),
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(
+                new ChangeMenuItemAvailabilityResponse(
+                    menuItemId,
+                    request.IsAvailable,
+                    result.Value));
+    }
 }
 
 public sealed record CreateMenuItemRequest(
@@ -197,4 +239,13 @@ public sealed record UpdateMenuItemRequest(
 
 public sealed record UpdateMenuItemResponse(
     Guid Id,
+    long Version);
+
+public sealed record ChangeMenuItemAvailabilityRequest(
+    bool IsAvailable,
+    long ExpectedVersion);
+
+public sealed record ChangeMenuItemAvailabilityResponse(
+    Guid Id,
+    bool IsAvailable,
     long Version);

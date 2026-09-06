@@ -169,6 +169,38 @@ public sealed class MenuItemTests
         Assert.Empty(menuItem.DomainEvents);
     }
 
+    [Fact]
+    public void ChangeAvailabilityShouldIncrementVersionAndRaiseEvent()
+    {
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        menuItem.ChangeAvailability(false);
+
+        Assert.False(menuItem.IsAvailable);
+        Assert.Equal(2, menuItem.Version);
+        var domainEvent =
+            Assert.IsType<MenuItemAvailabilityChangedDomainEvent>(
+                Assert.Single(menuItem.DomainEvents));
+        Assert.Equal(menuItem.Id, domainEvent.MenuItemId);
+        Assert.Equal(menuItem.RestaurantId, domainEvent.RestaurantId);
+        Assert.Equal(menuItem.CategoryId, domainEvent.CategoryId);
+        Assert.False(domainEvent.IsAvailable);
+    }
+
+    [Fact]
+    public void ChangeAvailabilityShouldBeNoOpForCurrentValue()
+    {
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        menuItem.ChangeAvailability(true);
+
+        Assert.True(menuItem.IsAvailable);
+        Assert.Equal(1, menuItem.Version);
+        Assert.Empty(menuItem.DomainEvents);
+    }
+
     private static RestaurantMenu.SharedKernel.Results.Result<MenuItem>
         CreateMenuItem(
             string? name = "Item",

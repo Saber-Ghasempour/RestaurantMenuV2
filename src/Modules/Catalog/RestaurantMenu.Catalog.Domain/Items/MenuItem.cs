@@ -198,4 +198,22 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
 
         return Result.Success(this);
     }
+
+    public void ChangeAvailability(bool isAvailable)
+    {
+        if (IsAvailable == isAvailable)
+        {
+            return;
+        }
+
+        IsAvailable = isAvailable;
+        Version++;
+
+        RaiseDomainEvent(
+            new MenuItemAvailabilityChangedDomainEvent(
+                Id,
+                RestaurantId,
+                CategoryId,
+                isAvailable));
+    }
 }
