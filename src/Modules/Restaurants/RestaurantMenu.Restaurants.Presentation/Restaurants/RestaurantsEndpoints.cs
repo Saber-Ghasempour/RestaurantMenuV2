@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Infrastructure;
 using RestaurantMenu.SharedKernel.Results;
@@ -24,11 +25,20 @@ public static class RestaurantsEndpoints
         group.MapPost(
                 "/",
                 CreateRestaurantAsync)
-                       .WithName("CreateRestaurant")
+            .WithName("CreateRestaurant")
             .Produces<CreateRestaurantResponse>(
                 StatusCodes.Status201Created)
             .ProducesValidationProblem(
                 StatusCodes.Status400BadRequest);
+
+        group.MapGet(
+                "/{restaurantId:guid}",
+                GetRestaurantAsync)
+            .WithName("GetRestaurant")
+            .Produces<GetRestaurantResponse>(
+                StatusCodes.Status200OK)
+            .ProducesProblem(
+                StatusCodes.Status404NotFound);
 
         return endpoints;
     }
@@ -64,8 +74,42 @@ public static class RestaurantsEndpoints
             $"/api/restaurants/{response.Id}",
             response);
     }
+
+    private static async Task<IResult> GetRestaurantAsync(
+        Guid restaurantId,
+        IQueryHandler<
+            GetRestaurantQuery,
+            Result<RestaurantResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var query =
+            new GetRestaurantQuery(
+                new RestaurantId(restaurantId));
+
+        var result =
+            await handler.Handle(
+                query,
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return result.Error.ToProblem();
+        }
+
+        var response =
+            new GetRestaurantResponse(
+                result.Value.Id,
+                result.Value.Name,
+                result.Value.CreatedAtUtc);
+
+        return Results.Ok(response);
+    }
 }
 
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
+
+public sealed record GetRestaurantResponse(Guid Id, string Name, DateTimeOffset CreatedAtUtc);

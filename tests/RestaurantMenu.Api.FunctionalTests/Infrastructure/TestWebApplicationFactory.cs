@@ -51,7 +51,7 @@ public sealed class TestWebApplicationFactory
 
         await dbContext.Database.MigrateAsync();
     }
-    
+
     public async Task<Restaurant?> FindRestaurantAsync(
         Guid restaurantId)
     {
@@ -80,5 +80,34 @@ public sealed class TestWebApplicationFactory
                 RestaurantsDbContext>();
 
         return await dbContext.Restaurants.CountAsync();
+    }
+
+    public async Task<Restaurant> SeedRestaurantAsync(
+        string name,
+        DateTimeOffset createdAtUtc)
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                RestaurantsDbContext>();
+
+        var result = Restaurant.Create(
+            RestaurantId.New(),
+            name,
+            createdAtUtc);
+
+        if (result.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"Could not seed restaurant: {result.Error.Code}");
+        }
+
+        dbContext.Restaurants.Add(result.Value);
+
+        await dbContext.SaveChangesAsync();
+
+        return result.Value;
     }
 }
