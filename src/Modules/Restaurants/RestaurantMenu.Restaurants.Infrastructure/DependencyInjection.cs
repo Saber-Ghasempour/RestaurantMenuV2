@@ -6,6 +6,11 @@ using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Restaurants;
 
+using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
+using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.SharedKernel.Results;
+
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
 public static class DependencyInjection
@@ -34,6 +39,14 @@ public static class DependencyInjection
             serviceProvider =>
                 serviceProvider.GetRequiredService<
                     RestaurantsDbContext>());
+
+        services.AddScoped<
+            ICommandHandler<
+                CreateRestaurantCommand,
+                Result<RestaurantId>>,
+            CreateRestaurantCommandHandler>();
+
+        services.AddSingleton(TimeProvider.System);
 
         return services;
     }

@@ -1,4 +1,5 @@
 using RestaurantMenu.Restaurants.Infrastructure;
+using RestaurantMenu.Restaurants.Presentation.Restaurants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,5 +25,10 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapRestaurantsEndpoints();
 
 app.Run();
+
+public partial class Program
+{
+}
