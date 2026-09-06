@@ -1,4 +1,6 @@
 ﻿using RestaurantMenu.Restaurants.Application.Abstractions.Data;
+using Microsoft.EntityFrameworkCore;
+
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 
@@ -22,5 +24,16 @@ public sealed class RestaurantRepository
         ArgumentNullException.ThrowIfNull(restaurant);
 
         _dbContext.Restaurants.Add(restaurant);
+    }
+
+    public Task<Restaurant?> GetByIdAsync(
+        RestaurantId restaurantId,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.Restaurants
+            .SingleOrDefaultAsync(
+                restaurant =>
+                    restaurant.Id == restaurantId,
+                cancellationToken);
     }
 }

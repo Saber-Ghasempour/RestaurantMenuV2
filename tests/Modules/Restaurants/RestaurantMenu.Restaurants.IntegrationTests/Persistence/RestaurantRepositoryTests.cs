@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
+using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
@@ -82,5 +83,63 @@ public sealed class RestaurantRepositoryTests : IAsyncLifetime
         Assert.Equal(
             "Integration Test Restaurant",
             persistedRestaurant.Name);
+    }
+
+    [Fact]
+    public async Task SaveChangesShouldThrowWhenRestaurantWasConcurrentlyUpdated()
+    {
+        var options =
+            new DbContextOptionsBuilder<RestaurantsDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "restaurants"))
+                .Options;
+
+        var restaurantId = RestaurantId.New();
+        var result = Restaurant.Create(
+            restaurantId,
+            "Concurrent Restaurant",
+            DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsSuccess);
+
+        await using (var arrangeContext =
+                     new RestaurantsDbContext(options))
+        {
+            await arrangeContext.Database.MigrateAsync();
+            arrangeContext.Restaurants.Add(result.Value);
+            await arrangeContext.SaveChangesAsync();
+        }
+
+        await using var firstContext =
+            new RestaurantsDbContext(options);
+        await using var secondContext =
+            new RestaurantsDbContext(options);
+
+        var firstRestaurant =
+            await new RestaurantRepository(firstContext)
+                .GetByIdAsync(
+                    restaurantId,
+                    CancellationToken.None);
+        var secondRestaurant =
+            await new RestaurantRepository(secondContext)
+                .GetByIdAsync(
+                    restaurantId,
+                    CancellationToken.None);
+
+        Assert.NotNull(firstRestaurant);
+        Assert.NotNull(secondRestaurant);
+        Assert.True(
+            firstRestaurant.Rename("First Update").IsSuccess);
+        Assert.True(
+            secondRestaurant.Rename("Second Update").IsSuccess);
+
+        await firstContext.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ConcurrencyException>(
+            () => secondContext.SaveChangesAsync());
     }
 }

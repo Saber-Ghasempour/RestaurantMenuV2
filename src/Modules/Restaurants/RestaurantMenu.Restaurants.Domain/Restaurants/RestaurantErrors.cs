@@ -19,4 +19,10 @@ public static class RestaurantErrors
         ErrorDetail.NotFound(
             "Restaurants.NotFound",
             $"Restaurant with identifier '{restaurantId.Value}' was not found.");
+
+    public static ErrorDetail VersionConflict(
+        RestaurantId restaurantId) =>
+        ErrorDetail.Conflict(
+            "Restaurants.VersionConflict",
+            $"Restaurant with identifier '{restaurantId.Value}' was modified by another request. Reload it and try again.");
 }

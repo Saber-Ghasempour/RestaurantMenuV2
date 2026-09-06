@@ -22,6 +22,22 @@ public sealed class RestaurantsDbContext
     public DbSet<Restaurant> Restaurants =>
         Set<Restaurant>();
 
+    public override async Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(
+                cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            throw new ConcurrencyException(
+                "A concurrent database update was detected.",
+                exception);
+        }
+    }
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {

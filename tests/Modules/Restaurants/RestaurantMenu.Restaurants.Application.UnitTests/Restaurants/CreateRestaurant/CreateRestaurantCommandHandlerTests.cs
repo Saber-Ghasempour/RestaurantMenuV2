@@ -83,6 +83,13 @@ public sealed class CreateRestaurantCommandHandlerTests
             AddedRestaurant = restaurant;
             AddCallCount++;
         }
+
+        public Task<Restaurant?> GetByIdAsync(
+            RestaurantId restaurantId,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
     }
 
     private sealed class UnitOfWorkSpy : IUnitOfWork
