@@ -6,6 +6,7 @@ using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Restaurants;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
@@ -56,6 +57,12 @@ public static class DependencyInjection
                 GetRestaurantQuery,
                 Result<RestaurantResponse>>,
             GetRestaurantQueryHandler>();
+
+        services.AddScoped<
+            IQueryHandler<
+                ListRestaurantsQuery,
+                Result<RestaurantsPage>>,
+            ListRestaurantsQueryHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

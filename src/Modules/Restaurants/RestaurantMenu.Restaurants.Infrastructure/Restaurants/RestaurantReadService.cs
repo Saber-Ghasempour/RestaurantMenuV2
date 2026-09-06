@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 
@@ -49,5 +50,38 @@ public sealed class RestaurantReadService
             restaurant.Id.Value,
             restaurant.Name,
             restaurant.CreatedAtUtc);
+    }
+
+    public async Task<RestaurantsPage> GetPageAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
+        var query =
+            _dbContext.Restaurants
+                .AsNoTracking();
+
+        var totalCount =
+            await query.CountAsync(cancellationToken);
+
+        var items =
+            await query
+                .OrderByDescending(restaurant =>
+                    restaurant.CreatedAtUtc)
+                .ThenBy(restaurant => restaurant.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(restaurant =>
+                    new RestaurantResponse(
+                        restaurant.Id.Value,
+                        restaurant.Name,
+                        restaurant.CreatedAtUtc))
+                .ToArrayAsync(cancellationToken);
+
+        return new RestaurantsPage(
+            items,
+            page,
+            pageSize,
+            totalCount);
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
@@ -16,6 +17,9 @@ public sealed class TestWebApplicationFactory
     private const string ConnectionStringVariable =
         "ConnectionStrings__Restaurants";
 
+    private static readonly object EnvironmentVariableLock =
+        new();
+
     private readonly PostgreSqlContainer _postgres =
         new PostgreSqlBuilder("postgres:18.6-alpine")
             .Build();
@@ -23,21 +27,41 @@ public sealed class TestWebApplicationFactory
     async Task IAsyncLifetime.InitializeAsync()
     {
         await _postgres.StartAsync();
-
-        Environment.SetEnvironmentVariable(
-            ConnectionStringVariable,
-            _postgres.GetConnectionString());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        Environment.SetEnvironmentVariable(
-            ConnectionStringVariable,
-            null);
-
         await _postgres.DisposeAsync();
 
         Dispose();
+    }
+
+    protected override IHost CreateHost(
+        IHostBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        lock (EnvironmentVariableLock)
+        {
+            var previousConnectionString =
+                Environment.GetEnvironmentVariable(
+                    ConnectionStringVariable);
+
+            Environment.SetEnvironmentVariable(
+                ConnectionStringVariable,
+                _postgres.GetConnectionString());
+
+            try
+            {
+                return base.CreateHost(builder);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable(
+                    ConnectionStringVariable,
+                    previousConnectionString);
+            }
+        }
     }
 
     public async Task MigrateDatabaseAsync()

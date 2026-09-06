@@ -93,6 +93,76 @@ public sealed class RestaurantReadServiceTests
         Assert.Null(response);
     }
 
+    [Fact]
+    public async Task GetPageShouldReturnRequestedRestaurantsAndMetadata()
+    {
+        var options = CreateOptions();
+
+        var oldest = CreateRestaurant(
+            "Oldest Restaurant",
+            CreatedAtUtc.AddHours(-2));
+
+        var middle = CreateRestaurant(
+            "Middle Restaurant",
+            CreatedAtUtc.AddHours(-1));
+
+        var newest = CreateRestaurant(
+            "Newest Restaurant",
+            CreatedAtUtc);
+
+        await using (var arrangeContext =
+                     new RestaurantsDbContext(options))
+        {
+            await arrangeContext.Database.MigrateAsync();
+
+            arrangeContext.Restaurants.AddRange(
+                oldest,
+                middle,
+                newest);
+
+            await arrangeContext.SaveChangesAsync();
+        }
+
+        await using var queryContext =
+            new RestaurantsDbContext(options);
+
+        var readService =
+            new RestaurantReadService(queryContext);
+
+        var response =
+            await readService.GetPageAsync(
+                2,
+                2,
+                CancellationToken.None);
+
+        Assert.Equal(2, response.Page);
+        Assert.Equal(2, response.PageSize);
+        Assert.Equal(3, response.TotalCount);
+        Assert.Equal(2, response.TotalPages);
+
+        var restaurant = Assert.Single(response.Items);
+
+        Assert.Equal(oldest.Id.Value, restaurant.Id);
+        Assert.Equal(oldest.Name, restaurant.Name);
+        Assert.Equal(
+            oldest.CreatedAtUtc,
+            restaurant.CreatedAtUtc);
+    }
+
+    private static Restaurant CreateRestaurant(
+        string name,
+        DateTimeOffset createdAtUtc)
+    {
+        var result = Restaurant.Create(
+            RestaurantId.New(),
+            name,
+            createdAtUtc);
+
+        Assert.True(result.IsSuccess);
+
+        return result.Value;
+    }
+
     private DbContextOptions<RestaurantsDbContext>
         CreateOptions()
     {

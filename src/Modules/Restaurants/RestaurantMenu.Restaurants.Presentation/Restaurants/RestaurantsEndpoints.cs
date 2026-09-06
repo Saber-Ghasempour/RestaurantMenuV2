@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Infrastructure;
 using RestaurantMenu.SharedKernel.Results;
@@ -39,6 +40,15 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status200OK)
             .ProducesProblem(
                 StatusCodes.Status404NotFound);
+
+        group.MapGet(
+                "/",
+                ListRestaurantsAsync)
+            .WithName("ListRestaurants")
+            .Produces<ListRestaurantsResponse>(
+                StatusCodes.Status200OK)
+            .ProducesValidationProblem(
+                StatusCodes.Status400BadRequest);
 
         return endpoints;
     }
@@ -106,6 +116,52 @@ public static class RestaurantsEndpoints
 
         return Results.Ok(response);
     }
+
+    private static async Task<IResult> ListRestaurantsAsync(
+        IQueryHandler<
+            ListRestaurantsQuery,
+            Result<RestaurantsPage>> handler,
+        CancellationToken cancellationToken,
+        int page = ListRestaurantsQuery.DefaultPage,
+        int pageSize = ListRestaurantsQuery.DefaultPageSize)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var query =
+            new ListRestaurantsQuery(
+                page,
+                pageSize);
+
+        var result =
+            await handler.Handle(
+                query,
+                cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return result.Error.ToProblem();
+        }
+
+        var items =
+            result.Value.Items
+                .Select(
+                    restaurant =>
+                        new RestaurantListItemResponse(
+                            restaurant.Id,
+                            restaurant.Name,
+                            restaurant.CreatedAtUtc))
+                .ToArray();
+
+        var response =
+            new ListRestaurantsResponse(
+                items,
+                result.Value.Page,
+                result.Value.PageSize,
+                result.Value.TotalCount,
+                result.Value.TotalPages);
+
+        return Results.Ok(response);
+    }
 }
 
 public sealed record CreateRestaurantRequest(string? Name);
@@ -113,3 +169,15 @@ public sealed record CreateRestaurantRequest(string? Name);
 public sealed record CreateRestaurantResponse(Guid Id);
 
 public sealed record GetRestaurantResponse(Guid Id, string Name, DateTimeOffset CreatedAtUtc);
+
+public sealed record ListRestaurantsResponse(
+    IReadOnlyList<RestaurantListItemResponse> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages);
+
+public sealed record RestaurantListItemResponse(
+    Guid Id,
+    string Name,
+    DateTimeOffset CreatedAtUtc);

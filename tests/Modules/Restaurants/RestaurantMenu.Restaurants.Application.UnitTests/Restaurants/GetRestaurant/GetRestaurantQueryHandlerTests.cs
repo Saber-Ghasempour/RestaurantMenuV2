@@ -1,5 +1,6 @@
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
 namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.GetRestaurant;
@@ -96,6 +97,14 @@ public sealed class GetRestaurantQueryHandlerTests
             RequestedRestaurantId = restaurantId;
 
             return Task.FromResult(_response);
+        }
+
+        public Task<RestaurantsPage> GetPageAsync(
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
         }
     }
 }
