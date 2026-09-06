@@ -49,6 +49,7 @@ public sealed class GetRestaurantTests
         Assert.Equal(restaurant.Id.Value, content.Id);
         Assert.Equal("Get Restaurant Test", content.Name);
         Assert.Equal(CreatedAtUtc, content.CreatedAtUtc);
+        Assert.Equal(1, content.Version);
     }
 
     [Fact]
@@ -86,7 +87,8 @@ public sealed class GetRestaurantTests
     private sealed record GetRestaurantResponse(
         Guid Id,
         string Name,
-        DateTimeOffset CreatedAtUtc);
+        DateTimeOffset CreatedAtUtc,
+        long Version);
 
     private sealed record ProblemResponse(
         int Status,

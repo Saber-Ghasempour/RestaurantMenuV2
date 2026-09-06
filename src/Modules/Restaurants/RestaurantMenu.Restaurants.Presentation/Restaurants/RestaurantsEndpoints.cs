@@ -6,6 +6,7 @@ using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Infrastructure;
 using RestaurantMenu.SharedKernel.Results;
@@ -49,6 +50,19 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status200OK)
             .ProducesValidationProblem(
                 StatusCodes.Status400BadRequest);
+
+        group.MapPut(
+                "/{restaurantId:guid}",
+                UpdateRestaurantAsync)
+            .WithName("UpdateRestaurant")
+            .Produces<UpdateRestaurantResponse>(
+                StatusCodes.Status200OK)
+            .ProducesValidationProblem(
+                StatusCodes.Status400BadRequest)
+            .ProducesProblem(
+                StatusCodes.Status404NotFound)
+            .ProducesProblem(
+                StatusCodes.Status409Conflict);
 
         return endpoints;
     }
@@ -112,7 +126,8 @@ public static class RestaurantsEndpoints
             new GetRestaurantResponse(
                 result.Value.Id,
                 result.Value.Name,
-                result.Value.CreatedAtUtc);
+                result.Value.CreatedAtUtc,
+                result.Value.Version);
 
         return Results.Ok(response);
     }
@@ -149,7 +164,8 @@ public static class RestaurantsEndpoints
                         new RestaurantListItemResponse(
                             restaurant.Id,
                             restaurant.Name,
-                            restaurant.CreatedAtUtc))
+                            restaurant.CreatedAtUtc,
+                            restaurant.Version))
                 .ToArray();
 
         var response =
@@ -162,13 +178,48 @@ public static class RestaurantsEndpoints
 
         return Results.Ok(response);
     }
+
+    private static async Task<IResult> UpdateRestaurantAsync(
+        Guid restaurantId,
+        UpdateRestaurantRequest request,
+        ICommandHandler<
+            UpdateRestaurantCommand,
+            Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var command = new UpdateRestaurantCommand(
+            new RestaurantId(restaurantId),
+            request.Name,
+            request.ExpectedVersion);
+
+        var result = await handler.Handle(
+            command,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return result.Error.ToProblem();
+        }
+
+        return Results.Ok(
+            new UpdateRestaurantResponse(
+                restaurantId,
+                result.Value));
+    }
 }
 
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
 
-public sealed record GetRestaurantResponse(Guid Id, string Name, DateTimeOffset CreatedAtUtc);
+public sealed record GetRestaurantResponse(
+    Guid Id,
+    string Name,
+    DateTimeOffset CreatedAtUtc,
+    long Version);
 
 public sealed record ListRestaurantsResponse(
     IReadOnlyList<RestaurantListItemResponse> Items,
@@ -180,4 +231,13 @@ public sealed record ListRestaurantsResponse(
 public sealed record RestaurantListItemResponse(
     Guid Id,
     string Name,
-    DateTimeOffset CreatedAtUtc);
+    DateTimeOffset CreatedAtUtc,
+    long Version);
+
+public sealed record UpdateRestaurantRequest(
+    string? Name,
+    long ExpectedVersion);
+
+public sealed record UpdateRestaurantResponse(
+    Guid Id,
+    long Version);

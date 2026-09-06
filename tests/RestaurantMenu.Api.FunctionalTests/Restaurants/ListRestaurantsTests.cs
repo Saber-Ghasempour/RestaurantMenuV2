@@ -66,11 +66,13 @@ public sealed class ListRestaurantsTests
             {
                 Assert.Equal(newest.Id.Value, restaurant.Id);
                 Assert.Equal(newest.Name, restaurant.Name);
+                Assert.Equal(1, restaurant.Version);
             },
             restaurant =>
             {
                 Assert.Equal(middle.Id.Value, restaurant.Id);
                 Assert.Equal(middle.Name, restaurant.Name);
+                Assert.Equal(1, restaurant.Version);
             });
     }
 
@@ -110,7 +112,8 @@ public sealed class ListRestaurantsTests
     private sealed record RestaurantResponse(
         Guid Id,
         string Name,
-        DateTimeOffset CreatedAtUtc);
+        DateTimeOffset CreatedAtUtc,
+        long Version);
 
     private sealed record ValidationProblemResponse(
         Dictionary<string, string[]> Errors);

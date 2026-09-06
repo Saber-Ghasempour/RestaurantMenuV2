@@ -19,7 +19,8 @@ public sealed class GetRestaurantQueryHandlerTests
             new RestaurantResponse(
                 restaurantId.Value,
                 "Query Test Restaurant",
-                CreatedAtUtc);
+                CreatedAtUtc,
+                1);
 
         var readService =
             new RestaurantReadServiceStub(

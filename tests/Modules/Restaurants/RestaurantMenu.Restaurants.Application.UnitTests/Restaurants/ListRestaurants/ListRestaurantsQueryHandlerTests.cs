@@ -20,7 +20,8 @@ public sealed class ListRestaurantsQueryHandlerTests
                         19,
                         0,
                         0,
-                        TimeSpan.Zero))
+                        TimeSpan.Zero),
+                    1)
             ],
             2,
             10,
