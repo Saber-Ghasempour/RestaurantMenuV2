@@ -6,6 +6,7 @@ using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
+using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Presentation.Infrastructure;
 using RestaurantMenu.SharedKernel.Results;
@@ -38,6 +39,16 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces<MenuItemResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        endpoints.MapPut(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
+                UpdateMenuItemAsync)
+            .WithName("UpdateMenuItem")
+            .WithTags("Catalog")
+            .Produces<UpdateMenuItemResponse>(StatusCodes.Status200OK)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         endpoints.MapGet(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items",
@@ -131,6 +142,40 @@ public static class MenuItemEndpoints
             ? result.Error.ToProblem()
             : Results.Ok(result.Value);
     }
+
+    private static async Task<IResult> UpdateMenuItemAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        UpdateMenuItemRequest request,
+        ICommandHandler<
+            UpdateMenuItemCommand,
+            Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var result = await handler.Handle(
+            new UpdateMenuItemCommand(
+                restaurantId,
+                new(categoryId),
+                new(menuItemId),
+                request.Name,
+                request.Description,
+                request.PriceAmount,
+                request.Currency,
+                request.DisplayOrder,
+                request.ExpectedVersion),
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(
+                new UpdateMenuItemResponse(
+                    menuItemId,
+                    result.Value));
+    }
 }
 
 public sealed record CreateMenuItemRequest(
@@ -141,3 +186,15 @@ public sealed record CreateMenuItemRequest(
     int DisplayOrder);
 
 public sealed record CreateMenuItemResponse(Guid Id);
+
+public sealed record UpdateMenuItemRequest(
+    string? Name,
+    string? Description,
+    decimal PriceAmount,
+    string? Currency,
+    int DisplayOrder,
+    long ExpectedVersion);
+
+public sealed record UpdateMenuItemResponse(
+    Guid Id,
+    long Version);

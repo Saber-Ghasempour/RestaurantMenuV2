@@ -379,6 +379,126 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.Null(itemUnderWrongCategory);
     }
 
+    [Fact]
+    public async Task MenuItemRepositoryShouldLoadAndPersistOwnedMoneyUpdate()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var category = CreateCategory(restaurantId, "Category", 1);
+        var menuItem = CreateMenuItem(
+            restaurantId,
+            category.Id,
+            "Original",
+            1,
+            10m);
+
+        await using (var arrangeContext =
+                     new CatalogDbContext(options))
+        {
+            await arrangeContext.Database.MigrateAsync();
+            arrangeContext.MenuCategories.Add(category);
+            arrangeContext.MenuItems.Add(menuItem);
+            await arrangeContext.SaveChangesAsync();
+        }
+
+        await using (var updateContext =
+                     new CatalogDbContext(options))
+        {
+            var repository = new MenuItemRepository(updateContext);
+            var loaded = await repository.GetByIdAsync(
+                menuItem.Id,
+                CancellationToken.None);
+            Assert.NotNull(loaded);
+            Assert.True(
+                loaded.Update(
+                    " Updated ",
+                    " New description ",
+                    19.95m,
+                    "usd",
+                    5).IsSuccess);
+            await updateContext.SaveChangesAsync();
+        }
+
+        await using var verificationContext =
+            new CatalogDbContext(options);
+        var persisted = await verificationContext.MenuItems
+            .AsNoTracking()
+            .SingleAsync(candidate => candidate.Id == menuItem.Id);
+        Assert.Equal("Updated", persisted.Name);
+        Assert.Equal("New description", persisted.Description);
+        Assert.Equal(19.95m, persisted.Price.Amount);
+        Assert.Equal("USD", persisted.Price.Currency);
+        Assert.Equal(5, persisted.DisplayOrder);
+        Assert.Equal(2, persisted.Version);
+    }
+
+    [Fact]
+    public async Task SaveChangesShouldThrowWhenMenuItemWasConcurrentlyUpdated()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var category = CreateCategory(restaurantId, "Category", 1);
+        var menuItem = CreateMenuItem(
+            restaurantId,
+            category.Id,
+            "Concurrent Item",
+            1,
+            10m);
+
+        await using (var arrangeContext =
+                     new CatalogDbContext(options))
+        {
+            await arrangeContext.Database.MigrateAsync();
+            arrangeContext.MenuCategories.Add(category);
+            arrangeContext.MenuItems.Add(menuItem);
+            await arrangeContext.SaveChangesAsync();
+        }
+
+        await using var firstContext =
+            new CatalogDbContext(options);
+        await using var secondContext =
+            new CatalogDbContext(options);
+        var first = await firstContext.MenuItems.SingleAsync(
+            candidate => candidate.Id == menuItem.Id);
+        var second = await secondContext.MenuItems.SingleAsync(
+            candidate => candidate.Id == menuItem.Id);
+
+        Assert.True(
+            first.Update(
+                "First Update",
+                null,
+                11m,
+                "EUR",
+                1).IsSuccess);
+        Assert.True(
+            second.Update(
+                "Second Update",
+                null,
+                12m,
+                "EUR",
+                1).IsSuccess);
+        await firstContext.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ConcurrencyException>(
+            () => secondContext.SaveChangesAsync());
+    }
+
     private static MenuCategory CreateCategory(
         Guid restaurantId,
         string name,

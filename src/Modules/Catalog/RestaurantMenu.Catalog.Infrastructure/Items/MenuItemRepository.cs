@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Database;
@@ -19,4 +21,11 @@ public sealed class MenuItemRepository : IMenuItemRepository
         ArgumentNullException.ThrowIfNull(menuItem);
         _dbContext.MenuItems.Add(menuItem);
     }
+
+    public Task<MenuItem?> GetByIdAsync(
+        MenuItemId menuItemId,
+        CancellationToken cancellationToken) =>
+        _dbContext.MenuItems.SingleOrDefaultAsync(
+            menuItem => menuItem.Id == menuItemId,
+            cancellationToken);
 }

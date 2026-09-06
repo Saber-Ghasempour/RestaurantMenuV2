@@ -130,4 +130,72 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
 
         return Result.Success(menuItem);
     }
+
+    public Result<MenuItem> Update(
+        string? name,
+        string? description,
+        decimal priceAmount,
+        string? currency,
+        int displayOrder)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result.Failure<MenuItem>(
+                MenuItemErrors.NameRequired);
+        }
+
+        var normalizedName = name.Trim();
+
+        if (normalizedName.Length > MaxNameLength)
+        {
+            return Result.Failure<MenuItem>(
+                MenuItemErrors.NameTooLong);
+        }
+
+        var normalizedDescription =
+            string.IsNullOrWhiteSpace(description)
+                ? null
+                : description.Trim();
+
+        if (normalizedDescription?.Length > MaxDescriptionLength)
+        {
+            return Result.Failure<MenuItem>(
+                MenuItemErrors.DescriptionTooLong);
+        }
+
+        if (displayOrder < 0)
+        {
+            return Result.Failure<MenuItem>(
+                MenuItemErrors.InvalidDisplayOrder);
+        }
+
+        var moneyResult = Money.Create(priceAmount, currency);
+
+        if (moneyResult.IsFailure)
+        {
+            return Result.Failure<MenuItem>(moneyResult.Error);
+        }
+
+        if (Name == normalizedName &&
+            Description == normalizedDescription &&
+            Price == moneyResult.Value &&
+            DisplayOrder == displayOrder)
+        {
+            return Result.Success(this);
+        }
+
+        Name = normalizedName;
+        Description = normalizedDescription;
+        Price = moneyResult.Value;
+        DisplayOrder = displayOrder;
+        Version++;
+
+        RaiseDomainEvent(
+            new MenuItemUpdatedDomainEvent(
+                Id,
+                RestaurantId,
+                CategoryId));
+
+        return Result.Success(this);
+    }
 }

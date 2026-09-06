@@ -184,6 +184,11 @@ public sealed class CreateMenuItemCommandHandlerTests
         public MenuItem? AddedItem { get; private set; }
 
         public void Add(MenuItem menuItem) => AddedItem = menuItem;
+
+        public Task<MenuItem?> GetByIdAsync(
+            MenuItemId menuItemId,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private sealed class RestaurantExistenceCheckerStub(bool exists)

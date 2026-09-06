@@ -84,6 +84,91 @@ public sealed class MenuItemTests
         Assert.Equal(MenuItemErrors.InvalidDisplayOrder, result.Error);
     }
 
+    [Fact]
+    public void UpdateShouldNormalizeValuesIncrementVersionAndRaiseEvent()
+    {
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        var result = menuItem.Update(
+            " Updated Item ",
+            " Updated description ",
+            12.75m,
+            "usd",
+            20);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Updated Item", menuItem.Name);
+        Assert.Equal("Updated description", menuItem.Description);
+        Assert.Equal(12.75m, menuItem.Price.Amount);
+        Assert.Equal("USD", menuItem.Price.Currency);
+        Assert.Equal(20, menuItem.DisplayOrder);
+        Assert.Equal(2, menuItem.Version);
+        var domainEvent = Assert.IsType<MenuItemUpdatedDomainEvent>(
+            Assert.Single(menuItem.DomainEvents));
+        Assert.Equal(menuItem.Id, domainEvent.MenuItemId);
+        Assert.Equal(menuItem.RestaurantId, domainEvent.RestaurantId);
+        Assert.Equal(menuItem.CategoryId, domainEvent.CategoryId);
+    }
+
+    [Fact]
+    public void UpdateShouldNormalizeBlankDescriptionToNull()
+    {
+        var menuItem = CreateMenuItem().Value;
+
+        var result = menuItem.Update(
+            menuItem.Name,
+            "   ",
+            menuItem.Price.Amount,
+            menuItem.Price.Currency,
+            menuItem.DisplayOrder);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(menuItem.Description);
+        Assert.Equal(2, menuItem.Version);
+    }
+
+    [Fact]
+    public void UpdateShouldNotChangeVersionOrRaiseEventForEquivalentValues()
+    {
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        var result = menuItem.Update(
+            " Item ",
+            " Description ",
+            10.00m,
+            "eur",
+            1);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, menuItem.Version);
+        Assert.Empty(menuItem.DomainEvents);
+    }
+
+    [Fact]
+    public void UpdateShouldRejectInvalidMoneyWithoutChangingState()
+    {
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        var result = menuItem.Update(
+            "Changed",
+            "Changed",
+            -1m,
+            "EUR",
+            2);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(MenuItemErrors.NegativePrice, result.Error);
+        Assert.Equal("Item", menuItem.Name);
+        Assert.Equal("Description", menuItem.Description);
+        Assert.Equal(10m, menuItem.Price.Amount);
+        Assert.Equal(1, menuItem.DisplayOrder);
+        Assert.Equal(1, menuItem.Version);
+        Assert.Empty(menuItem.DomainEvents);
+    }
+
     private static RestaurantMenu.SharedKernel.Results.Result<MenuItem>
         CreateMenuItem(
             string? name = "Item",

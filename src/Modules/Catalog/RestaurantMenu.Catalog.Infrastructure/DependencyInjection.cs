@@ -12,6 +12,7 @@ using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
+using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
@@ -89,6 +90,11 @@ public static class DependencyInjection
                 ListMenuItemsQuery,
                 Result<IReadOnlyList<MenuItemResponse>>>,
             ListMenuItemsQueryHandler>();
+        services.AddScoped<
+            ICommandHandler<
+                UpdateMenuItemCommand,
+                Result<long>>,
+            UpdateMenuItemCommandHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

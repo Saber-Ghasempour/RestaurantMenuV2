@@ -15,4 +15,9 @@ public static class MenuItemApplicationErrors
         ErrorDetail.NotFound(
             "Catalog.MenuItemNotFound",
             $"Menu item with identifier '{menuItemId.Value}' was not found for this restaurant and category.");
+
+    public static ErrorDetail VersionConflict(MenuItemId menuItemId) =>
+        ErrorDetail.Conflict(
+            "Catalog.MenuItemVersionConflict",
+            $"Menu item with identifier '{menuItemId.Value}' was modified by another request. Reload it and try again.");
 }
