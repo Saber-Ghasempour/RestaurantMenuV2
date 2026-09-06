@@ -30,7 +30,12 @@ public sealed class RestaurantRepositoryTests : IAsyncLifetime
     {
         var options =
             new DbContextOptionsBuilder<RestaurantsDbContext>()
-                .UseNpgsql(_postgres.GetConnectionString())
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions => 
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "restaurants"))
                 .Options;
 
         var restaurantId = RestaurantId.New();
@@ -51,7 +56,7 @@ public sealed class RestaurantRepositoryTests : IAsyncLifetime
 
         await using (var context = new RestaurantsDbContext(options))
         {
-            await context.Database.EnsureCreatedAsync();
+            await context.Database.MigrateAsync();
 
             var repository = new RestaurantRepository(context);
 

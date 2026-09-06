@@ -1,10 +1,15 @@
+using RestaurantMenu.Restaurants.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var restaurantsConnectionString = builder.Configuration.GetConnectionString("Restaurants") 
+    ?? throw new InvalidOperationException(
+        "Connection string 'Restaurants' is not configured.");
 
+// Add services to the container.
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddRestaurantsInfrastructure(restaurantsConnectionString);
 
 var app = builder.Build();
 
