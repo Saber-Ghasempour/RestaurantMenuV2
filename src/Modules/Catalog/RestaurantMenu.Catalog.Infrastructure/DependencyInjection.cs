@@ -5,6 +5,8 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Categories.CreateMenuCategory;
+using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
+using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
@@ -31,6 +33,8 @@ public static class DependencyInjection
 
         services.AddScoped<IMenuCategoryRepository,
             MenuCategoryRepository>();
+        services.AddScoped<IMenuCategoryReadService,
+            MenuCategoryReadService>();
         services.AddScoped<ICatalogUnitOfWork>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<CatalogDbContext>());
@@ -39,6 +43,16 @@ public static class DependencyInjection
                 CreateMenuCategoryCommand,
                 Result<MenuCategoryId>>,
             CreateMenuCategoryCommandHandler>();
+        services.AddScoped<
+            IQueryHandler<
+                GetMenuCategoryQuery,
+                Result<MenuCategoryResponse>>,
+            GetMenuCategoryQueryHandler>();
+        services.AddScoped<
+            IQueryHandler<
+                ListMenuCategoriesQuery,
+                Result<IReadOnlyList<MenuCategoryResponse>>>,
+            ListMenuCategoriesQueryHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

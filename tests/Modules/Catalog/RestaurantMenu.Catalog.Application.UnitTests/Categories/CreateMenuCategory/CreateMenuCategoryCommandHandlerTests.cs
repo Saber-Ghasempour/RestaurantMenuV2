@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Application.Categories;
 using RestaurantMenu.Catalog.Application.Categories.CreateMenuCategory;
 using RestaurantMenu.Catalog.Domain.Categories;
 
@@ -60,7 +61,7 @@ public sealed class CreateMenuCategoryCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(
-            CreateMenuCategoryErrors.RestaurantNotFound(
+            MenuCategoryApplicationErrors.RestaurantNotFound(
                 restaurantId),
             result.Error);
         Assert.Null(repository.AddedCategory);
@@ -89,7 +90,7 @@ public sealed class CreateMenuCategoryCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(
-            CreateMenuCategoryErrors.ParentCategoryNotFound(
+            MenuCategoryApplicationErrors.ParentCategoryNotFound(
                 parent.Id.Value),
             result.Error);
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);

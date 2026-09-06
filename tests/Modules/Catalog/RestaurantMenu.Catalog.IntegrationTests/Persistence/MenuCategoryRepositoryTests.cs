@@ -85,4 +85,87 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.Equal(2, persistedChild.DisplayOrder);
         Assert.Equal(1, persistedChild.Version);
     }
+
+    [Fact]
+    public async Task ReadServiceShouldFilterAndOrderRestaurantCategories()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var otherRestaurantId = Guid.CreateVersion7();
+        var first = CreateCategory(
+            restaurantId,
+            "Appetizers",
+            1);
+        var second = CreateCategory(
+            restaurantId,
+            "Desserts",
+            20);
+        var other = CreateCategory(
+            otherRestaurantId,
+            "Hidden Category",
+            0);
+
+        await using (var context = new CatalogDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.MenuCategories.AddRange(
+                second,
+                other,
+                first);
+            await context.SaveChangesAsync();
+        }
+
+        await using var readContext =
+            new CatalogDbContext(options);
+        var readService =
+            new MenuCategoryReadService(readContext);
+
+        var categories =
+            await readService.GetByRestaurantIdAsync(
+                restaurantId,
+                CancellationToken.None);
+        var category =
+            await readService.GetByIdAsync(
+                restaurantId,
+                second.Id,
+                CancellationToken.None);
+        var categoryUnderWrongRestaurant =
+            await readService.GetByIdAsync(
+                otherRestaurantId,
+                second.Id,
+                CancellationToken.None);
+
+        Assert.Collection(
+            categories,
+            item => Assert.Equal(first.Id.Value, item.Id),
+            item => Assert.Equal(second.Id.Value, item.Id));
+        Assert.NotNull(category);
+        Assert.Equal("Desserts", category.Name);
+        Assert.Null(categoryUnderWrongRestaurant);
+    }
+
+    private static MenuCategory CreateCategory(
+        Guid restaurantId,
+        string name,
+        int displayOrder)
+    {
+        var result = MenuCategory.Create(
+            MenuCategoryId.New(),
+            restaurantId,
+            null,
+            name,
+            displayOrder,
+            DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsSuccess);
+        return result.Value;
+    }
 }

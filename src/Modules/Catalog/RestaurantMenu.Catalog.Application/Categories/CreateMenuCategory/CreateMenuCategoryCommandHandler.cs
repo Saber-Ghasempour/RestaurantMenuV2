@@ -2,6 +2,7 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Application.Categories;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.SharedKernel.Results;
 
@@ -44,7 +45,7 @@ public sealed class CreateMenuCategoryCommandHandler
                 cancellationToken))
         {
             return Result.Failure<MenuCategoryId>(
-                CreateMenuCategoryErrors.RestaurantNotFound(
+                MenuCategoryApplicationErrors.RestaurantNotFound(
                     command.RestaurantId));
         }
 
@@ -62,7 +63,7 @@ public sealed class CreateMenuCategoryCommandHandler
                 parent.RestaurantId != command.RestaurantId)
             {
                 return Result.Failure<MenuCategoryId>(
-                    CreateMenuCategoryErrors.ParentCategoryNotFound(
+                    MenuCategoryApplicationErrors.ParentCategoryNotFound(
                         command.ParentCategoryId!.Value));
             }
         }
