@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Infrastructure\RestaurantMenu.Restaurants.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Presentation\RestaurantMenu.Restaurants.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

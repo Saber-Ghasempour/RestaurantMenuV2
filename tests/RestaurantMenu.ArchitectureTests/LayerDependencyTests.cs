@@ -5,6 +5,8 @@ using ArchUnitNET.xUnit;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
 using ApiAssemblyReference = RestaurantMenu.Api.AssemblyReference;
+using ApplicationAbstractionsAssemblyReference =
+    RestaurantMenu.Application.Abstractions.AssemblyReference;
 using ApplicationAssemblyReference =
     RestaurantMenu.Restaurants.Application.AssemblyReference;
 using DomainAssemblyReference =
@@ -39,11 +41,15 @@ public sealed class LayerDependencyTests
     private static readonly ReflectionAssembly PresentationAssembly =
         typeof(PresentationAssemblyReference).Assembly;
 
+    private static readonly ReflectionAssembly ApplicationAbstractionsAssembly =
+        typeof(ApplicationAbstractionsAssemblyReference).Assembly;
+
     private static readonly Architecture ArchitectureModel =
         new ArchLoader()
             .LoadAssemblies(
                 ApiAssembly,
                 SharedKernelAssembly,
+                ApplicationAbstractionsAssembly,
                 DomainAssembly,
                 ApplicationAssembly,
                 InfrastructureAssembly,
@@ -135,6 +141,38 @@ public sealed class LayerDependencyTests
 
         AssertDoesNotDependOn(
             PresentationAssembly,
+            ApiAssembly);
+    }
+
+    [Fact]
+    public void SharedKernelShouldNotDependOnApplicationAbstractions()
+    {
+        AssertDoesNotDependOn(
+            SharedKernelAssembly,
+            ApplicationAbstractionsAssembly);
+    }
+
+    [Fact]
+    public void ApplicationAbstractionsShouldNotDependOnModulesOrApi()
+    {
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            DomainAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            ApplicationAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            InfrastructureAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            PresentationAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
             ApiAssembly);
     }
 
