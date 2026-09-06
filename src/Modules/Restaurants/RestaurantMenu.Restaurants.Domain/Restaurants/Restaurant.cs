@@ -23,6 +23,10 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
 
     public long Version { get; private set; } = 1;
 
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+
     public static Result<Restaurant> Create(
         RestaurantId id,
         string? name,
@@ -81,5 +85,22 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
             new RestaurantRenamedDomainEvent(Id));
 
         return Result.Success(this);
+    }
+
+    public void Delete(DateTimeOffset deletedAtUtc)
+    {
+        if (IsDeleted)
+        {
+            return;
+        }
+
+        IsDeleted = true;
+        DeletedAtUtc = deletedAtUtc;
+        Version++;
+
+        RaiseDomainEvent(
+            new RestaurantDeletedDomainEvent(
+                Id,
+                deletedAtUtc));
     }
 }

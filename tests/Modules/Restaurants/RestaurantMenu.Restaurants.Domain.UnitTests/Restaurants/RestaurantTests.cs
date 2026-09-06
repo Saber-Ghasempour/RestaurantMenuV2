@@ -22,6 +22,8 @@ public sealed class RestaurantTests
         Assert.Equal("Coffee Menu", result.Value.Name);
         Assert.Equal(CreatedAtUtc, result.Value.CreatedAtUtc);
         Assert.Equal(1, result.Value.Version);
+        Assert.False(result.Value.IsDeleted);
+        Assert.Null(result.Value.DeletedAtUtc);
 
         var domainEvent = Assert.Single(result.Value.DomainEvents);
         var restaurantCreated =
@@ -145,6 +147,43 @@ public sealed class RestaurantTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Original Menu", restaurant.Name);
         Assert.Equal(1, restaurant.Version);
+        Assert.Empty(restaurant.DomainEvents);
+    }
+
+    [Fact]
+    public void DeleteShouldMarkRestaurantIncrementVersionAndRaiseDomainEvent()
+    {
+        var restaurant = CreateRestaurant();
+        restaurant.ClearDomainEvents();
+        var deletedAtUtc = CreatedAtUtc.AddHours(1);
+
+        restaurant.Delete(deletedAtUtc);
+
+        Assert.True(restaurant.IsDeleted);
+        Assert.Equal(deletedAtUtc, restaurant.DeletedAtUtc);
+        Assert.Equal(2, restaurant.Version);
+
+        var domainEvent = Assert.Single(restaurant.DomainEvents);
+        var deleted =
+            Assert.IsType<RestaurantDeletedDomainEvent>(
+                domainEvent);
+        Assert.Equal(restaurant.Id, deleted.RestaurantId);
+        Assert.Equal(deletedAtUtc, deleted.DeletedAtUtc);
+    }
+
+    [Fact]
+    public void DeleteShouldBeIdempotent()
+    {
+        var restaurant = CreateRestaurant();
+        restaurant.Delete(CreatedAtUtc.AddHours(1));
+        restaurant.ClearDomainEvents();
+
+        restaurant.Delete(CreatedAtUtc.AddHours(2));
+
+        Assert.Equal(
+            CreatedAtUtc.AddHours(1),
+            restaurant.DeletedAtUtc);
+        Assert.Equal(2, restaurant.Version);
         Assert.Empty(restaurant.DomainEvents);
     }
 

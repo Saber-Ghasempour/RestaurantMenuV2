@@ -40,6 +40,18 @@ internal sealed class RestaurantConfiguration
             .IsConcurrencyToken()
             .IsRequired();
 
+        builder.Property(restaurant => restaurant.IsDeleted)
+            .HasColumnName("is_deleted")
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(restaurant => restaurant.DeletedAtUtc)
+            .HasColumnName("deleted_at_utc")
+            .HasColumnType("timestamp with time zone");
+
+        builder.HasQueryFilter(
+            restaurant => !restaurant.IsDeleted);
+
         builder.Ignore(restaurant => restaurant.DomainEvents);
     }
 }

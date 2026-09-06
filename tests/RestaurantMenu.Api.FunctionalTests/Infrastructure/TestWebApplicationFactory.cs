@@ -94,6 +94,22 @@ public sealed class TestWebApplicationFactory
                 restaurant => restaurant.Id == id);
     }
 
+    public async Task<Restaurant?> FindRestaurantIncludingDeletedAsync(
+        Guid restaurantId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                RestaurantsDbContext>();
+        var id = new RestaurantId(restaurantId);
+
+        return await dbContext.Restaurants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                restaurant => restaurant.Id == id);
+    }
+
     public async Task<int> CountRestaurantsAsync()
     {
         await using var scope =

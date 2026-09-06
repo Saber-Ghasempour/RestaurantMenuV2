@@ -142,4 +142,65 @@ public sealed class RestaurantRepositoryTests : IAsyncLifetime
         await Assert.ThrowsAsync<ConcurrencyException>(
             () => secondContext.SaveChangesAsync());
     }
+
+    [Fact]
+    public async Task DeletedRestaurantShouldBeHiddenButRemainPersisted()
+    {
+        var options =
+            new DbContextOptionsBuilder<RestaurantsDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "restaurants"))
+                .Options;
+        var restaurantId = RestaurantId.New();
+        var deletedAtUtc = new DateTimeOffset(
+            2026,
+            9,
+            6,
+            23,
+            0,
+            0,
+            TimeSpan.Zero);
+        var result = Restaurant.Create(
+            restaurantId,
+            "Soft Deleted Restaurant",
+            deletedAtUtc.AddHours(-1));
+        Assert.True(result.IsSuccess);
+
+        await using (var context =
+                     new RestaurantsDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.Restaurants.Add(result.Value);
+            await context.SaveChangesAsync();
+
+            result.Value.Delete(deletedAtUtc);
+            await context.SaveChangesAsync();
+        }
+
+        await using var verificationContext =
+            new RestaurantsDbContext(options);
+
+        Assert.Null(
+            await verificationContext.Restaurants
+                .SingleOrDefaultAsync(
+                    restaurant =>
+                        restaurant.Id == restaurantId));
+
+        var persistedRestaurant =
+            await verificationContext.Restaurants
+                .IgnoreQueryFilters()
+                .SingleAsync(
+                    restaurant =>
+                        restaurant.Id == restaurantId);
+
+        Assert.True(persistedRestaurant.IsDeleted);
+        Assert.Equal(
+            deletedAtUtc,
+            persistedRestaurant.DeletedAtUtc);
+        Assert.Equal(2, persistedRestaurant.Version);
+    }
 }

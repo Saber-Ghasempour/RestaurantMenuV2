@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
+using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
@@ -57,6 +58,19 @@ public static class RestaurantsEndpoints
             .WithName("UpdateRestaurant")
             .Produces<UpdateRestaurantResponse>(
                 StatusCodes.Status200OK)
+            .ProducesValidationProblem(
+                StatusCodes.Status400BadRequest)
+            .ProducesProblem(
+                StatusCodes.Status404NotFound)
+            .ProducesProblem(
+                StatusCodes.Status409Conflict);
+
+        group.MapDelete(
+                "/{restaurantId:guid}",
+                DeleteRestaurantAsync)
+            .WithName("DeleteRestaurant")
+            .Produces(
+                StatusCodes.Status204NoContent)
             .ProducesValidationProblem(
                 StatusCodes.Status400BadRequest)
             .ProducesProblem(
@@ -208,6 +222,29 @@ public static class RestaurantsEndpoints
             new UpdateRestaurantResponse(
                 restaurantId,
                 result.Value));
+    }
+
+    private static async Task<IResult> DeleteRestaurantAsync(
+        Guid restaurantId,
+        long expectedVersion,
+        ICommandHandler<
+            DeleteRestaurantCommand,
+            Result<RestaurantId>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var command = new DeleteRestaurantCommand(
+            new RestaurantId(restaurantId),
+            expectedVersion);
+
+        var result = await handler.Handle(
+            command,
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.NoContent();
     }
 }
 
