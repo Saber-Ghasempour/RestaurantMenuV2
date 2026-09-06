@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+using RestaurantMenu.Catalog.Domain.Categories;
+using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
@@ -14,8 +16,11 @@ public sealed class TestWebApplicationFactory
     : WebApplicationFactory<Program>,
       IAsyncLifetime
 {
-    private const string ConnectionStringVariable =
+    private const string RestaurantsConnectionStringVariable =
         "ConnectionStrings__Restaurants";
+
+    private const string CatalogConnectionStringVariable =
+        "ConnectionStrings__Catalog";
 
     private static readonly object EnvironmentVariableLock =
         new();
@@ -43,13 +48,21 @@ public sealed class TestWebApplicationFactory
 
         lock (EnvironmentVariableLock)
         {
-            var previousConnectionString =
+            var previousRestaurantsConnectionString =
                 Environment.GetEnvironmentVariable(
-                    ConnectionStringVariable);
+                    RestaurantsConnectionStringVariable);
+            var previousCatalogConnectionString =
+                Environment.GetEnvironmentVariable(
+                    CatalogConnectionStringVariable);
+            var connectionString =
+                _postgres.GetConnectionString();
 
             Environment.SetEnvironmentVariable(
-                ConnectionStringVariable,
-                _postgres.GetConnectionString());
+                RestaurantsConnectionStringVariable,
+                connectionString);
+            Environment.SetEnvironmentVariable(
+                CatalogConnectionStringVariable,
+                connectionString);
 
             try
             {
@@ -58,8 +71,11 @@ public sealed class TestWebApplicationFactory
             finally
             {
                 Environment.SetEnvironmentVariable(
-                    ConnectionStringVariable,
-                    previousConnectionString);
+                    RestaurantsConnectionStringVariable,
+                    previousRestaurantsConnectionString);
+                Environment.SetEnvironmentVariable(
+                    CatalogConnectionStringVariable,
+                    previousCatalogConnectionString);
             }
         }
     }
@@ -74,6 +90,47 @@ public sealed class TestWebApplicationFactory
                 RestaurantsDbContext>();
 
         await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task MigrateCatalogDatabaseAsync()
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                CatalogDbContext>();
+
+        await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task<MenuCategory?> FindMenuCategoryAsync(
+        Guid categoryId)
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                CatalogDbContext>();
+        var id = new MenuCategoryId(categoryId);
+
+        return await dbContext.MenuCategories
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                category => category.Id == id);
+    }
+
+    public async Task<int> CountMenuCategoriesAsync()
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                CatalogDbContext>();
+
+        return await dbContext.MenuCategories.CountAsync();
     }
 
     public async Task<Restaurant?> FindRestaurantAsync(

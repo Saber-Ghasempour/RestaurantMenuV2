@@ -18,6 +18,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Presentation\RestaurantMenu.Restaurants.Presentation.csproj" />
     <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Infrastructure\RestaurantMenu.Restaurants.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\RestaurantMenu.Catalog.Application\RestaurantMenu.Catalog.Application.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\RestaurantMenu.Catalog.Infrastructure\RestaurantMenu.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Catalog\RestaurantMenu.Catalog.Presentation\RestaurantMenu.Catalog.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
+    <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Domain\RestaurantMenu.Restaurants.Domain.csproj" />
   </ItemGroup>
 
 </Project>

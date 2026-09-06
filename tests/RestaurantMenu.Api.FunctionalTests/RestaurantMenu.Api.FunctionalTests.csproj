@@ -20,6 +20,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\RestaurantMenu.Api\RestaurantMenu.Api.csproj" />
     <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Infrastructure\RestaurantMenu.Restaurants.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\RestaurantMenu.Catalog.Domain\RestaurantMenu.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\RestaurantMenu.Catalog.Infrastructure\RestaurantMenu.Catalog.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

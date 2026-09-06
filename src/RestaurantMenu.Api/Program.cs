@@ -1,3 +1,7 @@
+using RestaurantMenu.Api.Integrations.Catalog;
+using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Infrastructure;
+using RestaurantMenu.Catalog.Presentation.Categories;
 using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 
@@ -7,10 +11,18 @@ var restaurantsConnectionString = builder.Configuration.GetConnectionString("Res
     ?? throw new InvalidOperationException(
         "Connection string 'Restaurants' is not configured.");
 
+var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog")
+    ?? throw new InvalidOperationException(
+        "Connection string 'Catalog' is not configured.");
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddRestaurantsInfrastructure(restaurantsConnectionString);
+builder.Services.AddCatalogInfrastructure(catalogConnectionString);
+builder.Services.AddScoped<
+    IRestaurantExistenceChecker,
+    RestaurantExistenceChecker>();
 
 var app = builder.Build();
 
@@ -26,6 +38,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapRestaurantsEndpoints();
+app.MapMenuCategoryEndpoints();
 
 app.Run();
 

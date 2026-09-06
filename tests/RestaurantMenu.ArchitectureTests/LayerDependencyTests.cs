@@ -9,8 +9,14 @@ using ApplicationAbstractionsAssemblyReference =
     RestaurantMenu.Application.Abstractions.AssemblyReference;
 using ApplicationAssemblyReference =
     RestaurantMenu.Restaurants.Application.AssemblyReference;
+using CatalogApplicationAssemblyReference =
+    RestaurantMenu.Catalog.Application.AssemblyReference;
 using CatalogDomainAssemblyReference =
     RestaurantMenu.Catalog.Domain.AssemblyReference;
+using CatalogInfrastructureAssemblyReference =
+    RestaurantMenu.Catalog.Infrastructure.AssemblyReference;
+using CatalogPresentationAssemblyReference =
+    RestaurantMenu.Catalog.Presentation.AssemblyReference;
 using DomainAssemblyReference =
     RestaurantMenu.Restaurants.Domain.AssemblyReference;
 using InfrastructureAssemblyReference =
@@ -37,6 +43,15 @@ public sealed class LayerDependencyTests
     private static readonly ReflectionAssembly CatalogDomainAssembly =
         typeof(CatalogDomainAssemblyReference).Assembly;
 
+    private static readonly ReflectionAssembly CatalogApplicationAssembly =
+        typeof(CatalogApplicationAssemblyReference).Assembly;
+
+    private static readonly ReflectionAssembly CatalogInfrastructureAssembly =
+        typeof(CatalogInfrastructureAssemblyReference).Assembly;
+
+    private static readonly ReflectionAssembly CatalogPresentationAssembly =
+        typeof(CatalogPresentationAssemblyReference).Assembly;
+
     private static readonly ReflectionAssembly ApplicationAssembly =
         typeof(ApplicationAssemblyReference).Assembly;
 
@@ -56,6 +71,9 @@ public sealed class LayerDependencyTests
                 SharedKernelAssembly,
                 ApplicationAbstractionsAssembly,
                 CatalogDomainAssembly,
+                CatalogApplicationAssembly,
+                CatalogInfrastructureAssembly,
+                CatalogPresentationAssembly,
                 DomainAssembly,
                 ApplicationAssembly,
                 InfrastructureAssembly,
@@ -92,6 +110,18 @@ public sealed class LayerDependencyTests
         AssertDoesNotDependOn(
             SharedKernelAssembly,
             CatalogDomainAssembly);
+
+        AssertDoesNotDependOn(
+            SharedKernelAssembly,
+            CatalogApplicationAssembly);
+
+        AssertDoesNotDependOn(
+            SharedKernelAssembly,
+            CatalogInfrastructureAssembly);
+
+        AssertDoesNotDependOn(
+            SharedKernelAssembly,
+            CatalogPresentationAssembly);
     }
 
     [Fact]
@@ -116,6 +146,90 @@ public sealed class LayerDependencyTests
         AssertDoesNotDependOn(
             CatalogDomainAssembly,
             ApiAssembly);
+
+        AssertDoesNotDependOn(
+            CatalogDomainAssembly,
+            CatalogApplicationAssembly);
+
+        AssertDoesNotDependOn(
+            CatalogDomainAssembly,
+            CatalogInfrastructureAssembly);
+
+        AssertDoesNotDependOn(
+            CatalogDomainAssembly,
+            CatalogPresentationAssembly);
+    }
+
+    [Fact]
+    public void CatalogApplicationShouldNotDependOnOuterLayersOrRestaurants()
+    {
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            CatalogInfrastructureAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            CatalogPresentationAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            ApiAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            DomainAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            ApplicationAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            InfrastructureAssembly);
+        AssertDoesNotDependOn(
+            CatalogApplicationAssembly,
+            PresentationAssembly);
+    }
+
+    [Fact]
+    public void CatalogInfrastructureShouldNotDependOnPresentationApiOrRestaurants()
+    {
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            CatalogPresentationAssembly);
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            ApiAssembly);
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            DomainAssembly);
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            ApplicationAssembly);
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            InfrastructureAssembly);
+        AssertDoesNotDependOn(
+            CatalogInfrastructureAssembly,
+            PresentationAssembly);
+    }
+
+    [Fact]
+    public void CatalogPresentationShouldNotDependOnInfrastructureApiOrRestaurants()
+    {
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            CatalogInfrastructureAssembly);
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            ApiAssembly);
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            DomainAssembly);
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            ApplicationAssembly);
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            InfrastructureAssembly);
+        AssertDoesNotDependOn(
+            CatalogPresentationAssembly,
+            PresentationAssembly);
     }
 
     [Fact]
@@ -212,6 +326,18 @@ public sealed class LayerDependencyTests
         AssertDoesNotDependOn(
             ApplicationAbstractionsAssembly,
             CatalogDomainAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            CatalogApplicationAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            CatalogInfrastructureAssembly);
+
+        AssertDoesNotDependOn(
+            ApplicationAbstractionsAssembly,
+            CatalogPresentationAssembly);
     }
 
     private static void AssertDoesNotDependOn(

@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.SharedKernel\RestaurantMenu.SharedKernel.csproj" />
+    <ProjectReference Include="..\RestaurantMenu.Catalog.Application\RestaurantMenu.Catalog.Application.csproj" />
+    <ProjectReference Include="..\RestaurantMenu.Catalog.Domain\RestaurantMenu.Catalog.Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>
+        runtime;
+        build;
+        native;
+        contentfiles;
+        analyzers;
+        buildtransitive
+      </IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

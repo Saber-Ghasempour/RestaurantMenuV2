@@ -8,7 +8,10 @@
   </Folder>
   <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Application/RestaurantMenu.Catalog.Application.csproj" />
     <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Domain/RestaurantMenu.Catalog.Domain.csproj" />
+    <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Infrastructure/RestaurantMenu.Catalog.Infrastructure.csproj" />
+    <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Presentation/RestaurantMenu.Catalog.Presentation.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Restaurants/">
     <Project Path="src/Modules/Restaurants/RestaurantMenu.Restaurants.Application/RestaurantMenu.Restaurants.Application.csproj" />
@@ -22,7 +25,9 @@
   </Folder>
   <Folder Name="/tests/Modules/" />
   <Folder Name="/tests/Modules/Catalog/">
+    <Project Path="tests/Modules/Catalog/RestaurantMenu.Catalog.Application.UnitTests/RestaurantMenu.Catalog.Application.UnitTests.csproj" />
     <Project Path="tests/Modules/Catalog/RestaurantMenu.Catalog.Domain.UnitTests/RestaurantMenu.Catalog.Domain.UnitTests.csproj" />
+    <Project Path="tests/Modules/Catalog/RestaurantMenu.Catalog.IntegrationTests/RestaurantMenu.Catalog.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Restaurants/">
     <Project Path="tests/Modules/Restaurants/RestaurantMenu.Restaurants.Application.UnitTests/RestaurantMenu.Restaurants.Application.UnitTests.csproj" />
