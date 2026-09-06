@@ -5,12 +5,6 @@ namespace RestaurantMenu.Catalog.Application.Categories;
 
 public static class MenuCategoryApplicationErrors
 {
-    public static ErrorDetail RestaurantNotFound(
-        Guid restaurantId) =>
-        ErrorDetail.NotFound(
-            "Catalog.RestaurantNotFound",
-            $"Restaurant with identifier '{restaurantId}' was not found.");
-
     public static ErrorDetail CategoryNotFound(
         MenuCategoryId categoryId) =>
         ErrorDetail.NotFound(

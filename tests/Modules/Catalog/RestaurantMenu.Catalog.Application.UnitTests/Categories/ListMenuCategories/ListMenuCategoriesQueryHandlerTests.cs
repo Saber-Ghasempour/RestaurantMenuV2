@@ -1,5 +1,6 @@
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Application;
 using RestaurantMenu.Catalog.Application.Categories;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
@@ -70,7 +71,7 @@ public sealed class ListMenuCategoriesQueryHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(
-            MenuCategoryApplicationErrors.RestaurantNotFound(
+            CatalogApplicationErrors.RestaurantNotFound(
                 restaurantId),
             result.Error);
         Assert.Null(readService.RequestedRestaurantId);

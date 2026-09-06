@@ -1,5 +1,6 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Catalog.Application;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Application.Categories;
@@ -45,7 +46,7 @@ public sealed class CreateMenuCategoryCommandHandler
                 cancellationToken))
         {
             return Result.Failure<MenuCategoryId>(
-                MenuCategoryApplicationErrors.RestaurantNotFound(
+                CatalogApplicationErrors.RestaurantNotFound(
                     command.RestaurantId));
         }
 

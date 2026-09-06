@@ -1,4 +1,5 @@
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Catalog.Application;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
@@ -35,7 +36,7 @@ public sealed class ListMenuCategoriesQueryHandler
                 cancellationToken))
         {
             return Result.Failure<IReadOnlyList<MenuCategoryResponse>>(
-                MenuCategoryApplicationErrors.RestaurantNotFound(
+                CatalogApplicationErrors.RestaurantNotFound(
                     query.RestaurantId));
         }
 

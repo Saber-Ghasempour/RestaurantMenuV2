@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
+using RestaurantMenu.Catalog.Domain.Items;
 
 namespace RestaurantMenu.Catalog.Infrastructure.Database;
 
@@ -20,6 +21,8 @@ public sealed class CatalogDbContext
 
     public DbSet<MenuCategory> MenuCategories =>
         Set<MenuCategory>();
+
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)

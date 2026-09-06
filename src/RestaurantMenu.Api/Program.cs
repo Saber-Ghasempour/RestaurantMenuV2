@@ -2,6 +2,7 @@ using RestaurantMenu.Api.Integrations.Catalog;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Infrastructure;
 using RestaurantMenu.Catalog.Presentation.Categories;
+using RestaurantMenu.Catalog.Presentation.Items;
 using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 
@@ -39,6 +40,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapRestaurantsEndpoints();
 app.MapMenuCategoryEndpoints();
+app.MapMenuItemEndpoints();
 
 app.Run();
 

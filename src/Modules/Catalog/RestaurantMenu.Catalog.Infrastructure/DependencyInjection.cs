@@ -9,9 +9,12 @@ using RestaurantMenu.Catalog.Application.Categories.DeleteMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
+using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Domain.Categories;
+using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
+using RestaurantMenu.Catalog.Infrastructure.Items;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Infrastructure;
@@ -37,6 +40,8 @@ public static class DependencyInjection
             MenuCategoryRepository>();
         services.AddScoped<IMenuCategoryReadService,
             MenuCategoryReadService>();
+        services.AddScoped<IMenuItemRepository,
+            MenuItemRepository>();
         services.AddScoped<ICatalogUnitOfWork>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<CatalogDbContext>());
@@ -65,6 +70,11 @@ public static class DependencyInjection
                 DeleteMenuCategoryCommand,
                 Result<MenuCategoryId>>,
             DeleteMenuCategoryCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<
+                CreateMenuItemCommand,
+                Result<MenuItemId>>,
+            CreateMenuItemCommandHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
+using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
+using RestaurantMenu.Catalog.Infrastructure.Items;
 
 using Testcontainers.PostgreSql;
 
@@ -244,6 +246,65 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.True(persisted.IsDeleted);
         Assert.Equal(deletedAtUtc, persisted.DeletedAtUtc);
         Assert.Equal(2, persisted.Version);
+    }
+
+    [Fact]
+    public async Task AddShouldPersistMenuItemAndOwnedMoney()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var category = CreateCategory(
+            restaurantId,
+            "Main Courses",
+            1);
+        var itemResult = MenuItem.Create(
+            MenuItemId.New(),
+            restaurantId,
+            category.Id,
+            "Carbonara",
+            "Classic pasta",
+            14.50m,
+            "EUR",
+            1,
+            new DateTimeOffset(
+                2026,
+                9,
+                7,
+                16,
+                0,
+                0,
+                TimeSpan.Zero));
+        Assert.True(itemResult.IsSuccess);
+
+        await using (var context = new CatalogDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.MenuCategories.Add(category);
+            new MenuItemRepository(context).Add(itemResult.Value);
+            await context.SaveChangesAsync();
+        }
+
+        await using var verificationContext =
+            new CatalogDbContext(options);
+        var persisted = await verificationContext.MenuItems
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == itemResult.Value.Id);
+
+        Assert.Equal(category.Id, persisted.CategoryId);
+        Assert.Equal("Carbonara", persisted.Name);
+        Assert.Equal("Classic pasta", persisted.Description);
+        Assert.Equal(14.50m, persisted.Price.Amount);
+        Assert.Equal("EUR", persisted.Price.Currency);
+        Assert.True(persisted.IsAvailable);
+        Assert.Equal(1, persisted.Version);
     }
 
     private static MenuCategory CreateCategory(

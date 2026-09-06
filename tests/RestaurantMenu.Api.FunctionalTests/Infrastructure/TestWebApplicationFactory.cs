@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using RestaurantMenu.Catalog.Domain.Categories;
+using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
@@ -150,6 +151,27 @@ public sealed class TestWebApplicationFactory
                 CatalogDbContext>();
 
         return await dbContext.MenuCategories.CountAsync();
+    }
+
+    public async Task<MenuItem?> FindMenuItemAsync(Guid menuItemId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var id = new MenuItemId(menuItemId);
+
+        return await dbContext.MenuItems
+            .AsNoTracking()
+            .SingleOrDefaultAsync(menuItem => menuItem.Id == id);
+    }
+
+    public async Task<int> CountMenuItemsAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+
+        return await dbContext.MenuItems.CountAsync();
     }
 
     public async Task<MenuCategory> SeedMenuCategoryAsync(
