@@ -3,6 +3,11 @@
   <ItemGroup>
     <ProjectReference Include="..\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
     <ProjectReference Include="..\RestaurantMenu.Restaurants.Domain\RestaurantMenu.Restaurants.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
   <PropertyGroup>

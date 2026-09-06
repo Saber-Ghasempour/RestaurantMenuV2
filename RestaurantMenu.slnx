@@ -20,5 +20,6 @@
   <Folder Name="/tests/Modules/Restaurants/">
     <Project Path="tests/Modules/Restaurants/RestaurantMenu.Restaurants.Application.UnitTests/RestaurantMenu.Restaurants.Application.UnitTests.csproj" />
     <Project Path="tests/Modules/Restaurants/RestaurantMenu.Restaurants.Domain.UnitTests/RestaurantMenu.Restaurants.Domain.UnitTests.csproj" />
+    <Project Path="tests/Modules/Restaurants/RestaurantMenu.Restaurants.IntegrationTests/RestaurantMenu.Restaurants.IntegrationTests.csproj" />
   </Folder>
 </Solution>
