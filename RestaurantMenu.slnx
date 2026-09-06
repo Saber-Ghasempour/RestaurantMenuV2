@@ -5,7 +5,18 @@
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/RestaurantMenu.SharedKernel/RestaurantMenu.SharedKernel.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Restaurants/">
+    <Project Path="src/Modules/Restaurants/RestaurantMenu.Restaurants.Application/RestaurantMenu.Restaurants.Application.csproj" />
+    <Project Path="src/Modules/Restaurants/RestaurantMenu.Restaurants.Domain/RestaurantMenu.Restaurants.Domain.csproj" />
+    <Project Path="src/Modules/Restaurants/RestaurantMenu.Restaurants.Infrastructure/RestaurantMenu.Restaurants.Infrastructure.csproj" />
+    <Project Path="src/Modules/Restaurants/RestaurantMenu.Restaurants.Presentation/RestaurantMenu.Restaurants.Presentation.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/RestaurantMenu.ArchitectureTests/RestaurantMenu.ArchitectureTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Restaurants/">
+    <Project Path="tests/Modules/Restaurants/RestaurantMenu.Restaurants.Domain.UnitTests/RestaurantMenu.Restaurants.Domain.UnitTests.csproj" />
   </Folder>
 </Solution>
