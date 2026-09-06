@@ -31,4 +31,13 @@ public sealed class MenuCategoryRepository
             category => category.Id == categoryId,
             cancellationToken);
     }
+
+    public Task<bool> HasChildrenAsync(
+        MenuCategoryId categoryId,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.MenuCategories.AnyAsync(
+            category => category.ParentId == categoryId,
+            cancellationToken);
+    }
 }

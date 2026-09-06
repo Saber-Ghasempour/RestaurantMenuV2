@@ -36,6 +36,10 @@ public sealed class MenuCategory
 
     public long Version { get; private set; } = 1;
 
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+
     public static Result<MenuCategory> Create(
         MenuCategoryId id,
         Guid restaurantId,
@@ -84,5 +88,74 @@ public sealed class MenuCategory
                 restaurantId));
 
         return Result.Success(category);
+    }
+
+    public Result<MenuCategory> Update(
+        MenuCategoryId? parentId,
+        string? name,
+        int displayOrder)
+    {
+        if (parentId == Id)
+        {
+            return Result.Failure<MenuCategory>(
+                MenuCategoryErrors.CannotBeOwnParent);
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result.Failure<MenuCategory>(
+                MenuCategoryErrors.NameRequired);
+        }
+
+        var normalizedName = name.Trim();
+
+        if (normalizedName.Length > MaxNameLength)
+        {
+            return Result.Failure<MenuCategory>(
+                MenuCategoryErrors.NameTooLong);
+        }
+
+        if (displayOrder < 0)
+        {
+            return Result.Failure<MenuCategory>(
+                MenuCategoryErrors.InvalidDisplayOrder);
+        }
+
+        if (ParentId == parentId &&
+            Name == normalizedName &&
+            DisplayOrder == displayOrder)
+        {
+            return Result.Success(this);
+        }
+
+        ParentId = parentId;
+        Name = normalizedName;
+        DisplayOrder = displayOrder;
+        Version++;
+
+        RaiseDomainEvent(
+            new MenuCategoryUpdatedDomainEvent(
+                Id,
+                RestaurantId));
+
+        return Result.Success(this);
+    }
+
+    public void Delete(DateTimeOffset deletedAtUtc)
+    {
+        if (IsDeleted)
+        {
+            return;
+        }
+
+        IsDeleted = true;
+        DeletedAtUtc = deletedAtUtc;
+        Version++;
+
+        RaiseDomainEvent(
+            new MenuCategoryDeletedDomainEvent(
+                Id,
+                RestaurantId,
+                deletedAtUtc));
     }
 }

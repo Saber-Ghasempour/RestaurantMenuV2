@@ -23,4 +23,9 @@ public static class MenuCategoryErrors
         ErrorDetail.Validation(
             "Catalog.InvalidCategoryDisplayOrder",
             "The category display order cannot be negative.");
+
+    public static readonly ErrorDetail CannotBeOwnParent =
+        ErrorDetail.Validation(
+            "Catalog.CategoryCannotBeOwnParent",
+            "A menu category cannot be its own parent.");
 }

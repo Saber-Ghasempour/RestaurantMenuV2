@@ -9,4 +9,8 @@ public interface IMenuCategoryRepository
     Task<MenuCategory?> GetByIdAsync(
         MenuCategoryId categoryId,
         CancellationToken cancellationToken);
+
+    Task<bool> HasChildrenAsync(
+        MenuCategoryId categoryId,
+        CancellationToken cancellationToken);
 }

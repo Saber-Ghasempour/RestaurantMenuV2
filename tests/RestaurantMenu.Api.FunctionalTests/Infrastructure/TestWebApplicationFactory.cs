@@ -121,6 +121,25 @@ public sealed class TestWebApplicationFactory
                 category => category.Id == id);
     }
 
+    public async Task<MenuCategory?>
+        FindMenuCategoryIncludingDeletedAsync(
+            Guid categoryId)
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                CatalogDbContext>();
+        var id = new MenuCategoryId(categoryId);
+
+        return await dbContext.MenuCategories
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                category => category.Id == id);
+    }
+
     public async Task<int> CountMenuCategoriesAsync()
     {
         await using var scope =

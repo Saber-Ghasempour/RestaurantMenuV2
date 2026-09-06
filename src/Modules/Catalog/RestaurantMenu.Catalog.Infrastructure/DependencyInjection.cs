@@ -5,8 +5,10 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Categories.CreateMenuCategory;
+using RestaurantMenu.Catalog.Application.Categories.DeleteMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
+using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
@@ -53,6 +55,16 @@ public static class DependencyInjection
                 ListMenuCategoriesQuery,
                 Result<IReadOnlyList<MenuCategoryResponse>>>,
             ListMenuCategoriesQueryHandler>();
+        services.AddScoped<
+            ICommandHandler<
+                UpdateMenuCategoryCommand,
+                Result<long>>,
+            UpdateMenuCategoryCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<
+                DeleteMenuCategoryCommand,
+                Result<MenuCategoryId>>,
+            DeleteMenuCategoryCommandHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

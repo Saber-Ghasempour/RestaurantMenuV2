@@ -66,6 +66,17 @@ internal sealed class MenuCategoryConfiguration
             .IsConcurrencyToken()
             .IsRequired();
 
+        builder.Property(category => category.IsDeleted)
+            .HasColumnName("is_deleted")
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(category => category.DeletedAtUtc)
+            .HasColumnName("deleted_at_utc")
+            .HasColumnType("timestamp with time zone");
+
+        builder.HasQueryFilter(category => !category.IsDeleted);
+
         builder.HasOne<MenuCategory>()
             .WithMany()
             .HasForeignKey(category => category.ParentId)

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
@@ -150,6 +151,99 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.NotNull(category);
         Assert.Equal("Desserts", category.Name);
         Assert.Null(categoryUnderWrongRestaurant);
+    }
+
+    [Fact]
+    public async Task SaveChangesShouldThrowWhenCategoryWasConcurrentlyUpdated()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var category = CreateCategory(
+            Guid.CreateVersion7(),
+            "Concurrent Category",
+            1);
+
+        await using (var arrangeContext =
+                     new CatalogDbContext(options))
+        {
+            await arrangeContext.Database.MigrateAsync();
+            arrangeContext.MenuCategories.Add(category);
+            await arrangeContext.SaveChangesAsync();
+        }
+
+        await using var firstContext =
+            new CatalogDbContext(options);
+        await using var secondContext =
+            new CatalogDbContext(options);
+        var first = await firstContext.MenuCategories.SingleAsync(
+            candidate => candidate.Id == category.Id);
+        var second = await secondContext.MenuCategories.SingleAsync(
+            candidate => candidate.Id == category.Id);
+
+        Assert.True(first.Update(null, "First Update", 1).IsSuccess);
+        Assert.True(second.Update(null, "Second Update", 1).IsSuccess);
+        await firstContext.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ConcurrencyException>(
+            () => secondContext.SaveChangesAsync());
+    }
+
+    [Fact]
+    public async Task DeletedCategoryShouldBeHiddenButRemainPersisted()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var category = CreateCategory(
+            Guid.CreateVersion7(),
+            "Deleted Category",
+            1);
+        var deletedAtUtc = new DateTimeOffset(
+            2026,
+            9,
+            7,
+            13,
+            0,
+            0,
+            TimeSpan.Zero);
+
+        await using (var context = new CatalogDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.MenuCategories.Add(category);
+            await context.SaveChangesAsync();
+            category.Delete(deletedAtUtc);
+            await context.SaveChangesAsync();
+        }
+
+        await using var verificationContext =
+            new CatalogDbContext(options);
+        Assert.Null(
+            await verificationContext.MenuCategories
+                .SingleOrDefaultAsync(
+                    candidate => candidate.Id == category.Id));
+
+        var persisted =
+            await verificationContext.MenuCategories
+                .IgnoreQueryFilters()
+                .SingleAsync(
+                    candidate => candidate.Id == category.Id);
+        Assert.True(persisted.IsDeleted);
+        Assert.Equal(deletedAtUtc, persisted.DeletedAtUtc);
+        Assert.Equal(2, persisted.Version);
     }
 
     private static MenuCategory CreateCategory(

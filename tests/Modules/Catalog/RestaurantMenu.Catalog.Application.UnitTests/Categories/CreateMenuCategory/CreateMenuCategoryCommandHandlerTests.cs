@@ -159,6 +159,11 @@ public sealed class CreateMenuCategoryCommandHandlerTests
             MenuCategoryId categoryId,
             CancellationToken cancellationToken) =>
             Task.FromResult(category);
+
+        public Task<bool> HasChildrenAsync(
+            MenuCategoryId categoryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(false);
     }
 
     private sealed class RestaurantExistenceCheckerStub(
