@@ -19,6 +19,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\RestaurantMenu.Api\RestaurantMenu.Api.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.SharedKernel\RestaurantMenu.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Domain\RestaurantMenu.Restaurants.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Infrastructure\RestaurantMenu.Restaurants.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Restaurants\RestaurantMenu.Restaurants.Presentation\RestaurantMenu.Restaurants.Presentation.csproj" />
   </ItemGroup>
 
 </Project>
