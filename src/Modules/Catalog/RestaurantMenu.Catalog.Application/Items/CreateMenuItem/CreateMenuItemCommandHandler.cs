@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Application.Items;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.SharedKernel.Results;
@@ -59,7 +60,7 @@ public sealed class CreateMenuItemCommandHandler
             category.RestaurantId != command.RestaurantId)
         {
             return Result.Failure<MenuItemId>(
-                CreateMenuItemApplicationErrors.CategoryNotFound(
+                MenuItemApplicationErrors.CategoryNotFound(
                     command.CategoryId));
         }
 

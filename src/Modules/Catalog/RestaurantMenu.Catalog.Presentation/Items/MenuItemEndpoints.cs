@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
+using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
+using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Presentation.Infrastructure;
 using RestaurantMenu.SharedKernel.Results;
@@ -28,6 +30,23 @@ public static class MenuItemEndpoints
                 StatusCodes.Status400BadRequest)
             .ProducesProblem(
                 StatusCodes.Status404NotFound);
+
+        endpoints.MapGet(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
+                GetMenuItemAsync)
+            .WithName("GetMenuItem")
+            .WithTags("Catalog")
+            .Produces<MenuItemResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        endpoints.MapGet(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items",
+                ListMenuItemsAsync)
+            .WithName("ListMenuItems")
+            .WithTags("Catalog")
+            .Produces<IReadOnlyList<MenuItemResponse>>(
+                StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
     }
@@ -67,6 +86,50 @@ public static class MenuItemEndpoints
         return Results.Created(
             $"/api/restaurants/{restaurantId}/categories/{categoryId}/items/{response.Id}",
             response);
+    }
+
+    private static async Task<IResult> GetMenuItemAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        IQueryHandler<
+            GetMenuItemQuery,
+            Result<MenuItemResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var result = await handler.Handle(
+            new GetMenuItemQuery(
+                restaurantId,
+                new(categoryId),
+                new(menuItemId)),
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ListMenuItemsAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        IQueryHandler<
+            ListMenuItemsQuery,
+            Result<IReadOnlyList<MenuItemResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var result = await handler.Handle(
+            new ListMenuItemsQuery(
+                restaurantId,
+                new(categoryId)),
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(result.Value);
     }
 }
 

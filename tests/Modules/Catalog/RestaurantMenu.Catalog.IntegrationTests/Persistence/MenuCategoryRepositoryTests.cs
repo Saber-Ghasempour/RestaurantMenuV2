@@ -307,6 +307,78 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.Equal(1, persisted.Version);
     }
 
+    [Fact]
+    public async Task MenuItemReadServiceShouldScopeProjectAndOrderItems()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var category = CreateCategory(restaurantId, "Category", 1);
+        var otherCategory = CreateCategory(
+            restaurantId,
+            "Other Category",
+            2);
+        var first = CreateMenuItem(
+            restaurantId,
+            category.Id,
+            "Appetizer",
+            1,
+            8.25m);
+        var second = CreateMenuItem(
+            restaurantId,
+            category.Id,
+            "Dessert",
+            20,
+            6.50m);
+        var excluded = CreateMenuItem(
+            restaurantId,
+            otherCategory.Id,
+            "Excluded",
+            0,
+            1m);
+
+        await using (var context = new CatalogDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.MenuCategories.AddRange(category, otherCategory);
+            context.MenuItems.AddRange(second, excluded, first);
+            await context.SaveChangesAsync();
+        }
+
+        await using var readContext = new CatalogDbContext(options);
+        var readService = new MenuItemReadService(readContext);
+        var items = await readService.GetByCategoryIdAsync(
+            restaurantId,
+            category.Id,
+            CancellationToken.None);
+        var item = await readService.GetByIdAsync(
+            restaurantId,
+            category.Id,
+            second.Id,
+            CancellationToken.None);
+        var itemUnderWrongCategory = await readService.GetByIdAsync(
+            restaurantId,
+            otherCategory.Id,
+            second.Id,
+            CancellationToken.None);
+
+        Assert.Collection(
+            items,
+            response => Assert.Equal(first.Id.Value, response.Id),
+            response => Assert.Equal(second.Id.Value, response.Id));
+        Assert.NotNull(item);
+        Assert.Equal(6.50m, item.PriceAmount);
+        Assert.Equal("EUR", item.Currency);
+        Assert.Null(itemUnderWrongCategory);
+    }
+
     private static MenuCategory CreateCategory(
         Guid restaurantId,
         string name,
@@ -320,6 +392,34 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             displayOrder,
             DateTimeOffset.UtcNow);
 
+        Assert.True(result.IsSuccess);
+        return result.Value;
+    }
+
+    private static MenuItem CreateMenuItem(
+        Guid restaurantId,
+        MenuCategoryId categoryId,
+        string name,
+        int displayOrder,
+        decimal price)
+    {
+        var result = MenuItem.Create(
+            MenuItemId.New(),
+            restaurantId,
+            categoryId,
+            name,
+            null,
+            price,
+            "EUR",
+            displayOrder,
+            new DateTimeOffset(
+                2026,
+                9,
+                7,
+                17,
+                0,
+                0,
+                TimeSpan.Zero));
         Assert.True(result.IsSuccess);
         return result.Value;
     }

@@ -174,6 +174,39 @@ public sealed class TestWebApplicationFactory
         return await dbContext.MenuItems.CountAsync();
     }
 
+    public async Task<MenuItem> SeedMenuItemAsync(
+        Guid restaurantId,
+        MenuCategoryId categoryId,
+        string name,
+        decimal priceAmount,
+        string currency,
+        int displayOrder)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var result = MenuItem.Create(
+            MenuItemId.New(),
+            restaurantId,
+            categoryId,
+            name,
+            null,
+            priceAmount,
+            currency,
+            displayOrder,
+            DateTimeOffset.UtcNow);
+
+        if (result.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"Could not seed menu item: {result.Error.Code}");
+        }
+
+        dbContext.MenuItems.Add(result.Value);
+        await dbContext.SaveChangesAsync();
+        return result.Value;
+    }
+
     public async Task<MenuCategory> SeedMenuCategoryAsync(
         Guid restaurantId,
         string name,

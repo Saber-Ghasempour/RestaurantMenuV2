@@ -2,6 +2,7 @@ using RestaurantMenu.Catalog.Application;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
+using RestaurantMenu.Catalog.Application.Items;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 
@@ -89,7 +90,7 @@ public sealed class CreateMenuItemCommandHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(
-            CreateMenuItemApplicationErrors.CategoryNotFound(
+            MenuItemApplicationErrors.CategoryNotFound(
                 category.Id.Value),
             result.Error);
         Assert.Null(itemRepository.AddedItem);
