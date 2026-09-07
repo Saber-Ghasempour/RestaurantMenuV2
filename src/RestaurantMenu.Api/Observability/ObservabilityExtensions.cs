@@ -37,7 +37,11 @@ public static class ObservabilityExtensions
             tracing =>
             {
                 tracing
-                    .AddAspNetCoreInstrumentation()
+                    .AddAspNetCoreInstrumentation(
+                        options =>
+                            options.Filter = context =>
+                                !context.Request.Path.StartsWithSegments(
+                                    "/health"))
                     .AddHttpClientInstrumentation()
                     .AddNpgsql();
 

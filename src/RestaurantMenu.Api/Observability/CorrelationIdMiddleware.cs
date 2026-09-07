@@ -38,6 +38,8 @@ public sealed partial class CorrelationIdMiddleware
             {
                 [ItemName] = correlationId
             });
+        var isHealthProbe =
+            context.Request.Path.StartsWithSegments("/health");
         var startedAt = Stopwatch.GetTimestamp();
 
         try
@@ -46,7 +48,8 @@ public sealed partial class CorrelationIdMiddleware
         }
         finally
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            if (!isHealthProbe &&
+                _logger.IsEnabled(LogLevel.Information))
             {
                 var elapsedMilliseconds =
                     Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds;

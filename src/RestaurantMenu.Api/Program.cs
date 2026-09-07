@@ -1,13 +1,19 @@
 using System.Diagnostics;
 
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+using RestaurantMenu.Api.Health;
 using RestaurantMenu.Api.Infrastructure;
 using RestaurantMenu.Api.Integrations.Catalog;
 using RestaurantMenu.Api.Observability;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Infrastructure;
+using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Presentation.Categories;
 using RestaurantMenu.Catalog.Presentation.Items;
 using RestaurantMenu.Restaurants.Infrastructure;
+using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,8 +57,25 @@ builder.Services.AddCatalogInfrastructure(catalogConnectionString);
 builder.Services.AddScoped<
     IRestaurantExistenceChecker,
     RestaurantExistenceChecker>();
+builder.Services
+    .AddHealthChecks()
+    .AddCheck(
+        "self",
+        () => HealthCheckResult.Healthy(),
+        tags: ["live"])
+    .AddDbContextCheck<RestaurantsDbContext>(
+        "restaurants-database",
+        tags: ["ready"])
+    .AddDbContextCheck<CatalogDbContext>(
+        "catalog-database",
+        tags: ["ready"]);
 
 var app = builder.Build();
+
+if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+{
+    await app.ApplyDatabaseMigrationsAsync();
+}
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
@@ -63,7 +86,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 
@@ -71,6 +97,24 @@ app.MapControllers();
 app.MapRestaurantsEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
+app.MapHealthChecks(
+        "/health/live",
+        new HealthCheckOptions
+        {
+            Predicate = registration =>
+                registration.Tags.Contains("live"),
+            ResponseWriter = HealthCheckResponseWriter.WriteAsync
+        })
+    .AllowAnonymous();
+app.MapHealthChecks(
+        "/health/ready",
+        new HealthCheckOptions
+        {
+            Predicate = registration =>
+                registration.Tags.Contains("ready"),
+            ResponseWriter = HealthCheckResponseWriter.WriteAsync
+        })
+    .AllowAnonymous();
 
 app.Run();
 
