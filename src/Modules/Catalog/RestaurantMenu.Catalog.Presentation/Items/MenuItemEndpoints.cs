@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
+using RestaurantMenu.Catalog.Application.Items.DeleteMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
@@ -58,6 +59,15 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces<ChangeMenuItemAvailabilityResponse>(
                 StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        endpoints.MapDelete(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
+                DeleteMenuItemAsync)
+            .WithName("DeleteMenuItem")
+            .WithTags("Catalog")
+            .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
@@ -217,6 +227,31 @@ public static class MenuItemEndpoints
                     menuItemId,
                     request.IsAvailable,
                     result.Value));
+    }
+
+    private static async Task<IResult> DeleteMenuItemAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        long expectedVersion,
+        ICommandHandler<
+            DeleteMenuItemCommand,
+            Result<MenuItemId>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var result = await handler.Handle(
+            new DeleteMenuItemCommand(
+                restaurantId,
+                new(categoryId),
+                new(menuItemId),
+                expectedVersion),
+            cancellationToken);
+
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.NoContent();
     }
 }
 

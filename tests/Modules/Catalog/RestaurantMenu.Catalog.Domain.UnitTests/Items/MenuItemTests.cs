@@ -201,6 +201,41 @@ public sealed class MenuItemTests
         Assert.Empty(menuItem.DomainEvents);
     }
 
+    [Fact]
+    public void DeleteShouldMarkItemIncrementVersionAndRaiseEvent()
+    {
+        var deletedAtUtc = CreatedAtUtc.AddHours(1);
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+
+        menuItem.Delete(deletedAtUtc);
+
+        Assert.True(menuItem.IsDeleted);
+        Assert.Equal(deletedAtUtc, menuItem.DeletedAtUtc);
+        Assert.Equal(2, menuItem.Version);
+        var domainEvent = Assert.IsType<MenuItemDeletedDomainEvent>(
+            Assert.Single(menuItem.DomainEvents));
+        Assert.Equal(menuItem.Id, domainEvent.MenuItemId);
+        Assert.Equal(menuItem.RestaurantId, domainEvent.RestaurantId);
+        Assert.Equal(menuItem.CategoryId, domainEvent.CategoryId);
+        Assert.Equal(deletedAtUtc, domainEvent.DeletedAtUtc);
+    }
+
+    [Fact]
+    public void DeleteShouldBeIdempotentInsideAggregate()
+    {
+        var firstDeletedAtUtc = CreatedAtUtc.AddHours(1);
+        var menuItem = CreateMenuItem().Value;
+        menuItem.ClearDomainEvents();
+        menuItem.Delete(firstDeletedAtUtc);
+
+        menuItem.Delete(CreatedAtUtc.AddHours(2));
+
+        Assert.Equal(firstDeletedAtUtc, menuItem.DeletedAtUtc);
+        Assert.Equal(2, menuItem.Version);
+        Assert.Single(menuItem.DomainEvents);
+    }
+
     private static RestaurantMenu.SharedKernel.Results.Result<MenuItem>
         CreateMenuItem(
             string? name = "Item",

@@ -499,6 +499,60 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             () => secondContext.SaveChangesAsync());
     }
 
+    [Fact]
+    public async Task DeletedMenuItemShouldBeHiddenButRemainPersisted()
+    {
+        var options =
+            new DbContextOptionsBuilder<CatalogDbContext>()
+                .UseNpgsql(
+                    _postgres.GetConnectionString(),
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsHistoryTable(
+                            "__ef_migrations_history",
+                            "catalog"))
+                .Options;
+        var restaurantId = Guid.CreateVersion7();
+        var category = CreateCategory(restaurantId, "Category", 1);
+        var menuItem = CreateMenuItem(
+            restaurantId,
+            category.Id,
+            "Deleted Item",
+            1,
+            10m);
+        var deletedAtUtc = new DateTimeOffset(
+            2026,
+            9,
+            7,
+            19,
+            0,
+            0,
+            TimeSpan.Zero);
+
+        await using (var context = new CatalogDbContext(options))
+        {
+            await context.Database.MigrateAsync();
+            context.MenuCategories.Add(category);
+            context.MenuItems.Add(menuItem);
+            await context.SaveChangesAsync();
+            menuItem.Delete(deletedAtUtc);
+            await context.SaveChangesAsync();
+        }
+
+        await using var verificationContext =
+            new CatalogDbContext(options);
+        Assert.Null(
+            await verificationContext.MenuItems.SingleOrDefaultAsync(
+                candidate => candidate.Id == menuItem.Id));
+
+        var persisted = await verificationContext.MenuItems
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .SingleAsync(candidate => candidate.Id == menuItem.Id);
+        Assert.True(persisted.IsDeleted);
+        Assert.Equal(deletedAtUtc, persisted.DeletedAtUtc);
+        Assert.Equal(2, persisted.Version);
+    }
+
     private static MenuCategory CreateCategory(
         Guid restaurantId,
         string name,

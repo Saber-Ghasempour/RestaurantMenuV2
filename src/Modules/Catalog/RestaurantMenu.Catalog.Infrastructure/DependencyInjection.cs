@@ -11,6 +11,7 @@ using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
+using RestaurantMenu.Catalog.Application.Items.DeleteMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
@@ -101,6 +102,11 @@ public static class DependencyInjection
                 ChangeMenuItemAvailabilityCommand,
                 Result<long>>,
             ChangeMenuItemAvailabilityCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<
+                DeleteMenuItemCommand,
+                Result<MenuItemId>>,
+            DeleteMenuItemCommandHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

@@ -165,6 +165,20 @@ public sealed class TestWebApplicationFactory
             .SingleOrDefaultAsync(menuItem => menuItem.Id == id);
     }
 
+    public async Task<MenuItem?> FindMenuItemIncludingDeletedAsync(
+        Guid menuItemId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var id = new MenuItemId(menuItemId);
+
+        return await dbContext.MenuItems
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(menuItem => menuItem.Id == id);
+    }
+
     public async Task<int> CountMenuItemsAsync()
     {
         await using var scope = Services.CreateAsyncScope();

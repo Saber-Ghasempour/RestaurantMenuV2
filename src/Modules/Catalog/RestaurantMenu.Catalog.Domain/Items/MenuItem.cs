@@ -54,6 +54,10 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
 
     public long Version { get; private set; } = 1;
 
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAtUtc { get; private set; }
+
     public static Result<MenuItem> Create(
         MenuItemId id,
         Guid restaurantId,
@@ -215,5 +219,24 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
                 RestaurantId,
                 CategoryId,
                 isAvailable));
+    }
+
+    public void Delete(DateTimeOffset deletedAtUtc)
+    {
+        if (IsDeleted)
+        {
+            return;
+        }
+
+        IsDeleted = true;
+        DeletedAtUtc = deletedAtUtc;
+        Version++;
+
+        RaiseDomainEvent(
+            new MenuItemDeletedDomainEvent(
+                Id,
+                RestaurantId,
+                CategoryId,
+                deletedAtUtc));
     }
 }
