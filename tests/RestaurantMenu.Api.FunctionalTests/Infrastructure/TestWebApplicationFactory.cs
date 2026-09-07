@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -54,6 +56,25 @@ public sealed class TestWebApplicationFactory
             _redis.DisposeAsync().AsTask());
 
         Dispose();
+    }
+
+    protected override void ConfigureWebHost(
+        IWebHostBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ConfigureTestServices(
+            services =>
+            {
+                services
+                    .AddAuthentication(
+                        TestAuthenticationHandler.AuthenticationScheme)
+                    .AddScheme<
+                        Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions,
+                        TestAuthenticationHandler>(
+                            TestAuthenticationHandler.AuthenticationScheme,
+                            _ => { });
+            });
     }
 
     protected override IHost CreateHost(

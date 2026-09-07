@@ -1,0 +1,149 @@
+{
+  "realm": "restaurant-menu",
+  "displayName": "Restaurant Menu",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "client": {
+      "restaurant-menu-api": [
+        { "name": "restaurants.read" },
+        { "name": "restaurants.write" },
+        { "name": "catalog.read" },
+        { "name": "catalog.write" }
+      ]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "restaurant-menu-api",
+      "name": "Restaurant Menu API",
+      "enabled": true,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "restaurant-menu-web",
+      "name": "Restaurant Menu Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "restaurant-menu-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "restaurant-menu-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "restaurant-menu-permissions",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "usermodel.clientRoleMapping.clientId": "restaurant-menu-api",
+            "claim.name": "permission",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "restaurant-menu-service",
+      "name": "Restaurant Menu Local Service Client",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${RESTAURANT_MENU_SERVICE_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "restaurant-menu-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "restaurant-menu-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "restaurant-menu-permissions",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "usermodel.clientRoleMapping.clientId": "restaurant-menu-api",
+            "claim.name": "permission",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "manager",
+      "enabled": true,
+      "email": "manager@restaurant-menu.local",
+      "emailVerified": true,
+      "firstName": "Local",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_DEMO_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "restaurant-menu-api": [
+          "restaurants.read",
+          "restaurants.write",
+          "catalog.read",
+          "catalog.write"
+        ]
+      }
+    },
+    {
+      "username": "service-account-restaurant-menu-service",
+      "enabled": true,
+      "serviceAccountClientId": "restaurant-menu-service",
+      "clientRoles": {
+        "restaurant-menu-api": [
+          "restaurants.read",
+          "catalog.read"
+        ]
+      }
+    }
+  ]
+}

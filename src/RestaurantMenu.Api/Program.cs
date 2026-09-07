@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
+using RestaurantMenu.Api.Authentication;
 using RestaurantMenu.Api.Health;
 using RestaurantMenu.Api.Infrastructure;
 using RestaurantMenu.Api.Integrations.Catalog;
@@ -27,7 +28,8 @@ builder.Logging.AddJsonConsole(
         options.UseUtcTimestamp = true;
     });
 
-var restaurantsConnectionString = builder.Configuration.GetConnectionString("Restaurants") 
+var restaurantsConnectionString = builder.Configuration.GetConnectionString(
+    "Restaurants")
     ?? throw new InvalidOperationException(
         "Connection string 'Restaurants' is not configured.");
 
@@ -62,6 +64,8 @@ builder.Services.AddProblemDetails(
                     context.HttpContext);
         });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddRestaurantMenuAuthentication(
+    builder.Configuration);
 builder.Services.AddRestaurantMenuObservability(
     builder.Configuration);
 builder.Services.AddRestaurantsInfrastructure(
@@ -103,7 +107,8 @@ app.UseExceptionHandler();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi()
+        .AllowAnonymous();
 }
 
 if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
@@ -111,6 +116,7 @@ if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
     app.UseHttpsRedirection();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

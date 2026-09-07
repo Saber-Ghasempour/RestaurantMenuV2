@@ -10,6 +10,7 @@ using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.SharedKernel.Results;
 
@@ -32,7 +33,8 @@ public static class MenuItemEndpoints
             .ProducesValidationProblem(
                 StatusCodes.Status400BadRequest)
             .ProducesProblem(
-                StatusCodes.Status404NotFound);
+                StatusCodes.Status404NotFound)
+            .RequirePermission(Permissions.CatalogWrite);
 
         endpoints.MapGet(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
@@ -40,7 +42,8 @@ public static class MenuItemEndpoints
             .WithName("GetMenuItem")
             .WithTags("Catalog")
             .Produces<MenuItemResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .RequirePermission(Permissions.CatalogRead);
 
         endpoints.MapPut(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
@@ -50,7 +53,8 @@ public static class MenuItemEndpoints
             .Produces<UpdateMenuItemResponse>(StatusCodes.Status200OK)
             .ProducesValidationProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequirePermission(Permissions.CatalogWrite);
 
         endpoints.MapPatch(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}/availability",
@@ -60,7 +64,8 @@ public static class MenuItemEndpoints
             .Produces<ChangeMenuItemAvailabilityResponse>(
                 StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequirePermission(Permissions.CatalogWrite);
 
         endpoints.MapDelete(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}",
@@ -69,7 +74,8 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequirePermission(Permissions.CatalogWrite);
 
         endpoints.MapGet(
                 "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items",
@@ -78,7 +84,8 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces<IReadOnlyList<MenuItemResponse>>(
                 StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .RequirePermission(Permissions.CatalogRead);
 
         return endpoints;
     }

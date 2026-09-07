@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Presentation.Abstractions.Authorization;
+using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
-using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Restaurants.Presentation.Restaurants;
@@ -32,7 +33,8 @@ public static class RestaurantsEndpoints
             .Produces<CreateRestaurantResponse>(
                 StatusCodes.Status201Created)
             .ProducesValidationProblem(
-                StatusCodes.Status400BadRequest);
+                StatusCodes.Status400BadRequest)
+            .RequirePermission(Permissions.RestaurantsWrite);
 
         group.MapGet(
                 "/{restaurantId:guid}",
@@ -41,7 +43,8 @@ public static class RestaurantsEndpoints
             .Produces<GetRestaurantResponse>(
                 StatusCodes.Status200OK)
             .ProducesProblem(
-                StatusCodes.Status404NotFound);
+                StatusCodes.Status404NotFound)
+            .RequirePermission(Permissions.RestaurantsRead);
 
         group.MapGet(
                 "/",
@@ -50,7 +53,8 @@ public static class RestaurantsEndpoints
             .Produces<ListRestaurantsResponse>(
                 StatusCodes.Status200OK)
             .ProducesValidationProblem(
-                StatusCodes.Status400BadRequest);
+                StatusCodes.Status400BadRequest)
+            .RequirePermission(Permissions.RestaurantsRead);
 
         group.MapPut(
                 "/{restaurantId:guid}",
@@ -63,7 +67,8 @@ public static class RestaurantsEndpoints
             .ProducesProblem(
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
-                StatusCodes.Status409Conflict);
+                StatusCodes.Status409Conflict)
+            .RequirePermission(Permissions.RestaurantsWrite);
 
         group.MapDelete(
                 "/{restaurantId:guid}",
@@ -76,7 +81,8 @@ public static class RestaurantsEndpoints
             .ProducesProblem(
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
-                StatusCodes.Status409Conflict);
+                StatusCodes.Status409Conflict)
+            .RequirePermission(Permissions.RestaurantsWrite);
 
         return endpoints;
     }
