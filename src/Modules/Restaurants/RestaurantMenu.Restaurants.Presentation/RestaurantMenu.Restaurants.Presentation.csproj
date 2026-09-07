@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
     <ProjectReference Include="..\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
   </ItemGroup>
     

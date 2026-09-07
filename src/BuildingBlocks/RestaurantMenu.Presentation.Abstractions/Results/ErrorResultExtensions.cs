@@ -2,17 +2,18 @@ using Microsoft.AspNetCore.Http;
 
 using RestaurantMenu.SharedKernel.Results;
 
-namespace RestaurantMenu.Catalog.Presentation.Infrastructure;
+namespace RestaurantMenu.Presentation.Abstractions.Results;
 
-internal static class ErrorResultExtensions
+public static class ErrorResultExtensions
 {
-    internal static IResult ToProblem(this ErrorDetail error)
+    public static IResult ToProblem(this ErrorDetail error)
     {
         ArgumentNullException.ThrowIfNull(error);
 
         return error.Type switch
         {
-            ErrorType.Validation => Results.ValidationProblem(
+            ErrorType.Validation =>
+                global::Microsoft.AspNetCore.Http.Results.ValidationProblem(
                 new Dictionary<string, string[]>
                 {
                     [error.Code] = [error.Description]
@@ -23,6 +24,12 @@ internal static class ErrorResultExtensions
             ErrorType.Conflict => CreateProblem(
                 error,
                 StatusCodes.Status409Conflict),
+            ErrorType.Unauthorized => CreateProblem(
+                error,
+                StatusCodes.Status401Unauthorized),
+            ErrorType.Forbidden => CreateProblem(
+                error,
+                StatusCodes.Status403Forbidden),
             _ => CreateProblem(
                 error,
                 StatusCodes.Status500InternalServerError)
@@ -32,7 +39,7 @@ internal static class ErrorResultExtensions
     private static IResult CreateProblem(
         ErrorDetail error,
         int statusCode) =>
-        Results.Problem(
+        global::Microsoft.AspNetCore.Http.Results.Problem(
             statusCode: statusCode,
             title: error.Code,
             detail: error.Description);

@@ -1,3 +1,6 @@
+using System.Diagnostics;
+
+using RestaurantMenu.Api.Infrastructure;
 using RestaurantMenu.Api.Integrations.Catalog;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Infrastructure;
@@ -19,6 +22,13 @@ var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails(
+    options =>
+        options.CustomizeProblemDetails = context =>
+            context.ProblemDetails.Extensions["traceId"] =
+                Activity.Current?.Id ??
+                context.HttpContext.TraceIdentifier);
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddRestaurantsInfrastructure(restaurantsConnectionString);
 builder.Services.AddCatalogInfrastructure(catalogConnectionString);
 builder.Services.AddScoped<
@@ -26,6 +36,8 @@ builder.Services.AddScoped<
     RestaurantExistenceChecker>();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

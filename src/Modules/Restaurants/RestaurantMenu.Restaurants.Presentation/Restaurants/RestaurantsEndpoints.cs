@@ -9,7 +9,7 @@ using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
-using RestaurantMenu.Restaurants.Presentation.Infrastructure;
+using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Restaurants.Presentation.Restaurants;

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.SharedKernel\RestaurantMenu.SharedKernel.csproj" />
     <ProjectReference Include="..\RestaurantMenu.Catalog.Application\RestaurantMenu.Catalog.Application.csproj" />
     <ProjectReference Include="..\RestaurantMenu.Catalog.Domain\RestaurantMenu.Catalog.Domain.csproj" />

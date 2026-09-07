@@ -10,7 +10,7 @@ using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Domain.Items;
-using RestaurantMenu.Catalog.Presentation.Infrastructure;
+using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Presentation.Items;

@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/RestaurantMenu.Application.Abstractions/RestaurantMenu.Application.Abstractions.csproj" />
+    <Project Path="src/BuildingBlocks/RestaurantMenu.Presentation.Abstractions/RestaurantMenu.Presentation.Abstractions.csproj" />
     <Project Path="src/BuildingBlocks/RestaurantMenu.SharedKernel/RestaurantMenu.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />

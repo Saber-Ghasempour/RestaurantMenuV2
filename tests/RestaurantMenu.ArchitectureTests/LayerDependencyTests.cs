@@ -23,6 +23,8 @@ using InfrastructureAssemblyReference =
     RestaurantMenu.Restaurants.Infrastructure.AssemblyReference;
 using PresentationAssemblyReference =
     RestaurantMenu.Restaurants.Presentation.AssemblyReference;
+using PresentationAbstractionsAssemblyReference =
+    RestaurantMenu.Presentation.Abstractions.AssemblyReference;
 using ReflectionAssembly = System.Reflection.Assembly;
 using SharedKernelAssemblyReference =
     RestaurantMenu.SharedKernel.AssemblyReference;
@@ -64,12 +66,16 @@ public sealed class LayerDependencyTests
     private static readonly ReflectionAssembly ApplicationAbstractionsAssembly =
         typeof(ApplicationAbstractionsAssemblyReference).Assembly;
 
+    private static readonly ReflectionAssembly PresentationAbstractionsAssembly =
+        typeof(PresentationAbstractionsAssemblyReference).Assembly;
+
     private static readonly Architecture ArchitectureModel =
         new ArchLoader()
             .LoadAssemblies(
                 ApiAssembly,
                 SharedKernelAssembly,
                 ApplicationAbstractionsAssembly,
+                PresentationAbstractionsAssembly,
                 CatalogDomainAssembly,
                 CatalogApplicationAssembly,
                 CatalogInfrastructureAssembly,
@@ -337,6 +343,38 @@ public sealed class LayerDependencyTests
 
         AssertDoesNotDependOn(
             ApplicationAbstractionsAssembly,
+            CatalogPresentationAssembly);
+    }
+
+    [Fact]
+    public void PresentationAbstractionsShouldNotDependOnModulesOrApi()
+    {
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            ApiAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            DomainAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            ApplicationAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            InfrastructureAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            PresentationAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            CatalogDomainAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            CatalogApplicationAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
+            CatalogInfrastructureAssembly);
+        AssertDoesNotDependOn(
+            PresentationAbstractionsAssembly,
             CatalogPresentationAssembly);
     }
 

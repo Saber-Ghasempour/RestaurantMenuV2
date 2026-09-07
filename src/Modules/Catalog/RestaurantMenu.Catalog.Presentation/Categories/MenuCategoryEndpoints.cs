@@ -9,7 +9,7 @@ using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Domain.Categories;
-using RestaurantMenu.Catalog.Presentation.Infrastructure;
+using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Presentation.Categories;
