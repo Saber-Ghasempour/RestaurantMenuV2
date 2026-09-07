@@ -13,6 +13,7 @@ using RestaurantMenu.Catalog.Infrastructure;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Presentation.Categories;
 using RestaurantMenu.Catalog.Presentation.Items;
+using RestaurantMenu.Catalog.Presentation.PublicMenus;
 using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
@@ -78,6 +79,9 @@ builder.Services.AddCatalogInfrastructure(catalogConnectionString);
 builder.Services.AddScoped<
     IRestaurantExistenceChecker,
     RestaurantExistenceChecker>();
+builder.Services.AddScoped<
+    IRestaurantPublicProfileProvider,
+    RestaurantPublicProfileProvider>();
 builder.Services
     .AddHealthChecks()
     .AddCheck(
@@ -123,6 +127,7 @@ app.MapControllers();
 app.MapRestaurantsEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
+app.MapPublicMenuEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

@@ -265,6 +265,45 @@ public sealed class TestWebApplicationFactory
         return result.Value;
     }
 
+    public async Task SetMenuItemAvailabilityAsync(
+        MenuItemId menuItemId,
+        bool isAvailable)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var menuItem = await dbContext.MenuItems.SingleAsync(
+            item => item.Id == menuItemId);
+
+        menuItem.ChangeAvailability(isAvailable);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteMenuItemAsync(MenuItemId menuItemId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var menuItem = await dbContext.MenuItems.SingleAsync(
+            item => item.Id == menuItemId);
+
+        menuItem.Delete(DateTimeOffset.UtcNow);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteMenuCategoryAsync(
+        MenuCategoryId categoryId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var category = await dbContext.MenuCategories.SingleAsync(
+            item => item.Id == categoryId);
+
+        category.Delete(DateTimeOffset.UtcNow);
+        await dbContext.SaveChangesAsync();
+    }
+
     public async Task<MenuCategory> SeedMenuCategoryAsync(
         Guid restaurantId,
         string name,
