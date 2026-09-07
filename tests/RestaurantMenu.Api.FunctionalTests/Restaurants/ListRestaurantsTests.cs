@@ -40,6 +40,11 @@ public sealed class ListRestaurantsTests
                 "Newest Restaurant",
                 CreatedAtUtc);
 
+        await _factory.SeedRestaurantAsync(
+            "Another Tenant Restaurant",
+            CreatedAtUtc.AddHours(1),
+            "another-tenant-user");
+
         using var client = _factory.CreateClient();
 
         using var response =

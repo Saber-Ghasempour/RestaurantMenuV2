@@ -84,7 +84,7 @@ public sealed class UpdateRestaurantTests
     }
 
     [Fact]
-    public async Task UpdateRestaurantShouldReturnNotFoundForUnknownId()
+    public async Task UpdateRestaurantShouldReturnForbiddenWithoutMembership()
     {
         await _factory.MigrateDatabaseAsync();
         using var client = _factory.CreateClient();
@@ -93,7 +93,7 @@ public sealed class UpdateRestaurantTests
             $"/api/restaurants/{Guid.CreateVersion7()}",
             new UpdateRestaurantRequest("Updated Restaurant", 1));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

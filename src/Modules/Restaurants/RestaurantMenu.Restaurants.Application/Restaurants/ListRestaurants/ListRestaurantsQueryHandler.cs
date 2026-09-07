@@ -40,6 +40,7 @@ public sealed class ListRestaurantsQueryHandler
 
         var page =
             await _readService.GetPageAsync(
+                query.Subject,
                 query.Page,
                 query.PageSize,
                 cancellationToken);

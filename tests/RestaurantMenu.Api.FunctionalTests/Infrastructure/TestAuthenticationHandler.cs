@@ -25,6 +25,10 @@ public sealed class TestAuthenticationHandler(
 
     public const string PermissionsHeader = "X-Test-Permissions";
 
+    public const string SubjectHeader = "X-Test-Subject";
+
+    public const string DefaultSubject = "test-user";
+
     public const string AnonymousIdentity = "anonymous";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -41,10 +45,18 @@ public sealed class TestAuthenticationHandler(
                 AuthenticateResult.NoResult());
         }
 
+        var subject =
+            Request.Headers.TryGetValue(
+                SubjectHeader,
+                out var subjectValues)
+                ? subjectValues.ToString()
+                : DefaultSubject;
+
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, "test-user"),
-            new("preferred_username", "test-user")
+            new("sub", subject),
+            new(ClaimTypes.NameIdentifier, subject),
+            new("preferred_username", subject)
         };
 
         var permissions = GetPermissions();

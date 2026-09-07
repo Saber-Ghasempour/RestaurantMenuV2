@@ -60,6 +60,17 @@ public sealed class CreateRestaurantTests
         Assert.Equal(
             "Functional Test Restaurant",
             persistedRestaurant.Name);
+
+        var persistedMembership =
+            await _factory.FindRestaurantMembershipAsync(
+                content.Id,
+                TestAuthenticationHandler.DefaultSubject);
+
+        Assert.NotNull(persistedMembership);
+        Assert.Equal(
+            RestaurantMenu.Restaurants.Domain.Memberships
+                .RestaurantMembershipRole.Owner,
+            persistedMembership.Role);
     }
 
     [Theory]

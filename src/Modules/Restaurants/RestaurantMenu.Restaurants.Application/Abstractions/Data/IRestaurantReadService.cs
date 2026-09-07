@@ -11,6 +11,7 @@ public interface IRestaurantReadService
         CancellationToken cancellationToken);
 
     Task<RestaurantsPage> GetPageAsync(
+        string subject,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

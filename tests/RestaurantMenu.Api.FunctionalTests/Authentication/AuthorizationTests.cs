@@ -93,7 +93,7 @@ public sealed class AuthorizationTests
     }
 
     [Fact]
-    public async Task ReadPermissionShouldAuthorizeRestaurantRead()
+    public async Task PermissionWithoutMembershipShouldReturnForbidden()
     {
         await _factory.MigrateDatabaseAsync();
 
@@ -105,8 +105,62 @@ public sealed class AuthorizationTests
             $"/api/restaurants/{Guid.NewGuid()}");
 
         Assert.Equal(
-            HttpStatusCode.NotFound,
+            HttpStatusCode.Forbidden,
             response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PermissionAndMembershipShouldAuthorizeRestaurantRead()
+    {
+        await _factory.MigrateDatabaseAsync();
+
+        var restaurant = await _factory.SeedRestaurantAsync(
+            "Authorized Restaurant",
+            new DateTimeOffset(
+                2026,
+                9,
+                7,
+                20,
+                0,
+                0,
+                TimeSpan.Zero));
+
+        using var client = CreateClient(
+            "authenticated",
+            Permissions.RestaurantsRead);
+
+        using var response = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task MembershipForAnotherSubjectShouldReturnForbidden()
+    {
+        await _factory.MigrateDatabaseAsync();
+
+        var restaurant = await _factory.SeedRestaurantAsync(
+            "Tenant A Restaurant",
+            new DateTimeOffset(
+                2026,
+                9,
+                7,
+                20,
+                30,
+                0,
+                TimeSpan.Zero),
+            "tenant-a-user");
+
+        using var client = CreateClient(
+            "authenticated",
+            Permissions.RestaurantsRead,
+            "tenant-b-user");
+
+        using var response = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
@@ -139,7 +193,8 @@ public sealed class AuthorizationTests
 
     private HttpClient CreateClient(
         string identity,
-        string? permissions = null)
+        string? permissions = null,
+        string? subject = null)
     {
         var client = _factory.CreateClient();
 
@@ -152,6 +207,13 @@ public sealed class AuthorizationTests
             client.DefaultRequestHeaders.Add(
                 TestAuthenticationHandler.PermissionsHeader,
                 permissions);
+        }
+
+        if (subject is not null)
+        {
+            client.DefaultRequestHeaders.Add(
+                TestAuthenticationHandler.SubjectHeader,
+                subject);
         }
 
         return client;

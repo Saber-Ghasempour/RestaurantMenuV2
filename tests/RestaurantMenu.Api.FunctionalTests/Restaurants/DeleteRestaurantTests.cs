@@ -58,7 +58,7 @@ public sealed class DeleteRestaurantTests
     }
 
     [Fact]
-    public async Task DeleteRestaurantShouldReturnNotFoundForUnknownId()
+    public async Task DeleteRestaurantShouldReturnForbiddenWithoutMembership()
     {
         await _factory.MigrateDatabaseAsync();
         using var client = _factory.CreateClient();
@@ -66,7 +66,7 @@ public sealed class DeleteRestaurantTests
         using var response = await client.DeleteAsync(
             $"/api/restaurants/{Guid.CreateVersion7()}?expectedVersion=1");
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]

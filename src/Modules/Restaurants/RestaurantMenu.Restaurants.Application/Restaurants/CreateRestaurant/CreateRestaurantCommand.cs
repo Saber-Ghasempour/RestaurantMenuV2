@@ -5,4 +5,5 @@ using RestaurantMenu.SharedKernel.Results;
 namespace RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
 
 public sealed record CreateRestaurantCommand(
-    string? Name) : ICommand<Result<RestaurantId>>;
+    string? Name,
+    string OwnerSubject) : ICommand<Result<RestaurantId>>;

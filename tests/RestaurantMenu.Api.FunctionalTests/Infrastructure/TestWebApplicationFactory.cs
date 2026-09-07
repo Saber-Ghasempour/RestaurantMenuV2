@@ -10,6 +10,7 @@ using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Application.Abstractions.Caching;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
+using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
@@ -382,6 +383,26 @@ public sealed class TestWebApplicationFactory
         return await dbContext.Restaurants.CountAsync();
     }
 
+    public async Task<RestaurantMembership?> FindRestaurantMembershipAsync(
+        Guid restaurantId,
+        string subject)
+    {
+        await using var scope =
+            Services.CreateAsyncScope();
+
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<
+                RestaurantsDbContext>();
+        var id = new RestaurantId(restaurantId);
+
+        return await dbContext.RestaurantMemberships
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                membership =>
+                    membership.RestaurantId == id &&
+                    membership.Subject == subject);
+    }
+
     public async Task<RestaurantResponse?> GetCachedRestaurantAsync(
         RestaurantId restaurantId)
     {
@@ -396,7 +417,8 @@ public sealed class TestWebApplicationFactory
 
     public async Task<Restaurant> SeedRestaurantAsync(
         string name,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset createdAtUtc,
+        string ownerSubject = TestAuthenticationHandler.DefaultSubject)
     {
         await using var scope =
             Services.CreateAsyncScope();
@@ -417,6 +439,21 @@ public sealed class TestWebApplicationFactory
         }
 
         dbContext.Restaurants.Add(result.Value);
+
+        var membershipResult = RestaurantMembership.Create(
+            result.Value.Id,
+            ownerSubject,
+            RestaurantMembershipRole.Owner,
+            createdAtUtc);
+
+        if (membershipResult.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"Could not seed membership: {membershipResult.Error.Code}");
+        }
+
+        dbContext.RestaurantMemberships.Add(
+            membershipResult.Value);
 
         await dbContext.SaveChangesAsync();
 

@@ -60,7 +60,7 @@ public sealed class CreateMenuItemTests
     }
 
     [Fact]
-    public async Task CreateMenuItemShouldReturnNotFoundForUnknownRestaurant()
+    public async Task CreateMenuItemShouldReturnForbiddenWithoutMembership()
     {
         await MigrateDatabasesAsync();
         var restaurantId = Guid.CreateVersion7();
@@ -70,11 +70,11 @@ public sealed class CreateMenuItemTests
             $"/api/restaurants/{restaurantId}/categories/{Guid.CreateVersion7()}/items",
             ValidRequest());
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var problem =
             await response.Content.ReadFromJsonAsync<ProblemResponse>();
         Assert.NotNull(problem);
-        Assert.Equal("Catalog.RestaurantNotFound", problem.Title);
+        Assert.Equal("Forbidden", problem.Title);
     }
 
     [Fact]

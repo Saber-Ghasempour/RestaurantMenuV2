@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.IdentityModel.Tokens;
 
 using RestaurantMenu.Presentation.Abstractions.Authorization;
+using RestaurantMenu.Application.Abstractions.Security;
 
 namespace RestaurantMenu.Api.Authentication;
 
@@ -68,10 +69,26 @@ public static class AuthenticationExtensions
                 policy =>
                     policy
                         .RequireAuthenticatedUser()
+                        .RequireClaim("sub")
                         .RequireClaim(
                             PermissionClaimTypes.Permission,
                             permission));
         }
+
+        authorizationBuilder.AddPolicy(
+            RestaurantAccessPolicy.Name,
+            policy =>
+                policy
+                    .RequireAuthenticatedUser()
+                    .RequireClaim("sub")
+                    .AddRequirements(
+                        new RestaurantAccessRequirement()));
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+        services.AddScoped<
+            IAuthorizationHandler,
+            RestaurantAccessAuthorizationHandler>();
 
         services.AddSingleton<
             IAuthorizationMiddlewareResultHandler,

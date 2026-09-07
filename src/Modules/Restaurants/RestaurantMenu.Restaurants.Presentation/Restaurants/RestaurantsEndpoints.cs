@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Application.Abstractions.Security;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
@@ -44,7 +45,7 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status200OK)
             .ProducesProblem(
                 StatusCodes.Status404NotFound)
-            .RequirePermission(Permissions.RestaurantsRead);
+            .RequireRestaurantAccess(Permissions.RestaurantsRead);
 
         group.MapGet(
                 "/",
@@ -68,7 +69,7 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
                 StatusCodes.Status409Conflict)
-            .RequirePermission(Permissions.RestaurantsWrite);
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
         group.MapDelete(
                 "/{restaurantId:guid}",
@@ -82,13 +83,14 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
                 StatusCodes.Status409Conflict)
-            .RequirePermission(Permissions.RestaurantsWrite);
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
         return endpoints;
     }
 
     private static async Task<IResult> CreateRestaurantAsync(
         CreateRestaurantRequest request,
+        ICurrentUser currentUser,
         ICommandHandler<
             CreateRestaurantCommand,
             Result<RestaurantId>> handler,
@@ -98,7 +100,9 @@ public static class RestaurantsEndpoints
         ArgumentNullException.ThrowIfNull(handler);
 
         var command =
-            new CreateRestaurantCommand(request.Name);
+            new CreateRestaurantCommand(
+                request.Name,
+                currentUser.Subject);
 
         var result =
             await handler.Handle(
@@ -153,6 +157,7 @@ public static class RestaurantsEndpoints
     }
 
     private static async Task<IResult> ListRestaurantsAsync(
+        ICurrentUser currentUser,
         IQueryHandler<
             ListRestaurantsQuery,
             Result<RestaurantsPage>> handler,
@@ -164,6 +169,7 @@ public static class RestaurantsEndpoints
 
         var query =
             new ListRestaurantsQuery(
+                currentUser.Subject,
                 page,
                 pageSize);
 

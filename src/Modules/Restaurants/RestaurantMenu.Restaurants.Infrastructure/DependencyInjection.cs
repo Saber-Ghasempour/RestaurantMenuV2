@@ -9,6 +9,7 @@ using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Infrastructure.Caching;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Restaurants;
+using RestaurantMenu.Restaurants.Infrastructure.Memberships;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
@@ -64,6 +65,16 @@ public static class DependencyInjection
         services.AddScoped<
             IRestaurantReadService,
             RestaurantReadService>();
+
+        services.AddScoped<RestaurantMembershipRepository>();
+        services.AddScoped<IRestaurantMembershipRepository>(
+            serviceProvider =>
+                serviceProvider.GetRequiredService<
+                    RestaurantMembershipRepository>());
+        services.AddScoped<IRestaurantMembershipReadService>(
+            serviceProvider =>
+                serviceProvider.GetRequiredService<
+                    RestaurantMembershipRepository>());
 
         var redisConfiguration =
             ConfigurationOptions.Parse(redisConnectionString);

@@ -17,4 +17,19 @@ public static class AuthorizationEndpointConventionBuilderExtensions
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
     }
+
+    public static RouteHandlerBuilder RequireRestaurantAccess(
+        this RouteHandlerBuilder builder,
+        string permission)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentException.ThrowIfNullOrWhiteSpace(permission);
+
+        return builder
+            .RequireAuthorization(
+                permission,
+                RestaurantAccessPolicy.Name)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+    }
 }

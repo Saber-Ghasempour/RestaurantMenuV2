@@ -1,12 +1,15 @@
 ﻿using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
+using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
 namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.CreateRestaurant;
 
 public sealed class CreateRestaurantCommandHandlerTests
 {
+    private const string OwnerSubject = "keycloak-owner-123";
+
     private static readonly DateTimeOffset UtcNow =
         new(2026, 9, 6, 14, 0, 0, TimeSpan.Zero);
 
@@ -14,16 +17,19 @@ public sealed class CreateRestaurantCommandHandlerTests
     public async Task HandleShouldCreateRestaurantAndPersistChanges()
     {
         var repository = new RestaurantRepositorySpy();
+        var membershipRepository = new RestaurantMembershipRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var timeProvider = new StubTimeProvider(UtcNow);
 
         var handler = new CreateRestaurantCommandHandler(
             repository,
+            membershipRepository,
             unitOfWork,
             timeProvider);
 
         var command = new CreateRestaurantCommand(
-            " Coffee Menu ");
+            " Coffee Menu ",
+            OwnerSubject);
 
         var result = await handler.Handle(
             command,
@@ -38,6 +44,17 @@ public sealed class CreateRestaurantCommandHandlerTests
         Assert.Equal(UtcNow, repository.AddedRestaurant.CreatedAtUtc);
 
         Assert.Equal(1, repository.AddCallCount);
+        Assert.NotNull(membershipRepository.AddedMembership);
+        Assert.Equal(
+            result.Value,
+            membershipRepository.AddedMembership.RestaurantId);
+        Assert.Equal(
+            OwnerSubject,
+            membershipRepository.AddedMembership.Subject);
+        Assert.Equal(
+            RestaurantMembershipRole.Owner,
+            membershipRepository.AddedMembership.Role);
+        Assert.Equal(1, membershipRepository.AddCallCount);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
 
@@ -49,15 +66,19 @@ public sealed class CreateRestaurantCommandHandlerTests
     string? name)
     {
         var repository = new RestaurantRepositorySpy();
+        var membershipRepository = new RestaurantMembershipRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var timeProvider = new StubTimeProvider(UtcNow);
 
         var handler = new CreateRestaurantCommandHandler(
             repository,
+            membershipRepository,
             unitOfWork,
             timeProvider);
 
-        var command = new CreateRestaurantCommand(name);
+        var command = new CreateRestaurantCommand(
+            name,
+            OwnerSubject);
 
         var result = await handler.Handle(
             command,
@@ -67,7 +88,9 @@ public sealed class CreateRestaurantCommandHandlerTests
         Assert.Equal(RestaurantErrors.NameRequired, result.Error);
 
         Assert.Null(repository.AddedRestaurant);
+        Assert.Null(membershipRepository.AddedMembership);
         Assert.Equal(0, repository.AddCallCount);
+        Assert.Equal(0, membershipRepository.AddCallCount);
         Assert.Equal(0, unitOfWork.SaveChangesCallCount);
     }
 
@@ -89,6 +112,20 @@ public sealed class CreateRestaurantCommandHandlerTests
             CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
+        }
+    }
+
+    private sealed class RestaurantMembershipRepositorySpy :
+        IRestaurantMembershipRepository
+    {
+        public RestaurantMembership? AddedMembership { get; private set; }
+
+        public int AddCallCount { get; private set; }
+
+        public void Add(RestaurantMembership membership)
+        {
+            AddedMembership = membership;
+            AddCallCount++;
         }
     }
 

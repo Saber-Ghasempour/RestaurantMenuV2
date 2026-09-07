@@ -7,6 +7,8 @@ namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.ListResta
 
 public sealed class ListRestaurantsQueryHandlerTests
 {
+    private const string Subject = "keycloak-user-123";
+
     private static readonly RestaurantsPage Page =
         new(
             [
@@ -38,11 +40,12 @@ public sealed class ListRestaurantsQueryHandlerTests
 
         var result =
             await handler.Handle(
-                new ListRestaurantsQuery(2, 10),
+                new ListRestaurantsQuery(Subject, 2, 10),
                 CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Same(Page, result.Value);
+        Assert.Equal(Subject, readService.RequestedSubject);
         Assert.Equal(2, readService.RequestedPage);
         Assert.Equal(10, readService.RequestedPageSize);
     }
@@ -61,7 +64,7 @@ public sealed class ListRestaurantsQueryHandlerTests
 
         var result =
             await handler.Handle(
-                new ListRestaurantsQuery(page, 10),
+                new ListRestaurantsQuery(Subject, page, 10),
                 CancellationToken.None);
 
         Assert.True(result.IsFailure);
@@ -86,7 +89,7 @@ public sealed class ListRestaurantsQueryHandlerTests
 
         var result =
             await handler.Handle(
-                new ListRestaurantsQuery(1, pageSize),
+                new ListRestaurantsQuery(Subject, 1, pageSize),
                 CancellationToken.None);
 
         Assert.True(result.IsFailure);
@@ -104,6 +107,8 @@ public sealed class ListRestaurantsQueryHandlerTests
 
         public int? RequestedPageSize { get; private set; }
 
+        public string? RequestedSubject { get; private set; }
+
         public Task<RestaurantResponse?> GetByIdAsync(
             RestaurantId restaurantId,
             CancellationToken cancellationToken)
@@ -112,10 +117,12 @@ public sealed class ListRestaurantsQueryHandlerTests
         }
 
         public Task<RestaurantsPage> GetPageAsync(
+            string subject,
             int page,
             int pageSize,
             CancellationToken cancellationToken)
         {
+            RequestedSubject = subject;
             RequestedPage = page;
             RequestedPageSize = pageSize;
 

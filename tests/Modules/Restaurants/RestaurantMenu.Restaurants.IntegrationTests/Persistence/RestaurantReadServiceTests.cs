@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Restaurants;
@@ -11,6 +12,8 @@ namespace RestaurantMenu.Restaurants.IntegrationTests.Persistence;
 public sealed class RestaurantReadServiceTests
     : IAsyncLifetime
 {
+    private const string Subject = "keycloak-user-123";
+
     private static readonly DateTimeOffset CreatedAtUtc =
         new(2026, 9, 6, 17, 0, 0, TimeSpan.Zero);
 
@@ -120,6 +123,11 @@ public sealed class RestaurantReadServiceTests
                 middle,
                 newest);
 
+            arrangeContext.RestaurantMemberships.AddRange(
+                CreateMembership(oldest),
+                CreateMembership(middle),
+                CreateMembership(newest));
+
             await arrangeContext.SaveChangesAsync();
         }
 
@@ -131,6 +139,7 @@ public sealed class RestaurantReadServiceTests
 
         var response =
             await readService.GetPageAsync(
+                Subject,
                 2,
                 2,
                 CancellationToken.None);
@@ -147,6 +156,20 @@ public sealed class RestaurantReadServiceTests
         Assert.Equal(
             oldest.CreatedAtUtc,
             restaurant.CreatedAtUtc);
+    }
+
+    private static RestaurantMembership CreateMembership(
+        Restaurant restaurant)
+    {
+        var result = RestaurantMembership.Create(
+            restaurant.Id,
+            Subject,
+            RestaurantMembershipRole.Owner,
+            restaurant.CreatedAtUtc);
+
+        Assert.True(result.IsSuccess);
+
+        return result.Value;
     }
 
     private static Restaurant CreateRestaurant(

@@ -3,6 +3,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using RestaurantMenu.Application.Abstractions.Data;
+using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
 namespace RestaurantMenu.Restaurants.Infrastructure.Database;
@@ -21,6 +22,9 @@ public sealed class RestaurantsDbContext
 
     public DbSet<Restaurant> Restaurants =>
         Set<Restaurant>();
+
+    public DbSet<RestaurantMembership> RestaurantMemberships =>
+        Set<RestaurantMembership>();
 
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)

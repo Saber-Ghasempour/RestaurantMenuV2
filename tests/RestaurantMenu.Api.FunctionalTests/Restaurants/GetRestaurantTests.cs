@@ -53,7 +53,7 @@ public sealed class GetRestaurantTests
     }
 
     [Fact]
-    public async Task GetRestaurantShouldReturnNotFoundWhenRestaurantDoesNotExist()
+    public async Task GetRestaurantShouldReturnForbiddenWithoutMembership()
     {
         await _factory.MigrateDatabaseAsync();
 
@@ -66,7 +66,7 @@ public sealed class GetRestaurantTests
                 $"/api/restaurants/{restaurantId}");
 
         Assert.Equal(
-            HttpStatusCode.NotFound,
+            HttpStatusCode.Forbidden,
             response.StatusCode);
 
         var problem =
@@ -74,14 +74,10 @@ public sealed class GetRestaurantTests
                 .ReadFromJsonAsync<ProblemResponse>();
 
         Assert.NotNull(problem);
-        Assert.Equal(404, problem.Status);
+        Assert.Equal(403, problem.Status);
         Assert.Equal(
-            "Restaurants.NotFound",
+            "Forbidden",
             problem.Title);
-
-        Assert.Contains(
-            restaurantId.ToString(),
-            problem.Detail);
     }
 
     private sealed record GetRestaurantResponse(

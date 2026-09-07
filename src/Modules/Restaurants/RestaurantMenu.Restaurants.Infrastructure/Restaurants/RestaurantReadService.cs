@@ -55,13 +55,20 @@ public sealed class RestaurantReadService
     }
 
     public async Task<RestaurantsPage> GetPageAsync(
+        string subject,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(subject);
+
         var query =
-            _dbContext.Restaurants
-                .AsNoTracking();
+            from restaurant in _dbContext.Restaurants.AsNoTracking()
+            join membership in
+                _dbContext.RestaurantMemberships.AsNoTracking()
+                on restaurant.Id equals membership.RestaurantId
+            where membership.Subject == subject
+            select restaurant;
 
         var totalCount =
             await query.CountAsync(cancellationToken);

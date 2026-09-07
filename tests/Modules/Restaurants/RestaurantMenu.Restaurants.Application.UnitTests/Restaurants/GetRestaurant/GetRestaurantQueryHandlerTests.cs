@@ -135,6 +135,7 @@ public sealed class GetRestaurantQueryHandlerTests
         }
 
         public Task<RestaurantsPage> GetPageAsync(
+            string subject,
             int page,
             int pageSize,
             CancellationToken cancellationToken)
