@@ -6,4 +6,5 @@
 .env
 artifacts/
 TestResults/
+CoverageReport/
 docs/TECHNICAL_GUIDE.md
