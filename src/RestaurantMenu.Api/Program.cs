@@ -34,6 +34,18 @@ var restaurantsConnectionString = builder.Configuration.GetConnectionString("Res
 var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog")
     ?? throw new InvalidOperationException(
         "Connection string 'Catalog' is not configured.");
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException(
+        "Connection string 'Redis' is not configured.");
+var restaurantCacheTimeToLive = builder.Configuration.GetValue(
+    "Caching:Restaurants:TimeToLive",
+    TimeSpan.FromMinutes(5));
+var redisConnectTimeoutMilliseconds = builder.Configuration.GetValue(
+    "Caching:Redis:ConnectTimeoutMilliseconds",
+    1000);
+var redisOperationTimeoutMilliseconds = builder.Configuration.GetValue(
+    "Caching:Redis:OperationTimeoutMilliseconds",
+    1000);
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -52,7 +64,12 @@ builder.Services.AddProblemDetails(
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddRestaurantMenuObservability(
     builder.Configuration);
-builder.Services.AddRestaurantsInfrastructure(restaurantsConnectionString);
+builder.Services.AddRestaurantsInfrastructure(
+    restaurantsConnectionString,
+    redisConnectionString,
+    restaurantCacheTimeToLive,
+    redisConnectTimeoutMilliseconds,
+    redisOperationTimeoutMilliseconds);
 builder.Services.AddCatalogInfrastructure(catalogConnectionString);
 builder.Services.AddScoped<
     IRestaurantExistenceChecker,
@@ -68,6 +85,9 @@ builder.Services
         tags: ["ready"])
     .AddDbContextCheck<CatalogDbContext>(
         "catalog-database",
+        tags: ["ready"])
+    .AddCheck<RedisHealthCheck>(
+        "redis",
         tags: ["ready"]);
 
 var app = builder.Build();

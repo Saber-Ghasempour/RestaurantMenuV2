@@ -25,6 +25,7 @@ RUN dotnet publish "src/RestaurantMenu.Api/RestaurantMenu.Api.csproj" \
     /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
+RUN apk add --no-cache krb5-libs
 WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/publish .

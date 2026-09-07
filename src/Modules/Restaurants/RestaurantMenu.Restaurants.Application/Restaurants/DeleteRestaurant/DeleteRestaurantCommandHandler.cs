@@ -1,5 +1,6 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Abstractions.Caching;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.SharedKernel.Results;
@@ -14,18 +15,22 @@ public sealed class DeleteRestaurantCommandHandler
     private readonly IRestaurantRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
+    private readonly IRestaurantCache _cache;
 
     public DeleteRestaurantCommandHandler(
         IRestaurantRepository repository,
         IUnitOfWork unitOfWork,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IRestaurantCache cache)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(cache);
         _repository = repository;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
+        _cache = cache;
     }
 
     public async Task<Result<RestaurantId>> Handle(
@@ -61,6 +66,10 @@ public sealed class DeleteRestaurantCommandHandler
             return Result.Failure<RestaurantId>(
                 RestaurantErrors.VersionConflict(restaurant.Id));
         }
+
+        await _cache.RemoveAsync(
+            restaurant.Id,
+            cancellationToken);
 
         return Result.Success(restaurant.Id);
     }

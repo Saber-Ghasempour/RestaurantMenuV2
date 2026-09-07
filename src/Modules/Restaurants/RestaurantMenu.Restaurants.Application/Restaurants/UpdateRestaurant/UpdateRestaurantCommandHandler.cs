@@ -1,5 +1,6 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Abstractions.Caching;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.SharedKernel.Results;
@@ -13,16 +14,20 @@ public sealed class UpdateRestaurantCommandHandler
 {
     private readonly IRestaurantRepository _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IRestaurantCache _cache;
 
     public UpdateRestaurantCommandHandler(
         IRestaurantRepository repository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IRestaurantCache cache)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
+        ArgumentNullException.ThrowIfNull(cache);
 
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _cache = cache;
     }
 
     public async Task<Result<long>> Handle(
@@ -69,6 +74,10 @@ public sealed class UpdateRestaurantCommandHandler
                 RestaurantErrors.VersionConflict(
                     restaurant.Id));
         }
+
+        await _cache.RemoveAsync(
+            restaurant.Id,
+            cancellationToken);
 
         return Result.Success(restaurant.Version);
     }

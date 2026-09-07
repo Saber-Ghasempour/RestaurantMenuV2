@@ -26,10 +26,24 @@ public sealed class DeleteRestaurantTests
             DateTimeOffset.UtcNow);
         using var client = _factory.CreateClient();
 
+        using var warmResponse = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+        Assert.Equal(HttpStatusCode.OK, warmResponse.StatusCode);
+        Assert.NotNull(
+            await _factory.GetCachedRestaurantAsync(restaurant.Id));
+
         using var response = await client.DeleteAsync(
             $"/api/restaurants/{restaurant.Id.Value}?expectedVersion=1");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Null(
+            await _factory.GetCachedRestaurantAsync(restaurant.Id));
+
+        using var getAfterDeleteResponse = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            getAfterDeleteResponse.StatusCode);
         Assert.Null(
             await _factory.FindRestaurantAsync(
                 restaurant.Id.Value));

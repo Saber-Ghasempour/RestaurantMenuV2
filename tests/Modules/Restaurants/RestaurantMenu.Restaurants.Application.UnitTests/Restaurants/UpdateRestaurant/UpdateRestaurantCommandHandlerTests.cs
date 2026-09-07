@@ -2,6 +2,7 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.Restaurants.Application.UnitTests.TestDoubles;
 
 namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.UpdateRestaurant;
 
@@ -16,9 +17,11 @@ public sealed class UpdateRestaurantCommandHandlerTests
         var restaurant = CreateRestaurant();
         var repository = new RestaurantRepositoryStub(restaurant);
         var unitOfWork = new UnitOfWorkStub();
+        var cache = new RestaurantCacheStub();
         var handler = new UpdateRestaurantCommandHandler(
             repository,
-            unitOfWork);
+            unitOfWork,
+            cache);
 
         var result = await handler.Handle(
             new UpdateRestaurantCommand(
@@ -32,6 +35,8 @@ public sealed class UpdateRestaurantCommandHandlerTests
         Assert.Equal("Updated Restaurant", restaurant.Name);
         Assert.Equal(2, restaurant.Version);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, cache.RemoveCallCount);
+        Assert.Equal(restaurant.Id, cache.RemovedRestaurantId);
     }
 
     [Fact]
@@ -42,7 +47,8 @@ public sealed class UpdateRestaurantCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateRestaurantCommandHandler(
             repository,
-            unitOfWork);
+            unitOfWork,
+            new RestaurantCacheStub());
 
         var result = await handler.Handle(
             new UpdateRestaurantCommand(
@@ -66,7 +72,8 @@ public sealed class UpdateRestaurantCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateRestaurantCommandHandler(
             repository,
-            unitOfWork);
+            unitOfWork,
+            new RestaurantCacheStub());
 
         var result = await handler.Handle(
             new UpdateRestaurantCommand(
@@ -92,7 +99,8 @@ public sealed class UpdateRestaurantCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateRestaurantCommandHandler(
             repository,
-            unitOfWork);
+            unitOfWork,
+            new RestaurantCacheStub());
 
         var result = await handler.Handle(
             new UpdateRestaurantCommand(
@@ -115,9 +123,11 @@ public sealed class UpdateRestaurantCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub(
             new ConcurrencyException(
                 "The restaurant was concurrently updated."));
+        var cache = new RestaurantCacheStub();
         var handler = new UpdateRestaurantCommandHandler(
             repository,
-            unitOfWork);
+            unitOfWork,
+            cache);
 
         var result = await handler.Handle(
             new UpdateRestaurantCommand(
@@ -131,6 +141,7 @@ public sealed class UpdateRestaurantCommandHandlerTests
             RestaurantErrors.VersionConflict(restaurant.Id),
             result.Error);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(0, cache.RemoveCallCount);
     }
 
     private static Restaurant CreateRestaurant()

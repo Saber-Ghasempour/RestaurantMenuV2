@@ -6,10 +6,13 @@ using Microsoft.Extensions.Hosting;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Database;
+using RestaurantMenu.Restaurants.Application.Abstractions.Caching;
+using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
 
 namespace RestaurantMenu.Api.FunctionalTests.Infrastructure;
 
@@ -23,6 +26,9 @@ public sealed class TestWebApplicationFactory
     private const string CatalogConnectionStringVariable =
         "ConnectionStrings__Catalog";
 
+    private const string RedisConnectionStringVariable =
+        "ConnectionStrings__Redis";
+
     private static readonly object EnvironmentVariableLock =
         new();
 
@@ -30,14 +36,22 @@ public sealed class TestWebApplicationFactory
         new PostgreSqlBuilder("postgres:18.6-alpine")
             .Build();
 
+    private readonly RedisContainer _redis =
+        new RedisBuilder("redis:8.10.1-alpine")
+            .Build();
+
     async Task IAsyncLifetime.InitializeAsync()
     {
-        await _postgres.StartAsync();
+        await Task.WhenAll(
+            _postgres.StartAsync(),
+            _redis.StartAsync());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
     {
-        await _postgres.DisposeAsync();
+        await Task.WhenAll(
+            _postgres.DisposeAsync().AsTask(),
+            _redis.DisposeAsync().AsTask());
 
         Dispose();
     }
@@ -55,6 +69,9 @@ public sealed class TestWebApplicationFactory
             var previousCatalogConnectionString =
                 Environment.GetEnvironmentVariable(
                     CatalogConnectionStringVariable);
+            var previousRedisConnectionString =
+                Environment.GetEnvironmentVariable(
+                    RedisConnectionStringVariable);
             var connectionString =
                 _postgres.GetConnectionString();
 
@@ -64,6 +81,9 @@ public sealed class TestWebApplicationFactory
             Environment.SetEnvironmentVariable(
                 CatalogConnectionStringVariable,
                 connectionString);
+            Environment.SetEnvironmentVariable(
+                RedisConnectionStringVariable,
+                _redis.GetConnectionString());
 
             try
             {
@@ -77,6 +97,9 @@ public sealed class TestWebApplicationFactory
                 Environment.SetEnvironmentVariable(
                     CatalogConnectionStringVariable,
                     previousCatalogConnectionString);
+                Environment.SetEnvironmentVariable(
+                    RedisConnectionStringVariable,
+                    previousRedisConnectionString);
             }
         }
     }
@@ -297,6 +320,18 @@ public sealed class TestWebApplicationFactory
                 RestaurantsDbContext>();
 
         return await dbContext.Restaurants.CountAsync();
+    }
+
+    public async Task<RestaurantResponse?> GetCachedRestaurantAsync(
+        RestaurantId restaurantId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var cache = scope.ServiceProvider.GetRequiredService<
+            IRestaurantCache>();
+
+        return await cache.GetAsync(
+            restaurantId,
+            CancellationToken.None);
     }
 
     public async Task<Restaurant> SeedRestaurantAsync(

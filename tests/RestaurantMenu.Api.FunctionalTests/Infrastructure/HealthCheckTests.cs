@@ -54,13 +54,16 @@ public sealed class HealthCheckTests
 
         Assert.NotNull(health);
         Assert.Equal("Healthy", health.Status);
-        Assert.Equal(2, health.Checks.Count);
+        Assert.Equal(3, health.Checks.Count);
         Assert.Equal(
             "Healthy",
             health.Checks["restaurants-database"].Status);
         Assert.Equal(
             "Healthy",
             health.Checks["catalog-database"].Status);
+        Assert.Equal(
+            "Healthy",
+            health.Checks["redis"].Status);
     }
 
     private sealed record HealthResponse(

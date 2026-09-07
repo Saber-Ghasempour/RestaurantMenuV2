@@ -27,6 +27,12 @@ public sealed class UpdateRestaurantTests
                 DateTimeOffset.UtcNow);
         using var client = _factory.CreateClient();
 
+        using var warmResponse = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+        Assert.Equal(HttpStatusCode.OK, warmResponse.StatusCode);
+        Assert.NotNull(
+            await _factory.GetCachedRestaurantAsync(restaurant.Id));
+
         using var response = await client.PutAsJsonAsync(
             $"/api/restaurants/{restaurant.Id.Value}",
             new UpdateRestaurantRequest(
@@ -40,6 +46,17 @@ public sealed class UpdateRestaurantTests
         Assert.NotNull(content);
         Assert.Equal(restaurant.Id.Value, content.Id);
         Assert.Equal(2, content.Version);
+        Assert.Null(
+            await _factory.GetCachedRestaurantAsync(restaurant.Id));
+
+        using var refreshedResponse = await client.GetAsync(
+            $"/api/restaurants/{restaurant.Id.Value}");
+        Assert.Equal(HttpStatusCode.OK, refreshedResponse.StatusCode);
+        var refreshed =
+            await _factory.GetCachedRestaurantAsync(restaurant.Id);
+        Assert.NotNull(refreshed);
+        Assert.Equal("Updated Restaurant", refreshed.Name);
+        Assert.Equal(2, refreshed.Version);
 
         var updated =
             await _factory.FindRestaurantAsync(

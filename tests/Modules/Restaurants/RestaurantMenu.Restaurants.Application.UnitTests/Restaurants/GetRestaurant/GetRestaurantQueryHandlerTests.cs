@@ -2,6 +2,7 @@ using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.ListRestaurants;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.Restaurants.Application.UnitTests.TestDoubles;
 
 namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.GetRestaurant;
 
@@ -25,10 +26,12 @@ public sealed class GetRestaurantQueryHandlerTests
         var readService =
             new RestaurantReadServiceStub(
                 expectedResponse);
+        var cache = new RestaurantCacheStub();
 
         var handler =
             new GetRestaurantQueryHandler(
-                readService);
+                readService,
+                cache);
 
         var query =
             new GetRestaurantQuery(
@@ -48,6 +51,34 @@ public sealed class GetRestaurantQueryHandlerTests
         Assert.Equal(
             restaurantId,
             readService.RequestedRestaurantId.Value);
+        Assert.Equal(1, cache.SetCallCount);
+        Assert.Equal(expectedResponse, cache.CachedRestaurant);
+    }
+
+    [Fact]
+    public async Task HandleShouldReturnCachedRestaurantWithoutDatabaseQuery()
+    {
+        var restaurantId = RestaurantId.New();
+        var cachedResponse = new RestaurantResponse(
+            restaurantId.Value,
+            "Cached Restaurant",
+            CreatedAtUtc,
+            4);
+        var readService = new RestaurantReadServiceStub(null);
+        var cache = new RestaurantCacheStub(cachedResponse);
+        var handler = new GetRestaurantQueryHandler(
+            readService,
+            cache);
+
+        var result = await handler.Handle(
+            new GetRestaurantQuery(restaurantId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(cachedResponse, result.Value);
+        Assert.Equal(1, cache.GetCallCount);
+        Assert.Null(readService.RequestedRestaurantId);
+        Assert.Equal(0, cache.SetCallCount);
     }
 
     [Fact]
@@ -57,10 +88,12 @@ public sealed class GetRestaurantQueryHandlerTests
 
         var readService =
             new RestaurantReadServiceStub(null);
+        var cache = new RestaurantCacheStub();
 
         var handler =
             new GetRestaurantQueryHandler(
-                readService);
+                readService,
+                cache);
 
         var query =
             new GetRestaurantQuery(
@@ -76,6 +109,7 @@ public sealed class GetRestaurantQueryHandlerTests
         Assert.Equal(
             RestaurantErrors.NotFound(restaurantId),
             result.Error);
+        Assert.Equal(0, cache.SetCallCount);
     }
 
     private sealed class RestaurantReadServiceStub(

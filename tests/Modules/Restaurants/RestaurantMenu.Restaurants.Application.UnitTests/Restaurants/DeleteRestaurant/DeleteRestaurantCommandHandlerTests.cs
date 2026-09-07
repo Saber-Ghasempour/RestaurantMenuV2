@@ -2,6 +2,7 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.Restaurants.Application.UnitTests.TestDoubles;
 
 namespace RestaurantMenu.Restaurants.Application.UnitTests.Restaurants.DeleteRestaurant;
 
@@ -15,7 +16,11 @@ public sealed class DeleteRestaurantCommandHandlerTests
     {
         var restaurant = CreateRestaurant();
         var unitOfWork = new UnitOfWorkStub();
-        var handler = CreateHandler(restaurant, unitOfWork);
+        var cache = new RestaurantCacheStub();
+        var handler = CreateHandler(
+            restaurant,
+            unitOfWork,
+            cache);
 
         var result = await handler.Handle(
             new DeleteRestaurantCommand(restaurant.Id, 1),
@@ -27,6 +32,8 @@ public sealed class DeleteRestaurantCommandHandlerTests
         Assert.Equal(UtcNow, restaurant.DeletedAtUtc);
         Assert.Equal(2, restaurant.Version);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(1, cache.RemoveCallCount);
+        Assert.Equal(restaurant.Id, cache.RemovedRestaurantId);
     }
 
     [Fact]
@@ -72,7 +79,11 @@ public sealed class DeleteRestaurantCommandHandlerTests
         var restaurant = CreateRestaurant();
         var unitOfWork = new UnitOfWorkStub(
             new ConcurrencyException("Concurrent update."));
-        var handler = CreateHandler(restaurant, unitOfWork);
+        var cache = new RestaurantCacheStub();
+        var handler = CreateHandler(
+            restaurant,
+            unitOfWork,
+            cache);
 
         var result = await handler.Handle(
             new DeleteRestaurantCommand(restaurant.Id, 1),
@@ -83,16 +94,19 @@ public sealed class DeleteRestaurantCommandHandlerTests
             RestaurantErrors.VersionConflict(restaurant.Id),
             result.Error);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
+        Assert.Equal(0, cache.RemoveCallCount);
     }
 
     private static DeleteRestaurantCommandHandler CreateHandler(
         Restaurant? restaurant,
-        UnitOfWorkStub unitOfWork)
+        UnitOfWorkStub unitOfWork,
+        RestaurantCacheStub? cache = null)
     {
         return new DeleteRestaurantCommandHandler(
             new RestaurantRepositoryStub(restaurant),
             unitOfWork,
-            new StubTimeProvider(UtcNow));
+            new StubTimeProvider(UtcNow),
+            cache ?? new RestaurantCacheStub());
     }
 
     private static Restaurant CreateRestaurant()
