@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using RestaurantMenu.Api.Infrastructure;
 using RestaurantMenu.Api.Integrations.Catalog;
+using RestaurantMenu.Api.Observability;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Infrastructure;
 using RestaurantMenu.Catalog.Presentation.Categories;
@@ -10,6 +11,15 @@ using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(
+    options =>
+    {
+        options.IncludeScopes = true;
+        options.TimestampFormat = "O";
+        options.UseUtcTimestamp = true;
+    });
 
 var restaurantsConnectionString = builder.Configuration.GetConnectionString("Restaurants") 
     ?? throw new InvalidOperationException(
@@ -25,10 +35,17 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails(
     options =>
         options.CustomizeProblemDetails = context =>
+        {
             context.ProblemDetails.Extensions["traceId"] =
                 Activity.Current?.Id ??
-                context.HttpContext.TraceIdentifier);
+                context.HttpContext.TraceIdentifier;
+            context.ProblemDetails.Extensions["correlationId"] =
+                CorrelationIdMiddleware.GetCorrelationId(
+                    context.HttpContext);
+        });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddRestaurantMenuObservability(
+    builder.Configuration);
 builder.Services.AddRestaurantsInfrastructure(restaurantsConnectionString);
 builder.Services.AddCatalogInfrastructure(catalogConnectionString);
 builder.Services.AddScoped<
@@ -37,6 +54,7 @@ builder.Services.AddScoped<
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
