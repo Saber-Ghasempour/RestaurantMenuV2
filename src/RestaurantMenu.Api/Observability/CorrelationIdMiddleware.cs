@@ -68,6 +68,10 @@ public sealed partial class CorrelationIdMiddleware
     internal static string GetSafeLogPath(PathString path) =>
         path.StartsWithSegments("/m", out var remaining) && remaining.HasValue
             ? "/m/{code}"
+            : path.StartsWithSegments(
+                "/api/public/menu-codes",
+                out var publicCodePath) && publicCodePath.HasValue
+                ? "/api/public/menu-codes/{code}/menu"
             : path.Value ?? string.Empty;
 
     public static string? GetCorrelationId(HttpContext context)

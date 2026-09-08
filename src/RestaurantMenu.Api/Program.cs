@@ -10,11 +10,13 @@ using RestaurantMenu.Api.Infrastructure;
 using RestaurantMenu.Api.Integrations.Catalog;
 using RestaurantMenu.Api.Observability;
 using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
+using RestaurantMenu.Catalog.Application.Abstractions.Branches;
 using RestaurantMenu.Catalog.Infrastructure;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Presentation.Categories;
 using RestaurantMenu.Catalog.Presentation.Items;
 using RestaurantMenu.Catalog.Presentation.PublicMenus;
+using RestaurantMenu.Catalog.Presentation.Publications;
 using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
@@ -89,13 +91,17 @@ builder.Services.AddRestaurantsInfrastructure(
     restaurantCacheTimeToLive,
     redisConnectTimeoutMilliseconds,
     redisOperationTimeoutMilliseconds);
-builder.Services.AddCatalogInfrastructure(catalogConnectionString);
+builder.Services.AddCatalogInfrastructure(
+    catalogConnectionString,
+    restaurantCacheTimeToLive);
 builder.Services.AddScoped<
     IRestaurantExistenceChecker,
     RestaurantExistenceChecker>();
 builder.Services.AddScoped<
     IRestaurantPublicProfileProvider,
     RestaurantPublicProfileProvider>();
+builder.Services.AddScoped<IBranchExistenceChecker, BranchExistenceChecker>();
+builder.Services.AddScoped<IBranchPublicProfileProvider, BranchPublicProfileProvider>();
 builder.Services
     .AddHealthChecks()
     .AddCheck(
@@ -146,7 +152,9 @@ app.MapPublicMenuCodesEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
 app.MapPublicMenuEndpoints();
+app.MapBranchCategoryPublicationEndpoints();
 app.MapPublicMenuSlugEndpoints();
+app.MapPublicMenuCodeMenuEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

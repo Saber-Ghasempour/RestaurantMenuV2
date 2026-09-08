@@ -16,6 +16,12 @@ internal sealed class MenuCategoryConfiguration
         builder.ToTable("menu_categories");
         builder.HasKey(category => category.Id);
 
+        builder.HasAlternateKey(category => new
+            {
+                category.RestaurantId,
+                category.Id
+            });
+
         builder.Property(category => category.Id)
             .HasConversion(
                 categoryId => categoryId.Value,

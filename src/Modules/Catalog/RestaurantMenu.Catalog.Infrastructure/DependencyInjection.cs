@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
+using RestaurantMenu.Catalog.Application.Abstractions.Caching;
 using RestaurantMenu.Catalog.Application.Categories.CreateMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.DeleteMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
@@ -16,12 +17,18 @@ using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicMenu;
+using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicBranchMenu;
+using RestaurantMenu.Catalog.Application.Publications;
+using RestaurantMenu.Catalog.Application.Publications.GetBranchCatalogConfiguration;
+using RestaurantMenu.Catalog.Application.Publications.SetBranchCategoryPublications;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Infrastructure.Caching;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Infrastructure.Items;
 using RestaurantMenu.Catalog.Infrastructure.PublicMenus;
+using RestaurantMenu.Catalog.Infrastructure.Publications;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Infrastructure;
@@ -30,10 +37,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddCatalogInfrastructure(
         this IServiceCollection services,
-        string connectionString)
+        string connectionString,
+        TimeSpan publicMenuCacheTimeToLive)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(
+            publicMenuCacheTimeToLive,
+            TimeSpan.Zero);
 
         services.AddDbContext<CatalogDbContext>(
             options => options.UseNpgsql(
@@ -53,6 +64,14 @@ public static class DependencyInjection
             MenuItemReadService>();
         services.AddScoped<IPublicMenuReadService,
             PublicMenuReadService>();
+        services.AddScoped<IBranchCategoryPublicationRepository,
+            BranchCategoryPublicationRepository>();
+        services.AddScoped<IBranchCatalogReadService,
+            BranchCatalogReadService>();
+        services.AddSingleton(
+            new PublicBranchMenuCacheOptions(publicMenuCacheTimeToLive));
+        services.AddSingleton<IPublicBranchMenuCache,
+            PublicBranchMenuCache>();
         services.AddScoped<ICatalogUnitOfWork>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<CatalogDbContext>());
@@ -116,6 +135,17 @@ public static class DependencyInjection
                 GetPublicMenuQuery,
                 Result<PublicMenuResponse>>,
             GetPublicMenuQueryHandler>();
+        services.AddScoped<
+            ICommandHandler<SetBranchCategoryPublicationsCommand, Result<bool>>,
+            SetBranchCategoryPublicationsCommandHandler>();
+        services.AddScoped<
+            IQueryHandler<GetBranchCatalogConfigurationQuery,
+                Result<IReadOnlyList<BranchCategoryPublicationResponse>>>,
+            GetBranchCatalogConfigurationQueryHandler>();
+        services.AddScoped<
+            IQueryHandler<GetPublicBranchMenuQuery,
+                Result<PublicBranchMenuResponse>>,
+            GetPublicBranchMenuQueryHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

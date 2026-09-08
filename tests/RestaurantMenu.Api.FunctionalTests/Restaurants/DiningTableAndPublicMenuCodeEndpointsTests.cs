@@ -88,6 +88,10 @@ public sealed class DiningTableAndPublicMenuCodeEndpointsTests(TestWebApplicatio
         Assert.NotNull(metadata);
         Assert.Equal("public-menu-code-resolution", metadata.PolicyName);
         Assert.Equal("/m/{code}", CorrelationIdMiddleware.GetSafeLogPath("/m/sensitive-raw-code"));
+        Assert.Equal(
+            "/api/public/menu-codes/{code}/menu",
+            CorrelationIdMiddleware.GetSafeLogPath(
+                "/api/public/menu-codes/sensitive-raw-code/menu"));
     }
 
     [Fact]

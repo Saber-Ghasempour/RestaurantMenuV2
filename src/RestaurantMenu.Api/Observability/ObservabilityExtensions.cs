@@ -43,7 +43,9 @@ public static class ObservabilityExtensions
                                 !context.Request.Path.StartsWithSegments(
                                     "/health") &&
                                 !context.Request.Path.StartsWithSegments(
-                                    "/m"))
+                                    "/m") &&
+                                !context.Request.Path.StartsWithSegments(
+                                    "/api/public/menu-codes"))
                     .AddHttpClientInstrumentation()
                     .AddNpgsql();
 
