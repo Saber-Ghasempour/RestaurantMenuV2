@@ -2,6 +2,7 @@ using System.Diagnostics;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Threading.RateLimiting;
 
 using RestaurantMenu.Api.Authentication;
 using RestaurantMenu.Api.Health;
@@ -18,6 +19,8 @@ using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Branches;
+using RestaurantMenu.Restaurants.Presentation.DiningTables;
+using RestaurantMenu.Restaurants.Presentation.PublicMenuCodes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +69,16 @@ builder.Services.AddProblemDetails(
                     context.HttpContext);
         });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddRateLimiter(options => options.AddPolicy("public-menu-code-resolution", httpContext =>
+    RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        })));
 builder.Services.AddRestaurantMenuAuthentication(
     builder.Configuration);
 builder.Services.AddRestaurantMenuObservability(
@@ -123,10 +136,13 @@ if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllers();
 app.MapRestaurantsEndpoints();
 app.MapBranchesEndpoints();
+app.MapDiningTablesEndpoints();
+app.MapPublicMenuCodesEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
 app.MapPublicMenuEndpoints();

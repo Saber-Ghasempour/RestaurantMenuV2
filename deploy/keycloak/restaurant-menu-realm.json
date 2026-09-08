@@ -12,6 +12,10 @@
         { "name": "restaurants.write" },
         { "name": "branches.read" },
         { "name": "branches.write" },
+        { "name": "dining-tables.read" },
+        { "name": "dining-tables.write" },
+        { "name": "public-menu-codes.read" },
+        { "name": "public-menu-codes.write" },
         { "name": "catalog.read" },
         { "name": "catalog.write" }
       ]
@@ -133,6 +137,10 @@
           "restaurants.write",
           "branches.read",
           "branches.write",
+          "dining-tables.read",
+          "dining-tables.write",
+          "public-menu-codes.read",
+          "public-menu-codes.write",
           "catalog.read",
           "catalog.write"
         ]

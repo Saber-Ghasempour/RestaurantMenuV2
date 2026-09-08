@@ -28,6 +28,22 @@ using RestaurantMenu.Restaurants.Application.Branches.ListBranches;
 using RestaurantMenu.Restaurants.Application.Branches.UpdateBranch;
 using RestaurantMenu.Restaurants.Domain.Branches;
 using RestaurantMenu.Restaurants.Infrastructure.Branches;
+using RestaurantMenu.Restaurants.Application.Abstractions.Security;
+using RestaurantMenu.Restaurants.Application.DiningTables;
+using RestaurantMenu.Restaurants.Application.DiningTables.ChangeDiningTableStatus;
+using RestaurantMenu.Restaurants.Application.DiningTables.CreateDiningTable;
+using RestaurantMenu.Restaurants.Application.DiningTables.ListDiningTables;
+using RestaurantMenu.Restaurants.Application.DiningTables.UpdateDiningTable;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes.CreatePublicMenuCode;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes.ListPublicMenuCodes;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes.ResolvePublicMenuCode;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes.RevokePublicMenuCode;
+using RestaurantMenu.Restaurants.Application.PublicMenuCodes.RotatePublicMenuCode;
+using RestaurantMenu.Restaurants.Domain.DiningTables;
+using RestaurantMenu.Restaurants.Domain.PublicMenuCodes;
+using RestaurantMenu.Restaurants.Infrastructure.DiningTables;
+using RestaurantMenu.Restaurants.Infrastructure.PublicMenuCodes;
 
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
@@ -77,6 +93,11 @@ public static class DependencyInjection
 
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IBranchReadService, BranchReadService>();
+        services.AddScoped<IDiningTableRepository, DiningTableRepository>();
+        services.AddScoped<IDiningTableReadService, DiningTableReadService>();
+        services.AddScoped<IPublicMenuCodeRepository, PublicMenuCodeRepository>();
+        services.AddScoped<IPublicMenuCodeReadService, PublicMenuCodeReadService>();
+        services.AddSingleton<IPublicMenuCodeGenerator, CryptographicPublicMenuCodeGenerator>();
 
         services.AddScoped<RestaurantMembershipRepository>();
         services.AddScoped<IRestaurantMembershipRepository>(
@@ -172,6 +193,15 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<UpdateBranchCommand, Result<long>>, UpdateBranchCommandHandler>();
         services.AddScoped<ICommandHandler<ChangeBranchStatusCommand, Result<long>>, ChangeBranchStatusCommandHandler>();
         services.AddScoped<ICommandHandler<DeleteBranchCommand, Result<BranchId>>, DeleteBranchCommandHandler>();
+        services.AddScoped<ICommandHandler<CreateDiningTableCommand, Result<DiningTableId>>, CreateDiningTableCommandHandler>();
+        services.AddScoped<IQueryHandler<ListDiningTablesQuery, Result<IReadOnlyList<DiningTableResponse>>>, ListDiningTablesQueryHandler>();
+        services.AddScoped<ICommandHandler<UpdateDiningTableCommand, Result<long>>, UpdateDiningTableCommandHandler>();
+        services.AddScoped<ICommandHandler<ChangeDiningTableStatusCommand, Result<long>>, ChangeDiningTableStatusCommandHandler>();
+        services.AddScoped<ICommandHandler<CreatePublicMenuCodeCommand, Result<IssuedPublicMenuCode>>, CreatePublicMenuCodeCommandHandler>();
+        services.AddScoped<IQueryHandler<ListPublicMenuCodesQuery, Result<IReadOnlyList<PublicMenuCodeResponse>>>, ListPublicMenuCodesQueryHandler>();
+        services.AddScoped<ICommandHandler<RotatePublicMenuCodeCommand, Result<IssuedPublicMenuCode>>, RotatePublicMenuCodeCommandHandler>();
+        services.AddScoped<ICommandHandler<RevokePublicMenuCodeCommand, Result<long>>, RevokePublicMenuCodeCommandHandler>();
+        services.AddScoped<IQueryHandler<ResolvePublicMenuCodeQuery, Result<ResolvedPublicMenuCode>>, ResolvePublicMenuCodeQueryHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

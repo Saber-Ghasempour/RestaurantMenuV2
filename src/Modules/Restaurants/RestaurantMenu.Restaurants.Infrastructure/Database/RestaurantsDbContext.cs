@@ -6,7 +6,9 @@ using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Branches;
+using RestaurantMenu.Restaurants.Domain.DiningTables;
 using RestaurantMenu.Restaurants.Domain.Memberships;
+using RestaurantMenu.Restaurants.Domain.PublicMenuCodes;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
 namespace RestaurantMenu.Restaurants.Infrastructure.Database;
@@ -30,6 +32,8 @@ public sealed class RestaurantsDbContext
         Set<RestaurantMembership>();
 
     public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<DiningTable> DiningTables => Set<DiningTable>();
+    public DbSet<PublicMenuCode> PublicMenuCodes => Set<PublicMenuCode>();
 
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
@@ -38,6 +42,26 @@ public sealed class RestaurantsDbContext
         {
             return await base.SaveChangesAsync(
                 cancellationToken);
+        }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_public_menu_codes_code_hash"
+            })
+        {
+            throw new PublicMenuCodeHashAlreadyExistsException(
+                "Public menu code hash already exists.", exception);
+        }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_dining_tables_branch_id_number"
+            })
+        {
+            throw new DiningTableNumberAlreadyExistsException(
+                "Dining table number already exists for the branch.", exception);
         }
         catch (DbUpdateException exception) when (
             exception.InnerException is PostgresException

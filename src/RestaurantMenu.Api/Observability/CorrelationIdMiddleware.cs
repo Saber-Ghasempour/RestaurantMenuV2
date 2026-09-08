@@ -53,16 +53,22 @@ public sealed partial class CorrelationIdMiddleware
             {
                 var elapsedMilliseconds =
                     Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds;
+                var safePath = GetSafeLogPath(context.Request.Path);
 
                 LogRequestCompleted(
                     _logger,
                     context.Request.Method,
-                    context.Request.Path.Value ?? string.Empty,
+                    safePath,
                     context.Response.StatusCode,
                     elapsedMilliseconds);
             }
         }
     }
+
+    internal static string GetSafeLogPath(PathString path) =>
+        path.StartsWithSegments("/m", out var remaining) && remaining.HasValue
+            ? "/m/{code}"
+            : path.Value ?? string.Empty;
 
     public static string? GetCorrelationId(HttpContext context)
     {

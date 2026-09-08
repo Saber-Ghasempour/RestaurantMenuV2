@@ -12,6 +12,7 @@ internal sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
         ArgumentNullException.ThrowIfNull(builder);
         builder.ToTable("branches");
         builder.HasKey(branch => branch.Id);
+        builder.HasAlternateKey(branch => new { branch.RestaurantId, branch.Id });
         builder.Property(branch => branch.Id)
             .HasConversion(id => id.Value, value => new BranchId(value))
             .HasColumnName("id").ValueGeneratedNever();

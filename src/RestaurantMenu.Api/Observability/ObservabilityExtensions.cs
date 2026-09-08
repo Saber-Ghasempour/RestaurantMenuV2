@@ -41,7 +41,9 @@ public static class ObservabilityExtensions
                         options =>
                             options.Filter = context =>
                                 !context.Request.Path.StartsWithSegments(
-                                    "/health"))
+                                    "/health") &&
+                                !context.Request.Path.StartsWithSegments(
+                                    "/m"))
                     .AddHttpClientInstrumentation()
                     .AddNpgsql();
 
