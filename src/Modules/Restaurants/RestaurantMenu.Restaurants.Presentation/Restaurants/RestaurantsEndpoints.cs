@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
 using RestaurantMenu.Application.Abstractions.Security;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -85,7 +86,31 @@ public static class RestaurantsEndpoints
                 StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
+        group.MapPut("/{restaurantId:guid}/profile", UpdateProfileAsync)
+            .WithName("UpdateRestaurantProfile")
+            .Produces<UpdateRestaurantResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
+
         return endpoints;
+    }
+
+    private static async Task<IResult> UpdateProfileAsync(
+        Guid restaurantId,
+        UpdateRestaurantProfileRequest request,
+        ICommandHandler<UpdateRestaurantProfileCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(
+            new UpdateRestaurantProfileCommand(
+                new RestaurantId(restaurantId), request.Description,
+                request.About, request.Address, request.ExpectedVersion),
+            cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
     }
 
     private static async Task<IResult> CreateRestaurantAsync(
@@ -151,7 +176,10 @@ public static class RestaurantsEndpoints
                 result.Value.Id,
                 result.Value.Name,
                 result.Value.CreatedAtUtc,
-                result.Value.Version);
+                result.Value.Version,
+                result.Value.Description,
+                result.Value.About,
+                result.Value.Address);
 
         return Results.Ok(response);
     }
@@ -268,7 +296,16 @@ public sealed record GetRestaurantResponse(
     Guid Id,
     string Name,
     DateTimeOffset CreatedAtUtc,
-    long Version);
+    long Version,
+    string? Description,
+    string? About,
+    string? Address);
+
+public sealed record UpdateRestaurantProfileRequest(
+    string? Description,
+    string? About,
+    string? Address,
+    long ExpectedVersion);
 
 public sealed record ListRestaurantsResponse(
     IReadOnlyList<RestaurantListItemResponse> Items,

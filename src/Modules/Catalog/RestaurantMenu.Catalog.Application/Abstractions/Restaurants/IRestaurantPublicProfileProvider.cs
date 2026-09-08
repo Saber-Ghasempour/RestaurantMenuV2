@@ -9,4 +9,7 @@ public interface IRestaurantPublicProfileProvider
 
 public sealed record RestaurantPublicProfile(
     Guid Id,
-    string Name);
+    string Name,
+    string? Description = null,
+    string? About = null,
+    string? Address = null);

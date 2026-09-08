@@ -47,6 +47,9 @@ public sealed class GetPublicMenuQueryHandler
             new PublicMenuResponse(
                 restaurant.Id,
                 restaurant.Name,
-                categories));
+                categories,
+                restaurant.Description,
+                restaurant.About,
+                restaurant.Address));
     }
 }

@@ -19,6 +19,7 @@ using RestaurantMenu.Restaurants.Application.Restaurants.CreateRestaurant;
 using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.SharedKernel.Results;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
 
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
@@ -136,6 +137,12 @@ public static class DependencyInjection
                 DeleteRestaurantCommand,
                 Result<RestaurantId>>,
             DeleteRestaurantCommandHandler>();
+
+        services.AddScoped<
+            ICommandHandler<
+                UpdateRestaurantProfileCommand,
+                Result<long>>,
+            UpdateRestaurantProfileCommandHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

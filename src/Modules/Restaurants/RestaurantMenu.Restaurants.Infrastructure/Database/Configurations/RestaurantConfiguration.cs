@@ -14,6 +14,12 @@ internal sealed class RestaurantConfiguration
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.ToTable("restaurants");
+        builder.Property(restaurant => restaurant.Description)
+            .HasColumnName("description").HasMaxLength(Restaurant.MaxDescriptionLength);
+        builder.Property(restaurant => restaurant.About)
+            .HasColumnName("about").HasMaxLength(Restaurant.MaxAboutLength);
+        builder.Property(restaurant => restaurant.Address)
+            .HasColumnName("address").HasMaxLength(Restaurant.MaxAddressLength);
 
         builder.HasKey(restaurant => restaurant.Id);
 

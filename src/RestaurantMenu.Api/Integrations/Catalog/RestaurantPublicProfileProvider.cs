@@ -20,6 +20,9 @@ public sealed class RestaurantPublicProfileProvider(
             ? null
             : new RestaurantPublicProfile(
                 restaurant.Id,
-                restaurant.Name);
+                restaurant.Name,
+                restaurant.Description,
+                restaurant.About,
+                restaurant.Address);
     }
 }

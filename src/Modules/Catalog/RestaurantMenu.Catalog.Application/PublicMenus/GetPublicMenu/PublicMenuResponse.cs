@@ -3,7 +3,10 @@ namespace RestaurantMenu.Catalog.Application.PublicMenus.GetPublicMenu;
 public sealed record PublicMenuResponse(
     Guid RestaurantId,
     string RestaurantName,
-    IReadOnlyList<PublicMenuCategoryResponse> Categories);
+    IReadOnlyList<PublicMenuCategoryResponse> Categories,
+    string? Description = null,
+    string? About = null,
+    string? Address = null);
 
 public sealed record PublicMenuCategoryResponse(
     Guid Id,

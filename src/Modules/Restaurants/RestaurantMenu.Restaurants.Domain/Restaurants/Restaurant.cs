@@ -27,6 +27,17 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
 
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
+    public string? Description { get; private set; }
+    public string? About { get; private set; }
+    public string? Address { get; private set; }
+
+    public const int MaxDescriptionLength = 500;
+    public const int MaxAboutLength = 4000;
+    public const int MaxAddressLength = 500;
+
+    private static string? NormalizeProfileText(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     public static Result<Restaurant> Create(
         RestaurantId id,
         string? name,
@@ -102,5 +113,37 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
             new RestaurantDeletedDomainEvent(
                 Id,
                 deletedAtUtc));
+    }
+
+    public Result<Restaurant> UpdateProfile(
+        string? description,
+        string? about,
+        string? address)
+    {
+        description = NormalizeProfileText(description);
+        about = NormalizeProfileText(about);
+        address = NormalizeProfileText(address);
+
+        if (description?.Length > MaxDescriptionLength ||
+            about?.Length > MaxAboutLength ||
+            address?.Length > MaxAddressLength)
+        {
+            return Result.Failure<Restaurant>(
+                ErrorDetail.Validation(
+                    "Restaurants.ProfileTooLong",
+                    "Description and address must not exceed 500 characters; about must not exceed 4000 characters."));
+        }
+
+        if (Description == description && About == about && Address == address)
+        {
+            return Result.Success(this);
+        }
+
+        Description = description;
+        About = about;
+        Address = address;
+        Version++;
+        RaiseDomainEvent(new RestaurantProfileUpdatedDomainEvent(Id));
+        return Result.Success(this);
     }
 }

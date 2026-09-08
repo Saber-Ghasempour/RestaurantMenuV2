@@ -37,7 +37,10 @@ public sealed class RestaurantReadService
                         candidate.Id,
                         candidate.Name,
                         candidate.CreatedAtUtc,
-                        candidate.Version
+                        candidate.Version,
+                        candidate.Description,
+                        candidate.About,
+                        candidate.Address
                     })
                 .SingleOrDefaultAsync(
                     cancellationToken);
@@ -51,7 +54,10 @@ public sealed class RestaurantReadService
             restaurant.Id.Value,
             restaurant.Name,
             restaurant.CreatedAtUtc,
-            restaurant.Version);
+            restaurant.Version,
+            restaurant.Description,
+            restaurant.About,
+            restaurant.Address);
     }
 
     public async Task<RestaurantsPage> GetPageAsync(
@@ -85,7 +91,10 @@ public sealed class RestaurantReadService
                         restaurant.Id.Value,
                         restaurant.Name,
                         restaurant.CreatedAtUtc,
-                        restaurant.Version))
+                        restaurant.Version,
+                        restaurant.Description,
+                        restaurant.About,
+                        restaurant.Address))
                 .ToArrayAsync(cancellationToken);
 
         return new RestaurantsPage(
