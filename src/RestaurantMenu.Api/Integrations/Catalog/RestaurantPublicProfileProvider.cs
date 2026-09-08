@@ -23,6 +23,12 @@ public sealed class RestaurantPublicProfileProvider(
                 restaurant.Name,
                 restaurant.Description,
                 restaurant.About,
-                restaurant.Address);
+                restaurant.Address,
+                restaurant.WebsiteUrl,
+                restaurant.InstagramUrl,
+                restaurant.FacebookUrl,
+                restaurant.WhatsAppUrl,
+                restaurant.TelegramUrl,
+                restaurant.TwitterUrl);
     }
 }

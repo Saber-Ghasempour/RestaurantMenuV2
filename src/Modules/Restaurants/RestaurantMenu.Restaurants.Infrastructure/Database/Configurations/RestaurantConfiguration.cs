@@ -14,6 +14,18 @@ internal sealed class RestaurantConfiguration
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.ToTable("restaurants");
+        builder.Property(restaurant => restaurant.WebsiteUrl)
+            .HasColumnName("website_url").HasMaxLength(2048);
+        builder.Property(restaurant => restaurant.InstagramUrl)
+            .HasColumnName("instagram_url").HasMaxLength(2048);
+        builder.Property(restaurant => restaurant.FacebookUrl)
+            .HasColumnName("facebook_url").HasMaxLength(2048);
+        builder.Property(restaurant => restaurant.WhatsAppUrl)
+            .HasColumnName("whats_app_url").HasMaxLength(2048);
+        builder.Property(restaurant => restaurant.TelegramUrl)
+            .HasColumnName("telegram_url").HasMaxLength(2048);
+        builder.Property(restaurant => restaurant.TwitterUrl)
+            .HasColumnName("twitter_url").HasMaxLength(2048);
         builder.Property(restaurant => restaurant.Description)
             .HasColumnName("description").HasMaxLength(Restaurant.MaxDescriptionLength);
         builder.Property(restaurant => restaurant.About)

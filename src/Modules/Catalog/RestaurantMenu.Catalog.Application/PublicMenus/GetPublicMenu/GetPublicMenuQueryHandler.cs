@@ -50,6 +50,12 @@ public sealed class GetPublicMenuQueryHandler
                 categories,
                 restaurant.Description,
                 restaurant.About,
-                restaurant.Address));
+                restaurant.Address,
+                restaurant.WebsiteUrl,
+                restaurant.InstagramUrl,
+                restaurant.FacebookUrl,
+                restaurant.WhatsAppUrl,
+                restaurant.TelegramUrl,
+                restaurant.TwitterUrl));
     }
 }

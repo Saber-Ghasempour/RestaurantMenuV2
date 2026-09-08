@@ -144,6 +144,12 @@ public static class DependencyInjection
                 Result<long>>,
             UpdateRestaurantProfileCommandHandler>();
 
+        services.AddScoped<
+            ICommandHandler<
+                RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks.UpdateRestaurantLinksCommand,
+                Result<long>>,
+            RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks.UpdateRestaurantLinksCommandHandler>();
+
         services.AddSingleton(TimeProvider.System);
 
         return services;

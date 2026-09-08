@@ -27,6 +27,13 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
 
     public DateTimeOffset? DeletedAtUtc { get; private set; }
 
+    public string? WebsiteUrl { get; private set; }
+    public string? InstagramUrl { get; private set; }
+    public string? FacebookUrl { get; private set; }
+    public string? WhatsAppUrl { get; private set; }
+    public string? TelegramUrl { get; private set; }
+    public string? TwitterUrl { get; private set; }
+
     public string? Description { get; private set; }
     public string? About { get; private set; }
     public string? Address { get; private set; }
@@ -113,6 +120,49 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
             new RestaurantDeletedDomainEvent(
                 Id,
                 deletedAtUtc));
+    }
+
+    public Result<Restaurant> UpdateLinks(
+        string? websiteUrl,
+        string? instagramUrl,
+        string? facebookUrl,
+        string? whatsAppUrl,
+        string? telegramUrl,
+        string? twitterUrl)
+    {
+        websiteUrl = NormalizeProfileText(websiteUrl);
+        instagramUrl = NormalizeProfileText(instagramUrl);
+        facebookUrl = NormalizeProfileText(facebookUrl);
+        whatsAppUrl = NormalizeProfileText(whatsAppUrl);
+        telegramUrl = NormalizeProfileText(telegramUrl);
+        twitterUrl = NormalizeProfileText(twitterUrl);
+        var links = new[] { websiteUrl, instagramUrl, facebookUrl, whatsAppUrl, telegramUrl, twitterUrl };
+        if (links.Any(link => !PublicWebsiteLink.IsValid(link)))
+        {
+            return Result.Failure<Restaurant>(
+                ErrorDetail.Validation("Restaurants.InvalidLink",
+                    "Links must be absolute HTTPS URLs without credentials or whitespace, up to 2048 characters."));
+        }
+
+        if (WebsiteUrl == websiteUrl &&
+            InstagramUrl == instagramUrl &&
+            FacebookUrl == facebookUrl &&
+            WhatsAppUrl == whatsAppUrl &&
+            TelegramUrl == telegramUrl &&
+            TwitterUrl == twitterUrl)
+        {
+            return Result.Success(this);
+        }
+
+        WebsiteUrl = websiteUrl;
+        InstagramUrl = instagramUrl;
+        FacebookUrl = facebookUrl;
+        WhatsAppUrl = whatsAppUrl;
+        TelegramUrl = telegramUrl;
+        TwitterUrl = twitterUrl;
+        Version++;
+        RaiseDomainEvent(new RestaurantLinksUpdatedDomainEvent(Id));
+        return Result.Success(this);
     }
 
     public Result<Restaurant> UpdateProfile(

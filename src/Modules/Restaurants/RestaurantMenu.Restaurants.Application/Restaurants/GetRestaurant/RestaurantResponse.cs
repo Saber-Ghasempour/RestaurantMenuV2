@@ -7,4 +7,10 @@ public sealed record RestaurantResponse(
     long Version,
     string? Description = null,
     string? About = null,
-    string? Address = null);
+    string? Address = null,
+    string? WebsiteUrl = null,
+    string? InstagramUrl = null,
+    string? FacebookUrl = null,
+    string? WhatsAppUrl = null,
+    string? TelegramUrl = null,
+    string? TwitterUrl = null);

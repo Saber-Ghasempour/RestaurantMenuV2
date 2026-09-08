@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
 using RestaurantMenu.Application.Abstractions.Security;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
@@ -94,6 +95,14 @@ public static class RestaurantsEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
+        group.MapPut("/{restaurantId:guid}/links", UpdateLinksAsync)
+            .WithName("UpdateRestaurantLinks")
+            .Produces<UpdateRestaurantResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
+
         return endpoints;
     }
 
@@ -107,6 +116,30 @@ public static class RestaurantsEndpoints
             new UpdateRestaurantProfileCommand(
                 new RestaurantId(restaurantId), request.Description,
                 request.About, request.Address, request.ExpectedVersion),
+            cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
+    }
+
+    private static async Task<IResult> UpdateLinksAsync(
+        Guid restaurantId,
+        UpdateRestaurantLinksRequest request,
+        ICommandHandler<UpdateRestaurantLinksCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+        var result = await handler.Handle(
+            new UpdateRestaurantLinksCommand(
+                new RestaurantId(restaurantId),
+                request.WebsiteUrl,
+                request.InstagramUrl,
+                request.FacebookUrl,
+                request.WhatsAppUrl,
+                request.TelegramUrl,
+                request.TwitterUrl,
+                request.ExpectedVersion),
             cancellationToken);
         return result.IsFailure
             ? result.Error.ToProblem()
@@ -179,7 +212,13 @@ public static class RestaurantsEndpoints
                 result.Value.Version,
                 result.Value.Description,
                 result.Value.About,
-                result.Value.Address);
+                result.Value.Address,
+                result.Value.WebsiteUrl,
+                result.Value.InstagramUrl,
+                result.Value.FacebookUrl,
+                result.Value.WhatsAppUrl,
+                result.Value.TelegramUrl,
+                result.Value.TwitterUrl);
 
         return Results.Ok(response);
     }
@@ -288,6 +327,15 @@ public static class RestaurantsEndpoints
     }
 }
 
+public sealed record UpdateRestaurantLinksRequest(
+    string? WebsiteUrl,
+    string? InstagramUrl,
+    string? FacebookUrl,
+    string? WhatsAppUrl,
+    string? TelegramUrl,
+    string? TwitterUrl,
+    long ExpectedVersion);
+
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
@@ -299,7 +347,13 @@ public sealed record GetRestaurantResponse(
     long Version,
     string? Description,
     string? About,
-    string? Address);
+    string? Address,
+    string? WebsiteUrl,
+    string? InstagramUrl,
+    string? FacebookUrl,
+    string? WhatsAppUrl,
+    string? TelegramUrl,
+    string? TwitterUrl);
 
 public sealed record UpdateRestaurantProfileRequest(
     string? Description,

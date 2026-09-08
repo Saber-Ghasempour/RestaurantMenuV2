@@ -6,7 +6,13 @@ public sealed record PublicMenuResponse(
     IReadOnlyList<PublicMenuCategoryResponse> Categories,
     string? Description = null,
     string? About = null,
-    string? Address = null);
+    string? Address = null,
+    string? WebsiteUrl = null,
+    string? InstagramUrl = null,
+    string? FacebookUrl = null,
+    string? WhatsAppUrl = null,
+    string? TelegramUrl = null,
+    string? TwitterUrl = null);
 
 public sealed record PublicMenuCategoryResponse(
     Guid Id,

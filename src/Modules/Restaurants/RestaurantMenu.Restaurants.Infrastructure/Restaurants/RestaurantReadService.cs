@@ -40,7 +40,13 @@ public sealed class RestaurantReadService
                         candidate.Version,
                         candidate.Description,
                         candidate.About,
-                        candidate.Address
+                        candidate.Address,
+                        candidate.WebsiteUrl,
+                        candidate.InstagramUrl,
+                        candidate.FacebookUrl,
+                        candidate.WhatsAppUrl,
+                        candidate.TelegramUrl,
+                        candidate.TwitterUrl
                     })
                 .SingleOrDefaultAsync(
                     cancellationToken);
@@ -57,7 +63,13 @@ public sealed class RestaurantReadService
             restaurant.Version,
             restaurant.Description,
             restaurant.About,
-            restaurant.Address);
+            restaurant.Address,
+            restaurant.WebsiteUrl,
+            restaurant.InstagramUrl,
+            restaurant.FacebookUrl,
+            restaurant.WhatsAppUrl,
+            restaurant.TelegramUrl,
+            restaurant.TwitterUrl);
     }
 
     public async Task<RestaurantsPage> GetPageAsync(
@@ -94,7 +106,13 @@ public sealed class RestaurantReadService
                         restaurant.Version,
                         restaurant.Description,
                         restaurant.About,
-                        restaurant.Address))
+                        restaurant.Address,
+                        restaurant.WebsiteUrl,
+                        restaurant.InstagramUrl,
+                        restaurant.FacebookUrl,
+                        restaurant.WhatsAppUrl,
+                        restaurant.TelegramUrl,
+                        restaurant.TwitterUrl))
                 .ToArrayAsync(cancellationToken);
 
         return new RestaurantsPage(
