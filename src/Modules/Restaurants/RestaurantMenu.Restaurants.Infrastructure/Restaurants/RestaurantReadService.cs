@@ -46,7 +46,8 @@ public sealed class RestaurantReadService
                         candidate.FacebookUrl,
                         candidate.WhatsAppUrl,
                         candidate.TelegramUrl,
-                        candidate.TwitterUrl
+                        candidate.TwitterUrl,
+                        candidate.Slug
                     })
                 .SingleOrDefaultAsync(
                     cancellationToken);
@@ -69,7 +70,8 @@ public sealed class RestaurantReadService
             restaurant.FacebookUrl,
             restaurant.WhatsAppUrl,
             restaurant.TelegramUrl,
-            restaurant.TwitterUrl);
+            restaurant.TwitterUrl,
+            restaurant.Slug);
     }
 
     public async Task<RestaurantsPage> GetPageAsync(
@@ -112,7 +114,8 @@ public sealed class RestaurantReadService
                         restaurant.FacebookUrl,
                         restaurant.WhatsAppUrl,
                         restaurant.TelegramUrl,
-                        restaurant.TwitterUrl))
+                        restaurant.TwitterUrl,
+                        restaurant.Slug))
                 .ToArrayAsync(cancellationToken);
 
         return new RestaurantsPage(

@@ -1,6 +1,8 @@
 ﻿using System.Reflection.Emit;
 
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Memberships;
@@ -33,6 +35,15 @@ public sealed class RestaurantsDbContext
         {
             return await base.SaveChangesAsync(
                 cancellationToken);
+        }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_restaurants_slug"
+            })
+        {
+            throw new SlugAlreadyExistsException("Restaurant slug already exists.", exception);
         }
         catch (DbUpdateConcurrencyException exception)
         {

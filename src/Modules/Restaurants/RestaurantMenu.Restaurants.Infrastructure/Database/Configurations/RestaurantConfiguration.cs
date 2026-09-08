@@ -14,6 +14,9 @@ internal sealed class RestaurantConfiguration
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.ToTable("restaurants");
+        builder.Property(restaurant => restaurant.Slug).HasColumnName("slug").HasMaxLength(80);
+        builder.HasIndex(restaurant => restaurant.Slug).IsUnique()
+            .HasDatabaseName("ux_restaurants_slug");
         builder.Property(restaurant => restaurant.WebsiteUrl)
             .HasColumnName("website_url").HasMaxLength(2048);
         builder.Property(restaurant => restaurant.InstagramUrl)

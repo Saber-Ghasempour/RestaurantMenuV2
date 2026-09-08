@@ -150,6 +150,11 @@ public static class DependencyInjection
                 Result<long>>,
             RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks.UpdateRestaurantLinksCommandHandler>();
 
+        services.AddScoped<IRestaurantSlugLookup, RestaurantSlugLookup>();
+        services.AddScoped<
+            ICommandHandler<RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug.ChangeRestaurantSlugCommand, Result<long>>,
+            RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug.ChangeRestaurantSlugCommandHandler>();
+
         services.AddSingleton(TimeProvider.System);
 
         return services;

@@ -13,4 +13,5 @@ public sealed record RestaurantResponse(
     string? FacebookUrl = null,
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
-    string? TwitterUrl = null);
+    string? TwitterUrl = null,
+    string? Slug = null);

@@ -128,6 +128,7 @@ app.MapRestaurantsEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
 app.MapPublicMenuEndpoints();
+app.MapPublicMenuSlugEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

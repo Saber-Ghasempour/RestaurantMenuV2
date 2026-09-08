@@ -12,7 +12,8 @@ public sealed record PublicMenuResponse(
     string? FacebookUrl = null,
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
-    string? TwitterUrl = null);
+    string? TwitterUrl = null,
+    string? Slug = null);
 
 public sealed record PublicMenuCategoryResponse(
     Guid Id,

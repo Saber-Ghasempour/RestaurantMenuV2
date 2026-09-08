@@ -18,4 +18,5 @@ public sealed record RestaurantPublicProfile(
     string? FacebookUrl = null,
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
-    string? TwitterUrl = null);
+    string? TwitterUrl = null,
+    string? Slug = null);

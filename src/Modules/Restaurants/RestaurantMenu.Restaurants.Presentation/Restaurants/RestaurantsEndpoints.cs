@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
 using RestaurantMenu.Application.Abstractions.Messaging;
+using RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
 using RestaurantMenu.Application.Abstractions.Security;
@@ -103,6 +104,14 @@ public static class RestaurantsEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
+        group.MapPut("/{restaurantId:guid}/slug", ChangeSlugAsync)
+            .WithName("ChangeRestaurantSlug")
+            .Produces<UpdateRestaurantResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
+
         return endpoints;
     }
 
@@ -143,6 +152,21 @@ public static class RestaurantsEndpoints
             cancellationToken);
         return result.IsFailure
             ? result.Error.ToProblem()
+            : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
+    }
+
+    private static async Task<IResult> ChangeSlugAsync(
+        Guid restaurantId,
+        ChangeRestaurantSlugRequest request,
+        ICommandHandler<ChangeRestaurantSlugCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+        var result = await handler.Handle(
+            new ChangeRestaurantSlugCommand(new RestaurantId(restaurantId), request.Slug, request.ExpectedVersion),
+            cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem()
             : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
     }
 
@@ -218,7 +242,8 @@ public static class RestaurantsEndpoints
                 result.Value.FacebookUrl,
                 result.Value.WhatsAppUrl,
                 result.Value.TelegramUrl,
-                result.Value.TwitterUrl);
+                result.Value.TwitterUrl,
+                result.Value.Slug);
 
         return Results.Ok(response);
     }
@@ -336,6 +361,8 @@ public sealed record UpdateRestaurantLinksRequest(
     string? TwitterUrl,
     long ExpectedVersion);
 
+public sealed record ChangeRestaurantSlugRequest(string? Slug, long ExpectedVersion);
+
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
@@ -353,7 +380,8 @@ public sealed record GetRestaurantResponse(
     string? FacebookUrl,
     string? WhatsAppUrl,
     string? TelegramUrl,
-    string? TwitterUrl);
+    string? TwitterUrl,
+    string? Slug);
 
 public sealed record UpdateRestaurantProfileRequest(
     string? Description,

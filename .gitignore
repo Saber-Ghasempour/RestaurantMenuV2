@@ -481,4 +481,5 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 docs/TECHNICAL_GUIDE.md
+docs/V1_TO_V2_IMPLEMENTATION_BLUEPRINT.md
 /CoverageReport/

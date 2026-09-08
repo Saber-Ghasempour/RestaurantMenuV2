@@ -29,6 +29,7 @@ public sealed class RestaurantPublicProfileProvider(
                 restaurant.FacebookUrl,
                 restaurant.WhatsAppUrl,
                 restaurant.TelegramUrl,
-                restaurant.TwitterUrl);
+                restaurant.TwitterUrl,
+                restaurant.Slug);
     }
 }

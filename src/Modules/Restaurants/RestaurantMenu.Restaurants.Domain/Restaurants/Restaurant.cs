@@ -19,6 +19,32 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
 
     public string Name { get; private set; }
 
+    public string? Slug { get; private set; }
+
+    public Result<Restaurant> ChangeSlug(string? slug)
+    {
+        slug = slug?.Trim().ToLowerInvariant();
+        if (slug is null || slug.Length is < 3 or > 80 ||
+            slug[0] == '-' || slug[^1] == '-' ||
+            slug.Contains("--", StringComparison.Ordinal) ||
+            slug.Any(character => character is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '-'))
+        {
+            return Result.Failure<Restaurant>(ErrorDetail.Validation(
+                "Restaurants.InvalidSlug",
+                "Slug must contain 3 to 80 ASCII letters, digits or single hyphens, with no leading or trailing hyphen."));
+        }
+
+        if (Slug == slug)
+        {
+            return Result.Success(this);
+        }
+
+        Slug = slug;
+        Version++;
+        RaiseDomainEvent(new RestaurantSlugChangedDomainEvent(Id));
+        return Result.Success(this);
+    }
+
     public DateTimeOffset CreatedAtUtc { get; }
 
     public long Version { get; private set; } = 1;
