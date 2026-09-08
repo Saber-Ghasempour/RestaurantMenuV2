@@ -5,6 +5,7 @@ using Npgsql;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 
 using RestaurantMenu.Application.Abstractions.Data;
+using RestaurantMenu.Restaurants.Domain.Branches;
 using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 
@@ -28,6 +29,8 @@ public sealed class RestaurantsDbContext
     public DbSet<RestaurantMembership> RestaurantMemberships =>
         Set<RestaurantMembership>();
 
+    public DbSet<Branch> Branches => Set<Branch>();
+
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)
     {
@@ -35,6 +38,16 @@ public sealed class RestaurantsDbContext
         {
             return await base.SaveChangesAsync(
                 cancellationToken);
+        }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_branches_restaurant_id_slug"
+            })
+        {
+            throw new BranchSlugAlreadyExistsException(
+                "Branch slug already exists for the restaurant.", exception);
         }
         catch (DbUpdateException exception) when (
             exception.InnerException is PostgresException

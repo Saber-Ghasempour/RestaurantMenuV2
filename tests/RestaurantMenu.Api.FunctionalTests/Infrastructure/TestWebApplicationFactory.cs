@@ -13,6 +13,7 @@ using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
 using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.Restaurants.Domain.Branches;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -353,6 +354,24 @@ public sealed class TestWebApplicationFactory
             .AsNoTracking()
             .SingleOrDefaultAsync(
                 restaurant => restaurant.Id == id);
+    }
+
+    public async Task<Branch?> FindBranchAsync(Guid branchId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantsDbContext>();
+        var id = new BranchId(branchId);
+        return await dbContext.Branches.AsNoTracking()
+            .SingleOrDefaultAsync(branch => branch.Id == id);
+    }
+
+    public async Task<Branch?> FindBranchIncludingDeletedAsync(Guid branchId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantsDbContext>();
+        var id = new BranchId(branchId);
+        return await dbContext.Branches.IgnoreQueryFilters().AsNoTracking()
+            .SingleOrDefaultAsync(branch => branch.Id == id);
     }
 
     public async Task<Restaurant?> FindRestaurantIncludingDeletedAsync(

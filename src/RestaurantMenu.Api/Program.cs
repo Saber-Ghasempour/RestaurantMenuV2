@@ -17,6 +17,7 @@ using RestaurantMenu.Catalog.Presentation.PublicMenus;
 using RestaurantMenu.Restaurants.Infrastructure;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
+using RestaurantMenu.Restaurants.Presentation.Branches;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -125,6 +126,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapRestaurantsEndpoints();
+app.MapBranchesEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
 app.MapPublicMenuEndpoints();

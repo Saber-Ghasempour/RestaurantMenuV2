@@ -10,6 +10,8 @@
       "restaurant-menu-api": [
         { "name": "restaurants.read" },
         { "name": "restaurants.write" },
+        { "name": "branches.read" },
+        { "name": "branches.write" },
         { "name": "catalog.read" },
         { "name": "catalog.write" }
       ]
@@ -129,6 +131,8 @@
         "restaurant-menu-api": [
           "restaurants.read",
           "restaurants.write",
+          "branches.read",
+          "branches.write",
           "catalog.read",
           "catalog.write"
         ]
@@ -141,6 +145,7 @@
       "clientRoles": {
         "restaurant-menu-api": [
           "restaurants.read",
+          "branches.read",
           "catalog.read"
         ]
       }

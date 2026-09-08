@@ -20,6 +20,14 @@ using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.SharedKernel.Results;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
+using RestaurantMenu.Restaurants.Application.Branches.ChangeBranchStatus;
+using RestaurantMenu.Restaurants.Application.Branches.CreateBranch;
+using RestaurantMenu.Restaurants.Application.Branches.DeleteBranch;
+using RestaurantMenu.Restaurants.Application.Branches.GetBranch;
+using RestaurantMenu.Restaurants.Application.Branches.ListBranches;
+using RestaurantMenu.Restaurants.Application.Branches.UpdateBranch;
+using RestaurantMenu.Restaurants.Domain.Branches;
+using RestaurantMenu.Restaurants.Infrastructure.Branches;
 
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
@@ -66,6 +74,9 @@ public static class DependencyInjection
         services.AddScoped<
             IRestaurantReadService,
             RestaurantReadService>();
+
+        services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IBranchReadService, BranchReadService>();
 
         services.AddScoped<RestaurantMembershipRepository>();
         services.AddScoped<IRestaurantMembershipRepository>(
@@ -154,6 +165,13 @@ public static class DependencyInjection
         services.AddScoped<
             ICommandHandler<RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug.ChangeRestaurantSlugCommand, Result<long>>,
             RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug.ChangeRestaurantSlugCommandHandler>();
+
+        services.AddScoped<ICommandHandler<CreateBranchCommand, Result<BranchId>>, CreateBranchCommandHandler>();
+        services.AddScoped<IQueryHandler<GetBranchQuery, Result<BranchResponse>>, GetBranchQueryHandler>();
+        services.AddScoped<IQueryHandler<ListBranchesQuery, Result<BranchesPage>>, ListBranchesQueryHandler>();
+        services.AddScoped<ICommandHandler<UpdateBranchCommand, Result<long>>, UpdateBranchCommandHandler>();
+        services.AddScoped<ICommandHandler<ChangeBranchStatusCommand, Result<long>>, ChangeBranchStatusCommandHandler>();
+        services.AddScoped<ICommandHandler<DeleteBranchCommand, Result<BranchId>>, DeleteBranchCommandHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

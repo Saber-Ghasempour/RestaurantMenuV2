@@ -6,6 +6,10 @@ public static class Permissions
 
     public const string RestaurantsWrite = "restaurants.write";
 
+    public const string BranchesRead = "branches.read";
+
+    public const string BranchesWrite = "branches.write";
+
     public const string CatalogRead = "catalog.read";
 
     public const string CatalogWrite = "catalog.write";
@@ -14,6 +18,8 @@ public static class Permissions
     [
         RestaurantsRead,
         RestaurantsWrite,
+        BranchesRead,
+        BranchesWrite,
         CatalogRead,
         CatalogWrite
     ];
