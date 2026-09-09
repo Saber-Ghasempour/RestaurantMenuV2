@@ -26,4 +26,6 @@ public sealed record PublicBranchMenuResponse(
     string? TwitterUrl = null,
     string DefaultCurrency = "USD",
     string DefaultLocale = "en-US",
-    string TimeZoneId = "Etc/UTC");
+    string TimeZoneId = "Etc/UTC",
+    string? LogoUrl = null,
+    string? CoverUrl = null);

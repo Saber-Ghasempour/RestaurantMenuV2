@@ -22,4 +22,6 @@ public sealed record RestaurantPublicProfile(
     string? Slug = null,
     string DefaultCurrency = "USD",
     string DefaultLocale = "en-US",
-    string TimeZoneId = "Etc/UTC");
+    string TimeZoneId = "Etc/UTC",
+    Guid? LogoMediaId = null,
+    Guid? CoverMediaId = null);

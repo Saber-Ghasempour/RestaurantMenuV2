@@ -130,6 +130,10 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
     public string? TelegramUrl { get; private set; }
     public string? TwitterUrl { get; private set; }
 
+    public Guid? LogoMediaId { get; private set; }
+
+    public Guid? CoverMediaId { get; private set; }
+
     public string? Description { get; private set; }
     public string? About { get; private set; }
     public string? Address { get; private set; }
@@ -137,6 +141,18 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
     public const int MaxDescriptionLength = 500;
     public const int MaxAboutLength = 4000;
     public const int MaxAddressLength = 500;
+
+    public Result<Restaurant> SetBranding(Guid? logoMediaId, Guid? coverMediaId)
+    {
+        if (logoMediaId == Guid.Empty || coverMediaId == Guid.Empty)
+            return Result.Failure<Restaurant>(RestaurantErrors.InvalidMediaReference);
+        if (LogoMediaId == logoMediaId && CoverMediaId == coverMediaId) return Result.Success(this);
+        LogoMediaId = logoMediaId;
+        CoverMediaId = coverMediaId;
+        Version++;
+        RaiseDomainEvent(new RestaurantProfileUpdatedDomainEvent(Id));
+        return Result.Success(this);
+    }
 
     private static string? NormalizeProfileText(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -10,6 +10,7 @@ using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategoryContent;
 using RestaurantMenu.Catalog.Application.Categories.ChangeMenuCategoryPublication;
+using RestaurantMenu.Catalog.Application.Categories.SetMenuCategoryImage;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -82,6 +83,11 @@ public static class MenuCategoryEndpoints
             .Produces<ChangeMenuCategoryPublicationResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPut("/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/image", SetImageAsync)
+            .WithName("SetMenuCategoryImage").WithTags("Catalog")
+            .Produces<UpdateMenuCategoryResponse>().ProducesProblem(404).ProducesProblem(409)
             .RequireRestaurantAccess(Permissions.CatalogWrite);
 
         endpoints.MapDelete(
@@ -268,6 +274,16 @@ public static class MenuCategoryEndpoints
             : Results.Ok(new ChangeMenuCategoryPublicationResponse(
                 categoryId, request.IsPublished, result.Value));
     }
+
+    private static async Task<IResult> SetImageAsync(Guid restaurantId, Guid categoryId,
+        SetMenuCategoryImageRequest request,
+        ICommandHandler<SetMenuCategoryImageCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new SetMenuCategoryImageCommand(restaurantId,
+            new MenuCategoryId(categoryId), request.ImageMediaId, request.ExpectedVersion), cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem() : Results.Ok(new UpdateMenuCategoryResponse(categoryId, result.Value));
+    }
 }
 
 public sealed record CreateMenuCategoryRequest(
@@ -290,6 +306,8 @@ public sealed record UpdateMenuCategoryContentRequest(
 public sealed record ChangeMenuCategoryPublicationRequest(
     bool IsPublished,
     long ExpectedVersion);
+
+public sealed record SetMenuCategoryImageRequest(Guid? ImageMediaId, long ExpectedVersion);
 
 public sealed record ChangeMenuCategoryPublicationResponse(
     Guid Id,

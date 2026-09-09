@@ -37,6 +37,8 @@ public sealed class MenuCategory
 
     public bool IsPublished { get; private set; }
 
+    public Guid? ImageMediaId { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; }
 
     public long Version { get; private set; } = 1;
@@ -178,6 +180,16 @@ public sealed class MenuCategory
         Version++;
         RaiseDomainEvent(new MenuCategoryPublicationChangedDomainEvent(
             Id, RestaurantId, isPublished));
+    }
+
+    public Result<MenuCategory> SetImage(Guid? imageMediaId)
+    {
+        if (imageMediaId == Guid.Empty) return Result.Failure<MenuCategory>(MenuCategoryErrors.InvalidMediaReference);
+        if (ImageMediaId == imageMediaId) return Result.Success(this);
+        ImageMediaId = imageMediaId;
+        Version++;
+        RaiseDomainEvent(new MenuCategoryContentUpdatedDomainEvent(Id, RestaurantId));
+        return Result.Success(this);
     }
 
     public void Delete(DateTimeOffset deletedAtUtc)

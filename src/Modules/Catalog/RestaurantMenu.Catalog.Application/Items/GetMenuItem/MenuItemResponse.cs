@@ -21,4 +21,7 @@ public sealed record MenuItemResponse(
     short? PreparationTimeMinutes = null,
     bool IsFeatured = false,
     bool IsPublished = false,
-    IReadOnlyList<MenuItemVariantResponse>? Variants = null);
+    IReadOnlyList<MenuItemVariantResponse>? Variants = null,
+    IReadOnlyList<MenuItemMediaResponse>? Media = null);
+
+public sealed record MenuItemMediaResponse(Guid MediaAssetId, int DisplayOrder, string? AltText, bool IsPrimary);

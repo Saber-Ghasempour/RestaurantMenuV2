@@ -8,6 +8,12 @@
     <Project Path="src/BuildingBlocks/RestaurantMenu.SharedKernel/RestaurantMenu.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Media/">
+    <Project Path="src/Modules/Media/RestaurantMenu.Media.Application/RestaurantMenu.Media.Application.csproj" />
+    <Project Path="src/Modules/Media/RestaurantMenu.Media.Domain/RestaurantMenu.Media.Domain.csproj" />
+    <Project Path="src/Modules/Media/RestaurantMenu.Media.Infrastructure/RestaurantMenu.Media.Infrastructure.csproj" />
+    <Project Path="src/Modules/Media/RestaurantMenu.Media.Presentation/RestaurantMenu.Media.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Catalog/">
     <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Application/RestaurantMenu.Catalog.Application.csproj" />
     <Project Path="src/Modules/Catalog/RestaurantMenu.Catalog.Domain/RestaurantMenu.Catalog.Domain.csproj" />
@@ -25,6 +31,11 @@
     <Project Path="tests/RestaurantMenu.ArchitectureTests/RestaurantMenu.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Media/">
+    <Project Path="tests/Modules/Media/RestaurantMenu.Media.Application.UnitTests/RestaurantMenu.Media.Application.UnitTests.csproj" />
+    <Project Path="tests/Modules/Media/RestaurantMenu.Media.Domain.UnitTests/RestaurantMenu.Media.Domain.UnitTests.csproj" />
+    <Project Path="tests/Modules/Media/RestaurantMenu.Media.IntegrationTests/RestaurantMenu.Media.IntegrationTests.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/Catalog/">
     <Project Path="tests/Modules/Catalog/RestaurantMenu.Catalog.Application.UnitTests/RestaurantMenu.Catalog.Application.UnitTests.csproj" />
     <Project Path="tests/Modules/Catalog/RestaurantMenu.Catalog.Domain.UnitTests/RestaurantMenu.Catalog.Domain.UnitTests.csproj" />

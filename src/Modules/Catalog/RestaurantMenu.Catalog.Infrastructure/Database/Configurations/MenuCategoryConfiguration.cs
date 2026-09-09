@@ -65,6 +65,7 @@ internal sealed class MenuCategoryConfiguration
             .HasColumnName("is_published")
             .HasDefaultValue(false)
             .IsRequired();
+        builder.Property(category => category.ImageMediaId).HasColumnName("image_media_id");
 
         builder.Property(category => category.DisplayOrder)
             .HasColumnName("display_order")

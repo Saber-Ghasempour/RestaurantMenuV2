@@ -9,4 +9,5 @@ public sealed record MenuCategoryResponse(
     DateTimeOffset CreatedAtUtc,
     long Version,
     string? Description = null,
-    bool IsPublished = false);
+    bool IsPublished = false,
+    Guid? ImageMediaId = null);

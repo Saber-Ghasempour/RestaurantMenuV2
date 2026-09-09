@@ -223,6 +223,12 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
             Id, RestaurantId, CategoryId));
     }
 
+    public void MarkMediaChanged()
+    {
+        Version++;
+        RaiseDomainEvent(new MenuItemUpdatedDomainEvent(Id, RestaurantId, CategoryId));
+    }
+
     public Result<MenuItem> UpdateMetadata(
         string? recipe,
         int? calories,

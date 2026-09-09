@@ -44,6 +44,8 @@ internal sealed class RestaurantConfiguration
         builder.Property(restaurant => restaurant.TimeZoneId)
             .HasColumnName("time_zone_id").HasMaxLength(64)
             .HasDefaultValue(Restaurant.InitialTimeZoneId).IsRequired();
+        builder.Property(restaurant => restaurant.LogoMediaId).HasColumnName("logo_media_id");
+        builder.Property(restaurant => restaurant.CoverMediaId).HasColumnName("cover_media_id");
 
         builder.HasKey(restaurant => restaurant.Id);
 

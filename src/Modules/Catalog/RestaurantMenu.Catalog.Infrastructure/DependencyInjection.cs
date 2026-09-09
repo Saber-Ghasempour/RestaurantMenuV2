@@ -12,6 +12,7 @@ using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategoryContent;
 using RestaurantMenu.Catalog.Application.Categories.ChangeMenuCategoryPublication;
+using RestaurantMenu.Catalog.Application.Categories.SetMenuCategoryImage;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
 using RestaurantMenu.Catalog.Application.Items.DeleteMenuItem;
@@ -20,6 +21,7 @@ using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItemMetadata;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemPublication;
+using RestaurantMenu.Catalog.Application.Items.SetMenuItemMedia;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicMenu;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicBranchMenu;
 using RestaurantMenu.Catalog.Application.Publications;
@@ -76,6 +78,7 @@ public static class DependencyInjection
             MenuItemRepository>();
         services.AddScoped<IMenuItemReadService,
             MenuItemReadService>();
+        services.AddScoped<IMenuItemMediaRepository, MenuItemMediaRepository>();
         services.AddScoped<IMenuItemVariantRepository,
             MenuItemVariantRepository>();
         services.AddScoped<IMenuItemVariantReadService,
@@ -121,6 +124,8 @@ public static class DependencyInjection
         services.AddScoped<
             ICommandHandler<ChangeMenuCategoryPublicationCommand, Result<long>>,
             ChangeMenuCategoryPublicationCommandHandler>();
+        services.AddScoped<ICommandHandler<SetMenuCategoryImageCommand, Result<long>>,
+            SetMenuCategoryImageCommandHandler>();
         services.AddScoped<
             ICommandHandler<
                 DeleteMenuCategoryCommand,
@@ -149,6 +154,8 @@ public static class DependencyInjection
         services.AddScoped<
             ICommandHandler<UpdateMenuItemMetadataCommand, Result<long>>,
             UpdateMenuItemMetadataCommandHandler>();
+        services.AddScoped<ICommandHandler<SetMenuItemMediaCommand, Result<long>>,
+            SetMenuItemMediaCommandHandler>();
         services.AddScoped<
             ICommandHandler<ChangeMenuItemPublicationCommand, Result<long>>,
             ChangeMenuItemPublicationCommandHandler>();

@@ -50,7 +50,9 @@ public sealed class RestaurantReadService
                         candidate.Slug,
                         candidate.DefaultCurrency,
                         candidate.DefaultLocale,
-                        candidate.TimeZoneId
+                        candidate.TimeZoneId,
+                        candidate.LogoMediaId,
+                        candidate.CoverMediaId
                     })
                 .SingleOrDefaultAsync(
                     cancellationToken);
@@ -77,7 +79,9 @@ public sealed class RestaurantReadService
             restaurant.Slug,
             restaurant.DefaultCurrency,
             restaurant.DefaultLocale,
-            restaurant.TimeZoneId);
+            restaurant.TimeZoneId,
+            restaurant.LogoMediaId,
+            restaurant.CoverMediaId);
     }
 
     public async Task<RestaurantsPage> GetPageAsync(

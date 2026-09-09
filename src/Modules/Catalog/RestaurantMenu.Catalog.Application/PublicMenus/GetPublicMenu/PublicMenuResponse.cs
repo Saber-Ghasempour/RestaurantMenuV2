@@ -16,7 +16,9 @@ public sealed record PublicMenuResponse(
     string? Slug = null,
     string DefaultCurrency = "USD",
     string DefaultLocale = "en-US",
-    string TimeZoneId = "Etc/UTC");
+    string TimeZoneId = "Etc/UTC",
+    string? LogoUrl = null,
+    string? CoverUrl = null);
 
 public sealed record PublicMenuCategoryResponse(
     Guid Id,
@@ -24,7 +26,8 @@ public sealed record PublicMenuCategoryResponse(
     string Name,
     int DisplayOrder,
     IReadOnlyList<PublicMenuItemResponse> Items,
-    string? Description = null);
+    string? Description = null,
+    string? ImageUrl = null);
 
 public sealed record PublicMenuItemResponse(
     Guid Id,
@@ -40,7 +43,10 @@ public sealed record PublicMenuItemResponse(
     string? AllergenNotes = null,
     short? PreparationTimeMinutes = null,
     bool IsFeatured = false,
-    IReadOnlyList<PublicMenuVariantResponse>? Variants = null);
+    IReadOnlyList<PublicMenuVariantResponse>? Variants = null,
+    IReadOnlyList<PublicMenuMediaResponse>? Media = null);
+
+public sealed record PublicMenuMediaResponse(string Url, int DisplayOrder, string? AltText, bool IsPrimary);
 
 public sealed record PublicMenuVariantResponse(
     Guid Id,

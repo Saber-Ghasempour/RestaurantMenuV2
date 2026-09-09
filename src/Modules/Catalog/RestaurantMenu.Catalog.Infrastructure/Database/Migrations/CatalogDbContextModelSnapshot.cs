@@ -46,6 +46,10 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("display_order");
 
+                    b.Property<Guid?>("ImageMediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("image_media_id");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -202,6 +206,47 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Items.MenuItemMedia", b =>
+                {
+                    b.Property<Guid>("MenuItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("menu_item_id");
+
+                    b.Property<Guid>("MediaAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("media_asset_id");
+
+                    b.Property<string>("AltText")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("alt_text");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restaurant_id");
+
+                    b.HasKey("MenuItemId", "MediaAssetId");
+
+                    b.HasIndex("RestaurantId", "MenuItemId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_menu_item_media_primary")
+                        .HasFilter("is_primary");
+
+                    b.HasIndex("RestaurantId", "MenuItemId", "DisplayOrder")
+                        .IsUnique()
+                        .HasDatabaseName("ux_menu_item_media_order");
+
+                    b.ToTable("menu_item_media", "catalog");
+                });
+
             modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Publications.BranchCategoryPublication", b =>
                 {
                     b.Property<Guid>("BranchId")
@@ -350,6 +395,16 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Items.MenuItemMedia", b =>
+                {
+                    b.HasOne("RestaurantMenu.Catalog.Domain.Items.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId", "MenuItemId")
+                        .HasPrincipalKey("RestaurantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

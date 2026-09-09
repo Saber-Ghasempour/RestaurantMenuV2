@@ -7,6 +7,7 @@ using RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantDefaults;
+using RestaurantMenu.Restaurants.Application.Restaurants.SetRestaurantBranding;
 using RestaurantMenu.Application.Abstractions.Security;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -121,6 +122,11 @@ public static class RestaurantsEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
+        group.MapPut("/{restaurantId:guid}/branding", SetBrandingAsync)
+            .WithName("SetRestaurantBranding").Produces<UpdateRestaurantResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
+
         return endpoints;
     }
 
@@ -194,6 +200,16 @@ public static class RestaurantsEndpoints
         return result.IsFailure
             ? result.Error.ToProblem()
             : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
+    }
+
+    private static async Task<IResult> SetBrandingAsync(Guid restaurantId,
+        SetRestaurantBrandingRequest request,
+        ICommandHandler<SetRestaurantBrandingCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new SetRestaurantBrandingCommand(new RestaurantId(restaurantId),
+            request.LogoMediaId, request.CoverMediaId, request.ExpectedVersion), cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem() : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
     }
 
     private static async Task<IResult> CreateRestaurantAsync(
@@ -272,7 +288,9 @@ public static class RestaurantsEndpoints
                 result.Value.Slug,
                 result.Value.DefaultCurrency,
                 result.Value.DefaultLocale,
-                result.Value.TimeZoneId);
+                result.Value.TimeZoneId,
+                result.Value.LogoMediaId,
+                result.Value.CoverMediaId);
 
         return Results.Ok(response);
     }
@@ -398,6 +416,11 @@ public sealed record UpdateRestaurantDefaultsRequest(
     string? TimeZoneId,
     long ExpectedVersion);
 
+public sealed record SetRestaurantBrandingRequest(
+    Guid? LogoMediaId,
+    Guid? CoverMediaId,
+    long ExpectedVersion);
+
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
@@ -419,7 +442,9 @@ public sealed record GetRestaurantResponse(
     string? Slug,
     string DefaultCurrency,
     string DefaultLocale,
-    string TimeZoneId);
+    string TimeZoneId,
+    Guid? LogoMediaId,
+    Guid? CoverMediaId);
 
 public sealed record UpdateRestaurantProfileRequest(
     string? Description,

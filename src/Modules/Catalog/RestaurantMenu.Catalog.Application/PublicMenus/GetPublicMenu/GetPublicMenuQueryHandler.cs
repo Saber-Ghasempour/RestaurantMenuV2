@@ -60,6 +60,12 @@ public sealed class GetPublicMenuQueryHandler
                 restaurant.Slug,
                 restaurant.DefaultCurrency,
                 restaurant.DefaultLocale,
-                restaurant.TimeZoneId));
+                restaurant.TimeZoneId,
+                PublicUrl(restaurant.Id, restaurant.LogoMediaId),
+                PublicUrl(restaurant.Id, restaurant.CoverMediaId)));
     }
+
+    private static string? PublicUrl(Guid restaurantId, Guid? mediaId) => mediaId.HasValue
+        ? $"/api/public/restaurants/{restaurantId}/media-assets/{mediaId.Value}"
+        : null;
 }

@@ -52,6 +52,8 @@ public sealed class BranchPublicProfileProvider(
                 restaurant.TwitterUrl,
                 restaurant.DefaultCurrency,
                 restaurant.DefaultLocale,
-                branch.TimeZoneId ?? restaurant.TimeZoneId);
+                branch.TimeZoneId ?? restaurant.TimeZoneId,
+                restaurant.LogoMediaId,
+                restaurant.CoverMediaId);
     }
 }

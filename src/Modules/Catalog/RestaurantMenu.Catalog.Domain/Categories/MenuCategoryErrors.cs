@@ -33,4 +33,7 @@ public static class MenuCategoryErrors
         ErrorDetail.Validation(
             "Catalog.CategoryCannotBeOwnParent",
             "A menu category cannot be its own parent.");
+
+    public static readonly ErrorDetail InvalidMediaReference =
+        ErrorDetail.Validation("Catalog.InvalidCategoryMediaReference", "A Category media identifier cannot be empty.");
 }

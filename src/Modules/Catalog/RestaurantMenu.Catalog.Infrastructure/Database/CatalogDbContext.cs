@@ -28,6 +28,8 @@ public sealed class CatalogDbContext
 
     public DbSet<MenuItemVariant> MenuItemVariants => Set<MenuItemVariant>();
 
+    public DbSet<MenuItemMedia> MenuItemMedia => Set<MenuItemMedia>();
+
     public DbSet<BranchCategoryPublication> BranchCategoryPublications =>
         Set<BranchCategoryPublication>();
 

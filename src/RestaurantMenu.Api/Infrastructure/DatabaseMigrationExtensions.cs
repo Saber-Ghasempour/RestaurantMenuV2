@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
+using RestaurantMenu.Media.Infrastructure.Database;
 
 namespace RestaurantMenu.Api.Infrastructure;
 
@@ -21,8 +22,10 @@ public static class DatabaseMigrationExtensions
         var catalogDbContext =
             scope.ServiceProvider.GetRequiredService<
                 CatalogDbContext>();
+        var mediaDbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
 
         await restaurantsDbContext.Database.MigrateAsync();
         await catalogDbContext.Database.MigrateAsync();
+        await mediaDbContext.Database.MigrateAsync();
     }
 }

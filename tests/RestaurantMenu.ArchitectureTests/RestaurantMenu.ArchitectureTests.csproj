@@ -27,6 +27,10 @@
     <ProjectReference Include="..\..\src\Modules\Catalog\RestaurantMenu.Catalog.Application\RestaurantMenu.Catalog.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\RestaurantMenu.Catalog.Infrastructure\RestaurantMenu.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Catalog\RestaurantMenu.Catalog.Presentation\RestaurantMenu.Catalog.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Media\RestaurantMenu.Media.Domain\RestaurantMenu.Media.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Media\RestaurantMenu.Media.Application\RestaurantMenu.Media.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Media\RestaurantMenu.Media.Infrastructure\RestaurantMenu.Media.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Media\RestaurantMenu.Media.Presentation\RestaurantMenu.Media.Presentation.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
   </ItemGroup>

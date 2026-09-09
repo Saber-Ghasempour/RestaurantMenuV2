@@ -24,6 +24,12 @@ using RestaurantMenu.Restaurants.Presentation.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Branches;
 using RestaurantMenu.Restaurants.Presentation.DiningTables;
 using RestaurantMenu.Restaurants.Presentation.PublicMenuCodes;
+using RestaurantMenu.Media.Infrastructure;
+using RestaurantMenu.Media.Infrastructure.Database;
+using RestaurantMenu.Media.Infrastructure.Storage;
+using RestaurantMenu.Media.Presentation.Assets;
+using RestaurantMenu.Api.Integrations.Media;
+using RestaurantMenu.Media.Application.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +50,7 @@ var restaurantsConnectionString = builder.Configuration.GetConnectionString(
 var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog")
     ?? throw new InvalidOperationException(
         "Connection string 'Catalog' is not configured.");
+var mediaConnectionString = builder.Configuration.GetConnectionString("Media") ?? catalogConnectionString;
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException(
         "Connection string 'Redis' is not configured.");
@@ -95,6 +102,17 @@ builder.Services.AddRestaurantsInfrastructure(
 builder.Services.AddCatalogInfrastructure(
     catalogConnectionString,
     restaurantCacheTimeToLive);
+builder.Services.AddMediaInfrastructure(mediaConnectionString, new ObjectStorageOptions(
+    builder.Configuration["ObjectStorage:BucketName"] ?? "restaurant-menu-media",
+    builder.Configuration["ObjectStorage:ServiceUrl"] ?? "http://localhost:9000",
+    builder.Configuration["ObjectStorage:AccessKey"] ?? "minioadmin",
+    builder.Configuration["ObjectStorage:SecretKey"] ?? "minioadmin",
+    PublicServiceUrl: builder.Configuration["ObjectStorage:PublicServiceUrl"]));
+builder.Services.AddScoped<MediaAssetIntegrationService>();
+builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
+builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
+builder.Services.AddScoped<IMediaReferenceChecker>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
+builder.Services.AddScoped<IPublicMediaReferenceChecker>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<
     IRestaurantExistenceChecker,
     RestaurantExistenceChecker>();
@@ -118,6 +136,7 @@ builder.Services
     .AddDbContextCheck<CatalogDbContext>(
         "catalog-database",
         tags: ["ready"])
+    .AddDbContextCheck<MediaDbContext>("media-database", tags: ["ready"])
     .AddCheck<RedisHealthCheck>(
         "redis",
         tags: ["ready"]);
@@ -158,6 +177,7 @@ app.MapMenuItemEndpoints();
 app.MapMenuItemVariantEndpoints();
 app.MapPublicMenuEndpoints();
 app.MapBranchCategoryPublicationEndpoints();
+app.MapMediaAssetEndpoints();
 app.MapPublicMenuSlugEndpoints();
 app.MapPublicMenuCodeMenuEndpoints();
 app.MapHealthChecks(

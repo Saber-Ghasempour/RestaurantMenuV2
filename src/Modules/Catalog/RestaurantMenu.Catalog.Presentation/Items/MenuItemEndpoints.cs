@@ -10,6 +10,7 @@ using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItemMetadata;
+using RestaurantMenu.Catalog.Application.Items.SetMenuItemMedia;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemPublication;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
@@ -67,6 +68,14 @@ public static class MenuItemEndpoints
                 StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPut(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}/media",
+                SetMenuItemMediaAsync)
+            .WithName("SetMenuItemMedia").WithTags("Catalog")
+            .Produces<UpdateMenuItemResponse>().ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.CatalogWrite);
 
         endpoints.MapPut(
@@ -318,6 +327,17 @@ public static class MenuItemEndpoints
             : Results.Ok(new ChangeMenuItemPublicationResponse(
                 menuItemId, request.IsPublished, result.Value));
     }
+
+    private static async Task<IResult> SetMenuItemMediaAsync(Guid restaurantId, Guid categoryId,
+        Guid menuItemId, SetMenuItemMediaRequest request,
+        ICommandHandler<SetMenuItemMediaCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var media = request.Media.Select(x => new MenuItemMediaInput(x.MediaAssetId, x.DisplayOrder, x.AltText, x.IsPrimary)).ToArray();
+        var result = await handler.Handle(new SetMenuItemMediaCommand(restaurantId, new(categoryId),
+            new(menuItemId), media, request.ExpectedVersion), cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem() : Results.Ok(new UpdateMenuItemResponse(menuItemId, result.Value));
+    }
 }
 
 public sealed record CreateMenuItemRequest(
@@ -367,3 +387,6 @@ public sealed record ChangeMenuItemPublicationResponse(
     Guid Id,
     bool IsPublished,
     long Version);
+
+public sealed record SetMenuItemMediaRequest(IReadOnlyList<MenuItemMediaRequest> Media, long ExpectedVersion);
+public sealed record MenuItemMediaRequest(Guid MediaAssetId, int DisplayOrder, string? AltText, bool IsPrimary);

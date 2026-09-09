@@ -313,6 +313,10 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("address");
 
+                    b.Property<Guid?>("CoverMediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cover_media_id");
+
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -356,6 +360,10 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_deleted");
+
+                    b.Property<Guid?>("LogoMediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("logo_media_id");
 
                     b.Property<string>("Name")
                         .IsRequired()

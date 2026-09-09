@@ -38,10 +38,11 @@ public sealed class HealthCheckTests
     }
 
     [Fact]
-    public async Task ReadinessShouldReportBothDatabasesHealthy()
+    public async Task ReadinessShouldReportAllDatabasesHealthy()
     {
         await _factory.MigrateDatabaseAsync();
         await _factory.MigrateCatalogDatabaseAsync();
+        await _factory.MigrateMediaDatabaseAsync();
 
         using var client = _factory.CreateClient();
 
@@ -54,13 +55,16 @@ public sealed class HealthCheckTests
 
         Assert.NotNull(health);
         Assert.Equal("Healthy", health.Status);
-        Assert.Equal(3, health.Checks.Count);
+        Assert.Equal(4, health.Checks.Count);
         Assert.Equal(
             "Healthy",
             health.Checks["restaurants-database"].Status);
         Assert.Equal(
             "Healthy",
             health.Checks["catalog-database"].Status);
+        Assert.Equal(
+            "Healthy",
+            health.Checks["media-database"].Status);
         Assert.Equal(
             "Healthy",
             health.Checks["redis"].Status);

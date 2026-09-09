@@ -180,6 +180,10 @@ public static class DependencyInjection
         services.AddScoped<
             ICommandHandler<UpdateRestaurantDefaultsCommand, Result<long>>,
             UpdateRestaurantDefaultsCommandHandler>();
+        services.AddScoped<ICommandHandler<
+            RestaurantMenu.Restaurants.Application.Restaurants.SetRestaurantBranding.SetRestaurantBrandingCommand,
+            Result<long>>,
+            RestaurantMenu.Restaurants.Application.Restaurants.SetRestaurantBranding.SetRestaurantBrandingCommandHandler>();
 
         services.AddScoped<
             ICommandHandler<

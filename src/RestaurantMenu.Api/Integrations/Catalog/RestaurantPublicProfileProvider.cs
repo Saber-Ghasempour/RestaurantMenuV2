@@ -33,6 +33,8 @@ public sealed class RestaurantPublicProfileProvider(
                 restaurant.Slug,
                 restaurant.DefaultCurrency,
                 restaurant.DefaultLocale,
-                restaurant.TimeZoneId);
+                restaurant.TimeZoneId,
+                restaurant.LogoMediaId,
+                restaurant.CoverMediaId);
     }
 }

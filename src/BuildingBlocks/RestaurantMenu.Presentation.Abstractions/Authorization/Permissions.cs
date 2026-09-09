@@ -22,6 +22,10 @@ public static class Permissions
 
     public const string CatalogWrite = "catalog.write";
 
+    public const string MediaRead = "media.read";
+
+    public const string MediaWrite = "media.write";
+
     public static readonly IReadOnlyList<string> All =
     [
         RestaurantsRead,
@@ -33,6 +37,8 @@ public static class Permissions
         PublicMenuCodesRead,
         PublicMenuCodesWrite,
         CatalogRead,
-        CatalogWrite
+        CatalogWrite,
+        MediaRead,
+        MediaWrite
     ];
 }

@@ -19,4 +19,6 @@ public sealed record RestaurantResponse(
     string? Slug = null,
     string DefaultCurrency = Restaurant.InitialDefaultCurrency,
     string DefaultLocale = Restaurant.InitialDefaultLocale,
-    string TimeZoneId = Restaurant.InitialTimeZoneId);
+    string TimeZoneId = Restaurant.InitialTimeZoneId,
+    Guid? LogoMediaId = null,
+    Guid? CoverMediaId = null);

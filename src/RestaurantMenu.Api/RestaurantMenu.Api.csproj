@@ -33,6 +33,9 @@
     <ProjectReference Include="..\Modules\Catalog\RestaurantMenu.Catalog.Presentation\RestaurantMenu.Catalog.Presentation.csproj" />
     <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Application\RestaurantMenu.Restaurants.Application.csproj" />
     <ProjectReference Include="..\Modules\Restaurants\RestaurantMenu.Restaurants.Domain\RestaurantMenu.Restaurants.Domain.csproj" />
+    <ProjectReference Include="..\Modules\Media\RestaurantMenu.Media.Application\RestaurantMenu.Media.Application.csproj" />
+    <ProjectReference Include="..\Modules\Media\RestaurantMenu.Media.Infrastructure\RestaurantMenu.Media.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Media\RestaurantMenu.Media.Presentation\RestaurantMenu.Media.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

@@ -15,6 +15,8 @@ using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Domain.Branches;
+using RestaurantMenu.Media.Infrastructure.Database;
+using RestaurantMenu.Media.Domain.Assets;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -150,6 +152,27 @@ public sealed class TestWebApplicationFactory
                 CatalogDbContext>();
 
         await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task MigrateMediaDatabaseAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task<MediaAsset> SeedReadyMediaAssetAsync(Guid restaurantId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        const string hash = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        var asset = MediaAsset.Initiate(MediaAssetId.New(), restaurantId,
+            $"restaurants/{restaurantId:N}/{Guid.CreateVersion7():N}", "seed.png",
+            "image/png", 68, hash, TestAuthenticationHandler.DefaultSubject, DateTimeOffset.UtcNow).Value;
+        asset.Complete("image/png", 68, hash, 1, 1);
+        dbContext.MediaAssets.Add(asset);
+        await dbContext.SaveChangesAsync();
+        return asset;
     }
 
     public async Task<MenuCategory?> FindMenuCategoryAsync(

@@ -17,7 +17,9 @@
         { "name": "public-menu-codes.read" },
         { "name": "public-menu-codes.write" },
         { "name": "catalog.read" },
-        { "name": "catalog.write" }
+        { "name": "catalog.write" },
+        { "name": "media.read" },
+        { "name": "media.write" }
       ]
     }
   },
@@ -142,7 +144,9 @@
           "public-menu-codes.read",
           "public-menu-codes.write",
           "catalog.read",
-          "catalog.write"
+          "catalog.write",
+          "media.read",
+          "media.write"
         ]
       }
     },
@@ -154,7 +158,8 @@
         "restaurant-menu-api": [
           "restaurants.read",
           "branches.read",
-          "catalog.read"
+          "catalog.read",
+          "media.read"
         ]
       }
     }

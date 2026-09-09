@@ -30,7 +30,8 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
                     : (Guid?)null,
                 category.Name,
                 category.DisplayOrder,
-                category.Description
+                category.Description,
+                category.ImageMediaId
             })
             .ToArrayAsync(cancellationToken);
 
@@ -85,6 +86,12 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
         var menuItemsByCategory = menuItems.ToLookup(
             menuItem => menuItem.CategoryId);
         var variantsByItem = variants.ToLookup(variant => variant.MenuItemId);
+        var media = await dbContext.MenuItemMedia.AsNoTracking()
+            .Where(x => x.RestaurantId == restaurantId)
+            .OrderBy(x => x.DisplayOrder).ThenBy(x => x.MediaAssetId)
+            .Select(x => new { MenuItemId = x.MenuItemId.Value, x.MediaAssetId,
+                x.DisplayOrder, x.AltText, x.IsPrimary }).ToArrayAsync(cancellationToken);
+        var mediaByItem = media.ToLookup(x => x.MenuItemId);
 
         return categories
             .Select(category => new PublicMenuCategoryResponse(
@@ -108,10 +115,16 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
                                 variant.Id, variant.Name, variant.Description,
                                 variant.PriceAmount, variant.Currency,
                                 variant.DisplayOrder, variant.IsDefault,
-                                variant.IsAvailable)).ToArray());
+                                variant.IsAvailable)).ToArray(),
+                            mediaByItem[menuItem.Id].Select(link => new PublicMenuMediaResponse(
+                                $"/api/public/restaurants/{restaurantId}/media-assets/{link.MediaAssetId}",
+                                link.DisplayOrder, link.AltText, link.IsPrimary)).ToArray());
                     })
                     .ToArray(),
-                category.Description))
+                category.Description,
+                category.ImageMediaId.HasValue
+                    ? $"/api/public/restaurants/{restaurantId}/media-assets/{category.ImageMediaId.Value}"
+                    : null))
             .ToArray();
     }
 }

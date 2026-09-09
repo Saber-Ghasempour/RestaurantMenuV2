@@ -29,6 +29,9 @@ public static class RestaurantErrors
             "Restaurants.InvalidTimeZone",
             "The time zone must be a recognized IANA time-zone identifier up to 64 characters.");
 
+    public static readonly ErrorDetail InvalidMediaReference =
+        ErrorDetail.Validation("Restaurants.InvalidMediaReference", "Media identifiers cannot be empty.");
+
     public static ErrorDetail NotFound(
         RestaurantId restaurantId) =>
         ErrorDetail.NotFound(

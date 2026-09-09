@@ -31,4 +31,6 @@ public sealed record BranchPublicProfile(
     string? TwitterUrl = null,
     string DefaultCurrency = "USD",
     string DefaultLocale = "en-US",
-    string TimeZoneId = "Etc/UTC");
+    string TimeZoneId = "Etc/UTC",
+    Guid? LogoMediaId = null,
+    Guid? CoverMediaId = null);

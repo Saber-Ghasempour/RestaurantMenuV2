@@ -64,9 +64,15 @@ public sealed class GetPublicBranchMenuQueryHandler(
             profile.TwitterUrl,
             profile.DefaultCurrency,
             profile.DefaultLocale,
-            profile.TimeZoneId);
+            profile.TimeZoneId,
+            PublicUrl(profile.RestaurantId, profile.LogoMediaId),
+            PublicUrl(profile.RestaurantId, profile.CoverMediaId));
 
         await cache.SetAsync(response, cancellationToken);
         return Result.Success(response);
     }
+
+    private static string? PublicUrl(Guid restaurantId, Guid? mediaId) => mediaId.HasValue
+        ? $"/api/public/restaurants/{restaurantId}/media-assets/{mediaId.Value}"
+        : null;
 }

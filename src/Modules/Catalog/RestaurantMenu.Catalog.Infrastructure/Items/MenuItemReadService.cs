@@ -63,6 +63,13 @@ public sealed class MenuItemReadService(CatalogDbContext dbContext)
                 variant.IsAvailable, variant.CreatedAtUtc, variant.Version))
             .ToArrayAsync(cancellationToken);
         var byItem = variants.ToLookup(variant => variant.MenuItemId);
+        var media = await dbContext.MenuItemMedia.AsNoTracking()
+            .Where(x => x.RestaurantId == restaurantId && (!menuItemId.HasValue || x.MenuItemId == menuItemId.Value))
+            .OrderBy(x => x.DisplayOrder).ThenBy(x => x.MediaAssetId)
+            .Select(x => new { MenuItemId = x.MenuItemId.Value,
+                Value = new MenuItemMediaResponse(x.MediaAssetId, x.DisplayOrder, x.AltText, x.IsPrimary) })
+            .ToArrayAsync(cancellationToken);
+        var mediaByItem = media.ToLookup(x => x.MenuItemId, x => x.Value);
 
         return items.Select(item =>
         {
@@ -74,7 +81,7 @@ public sealed class MenuItemReadService(CatalogDbContext dbContext)
                 defaultVariant.Currency, item.DisplayOrder, item.IsAvailable,
                 item.CreatedAtUtc, item.Version, item.Recipe, item.Calories,
                 item.Tags, item.AllergenNotes, item.PreparationTimeMinutes,
-                item.IsFeatured, item.IsPublished, itemVariants);
+                item.IsFeatured, item.IsPublished, itemVariants, mediaByItem[item.Id].ToArray());
         }).ToArray();
     }
 }
