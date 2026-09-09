@@ -11,6 +11,7 @@ services:
       ConnectionStrings__Restaurants: Host=postgres;Port=5432;Database=restaurantmenu;Username=postgres;Password=${POSTGRES_PASSWORD:-restaurantmenu_dev}
       ConnectionStrings__Catalog: Host=postgres;Port=5432;Database=restaurantmenu;Username=postgres;Password=${POSTGRES_PASSWORD:-restaurantmenu_dev}
       ConnectionStrings__Media: Host=postgres;Port=5432;Database=restaurantmenu;Username=postgres;Password=${POSTGRES_PASSWORD:-restaurantmenu_dev}
+      ConnectionStrings__Ordering: Host=postgres;Port=5432;Database=restaurantmenu;Username=postgres;Password=${POSTGRES_PASSWORD:-restaurantmenu_dev}
       ConnectionStrings__Redis: redis:6379,abortConnect=false
       Database__ApplyMigrations: "true"
       HttpsRedirection__Enabled: "false"

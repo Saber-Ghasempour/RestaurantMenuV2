@@ -43,6 +43,7 @@ public sealed class HealthCheckTests
         await _factory.MigrateDatabaseAsync();
         await _factory.MigrateCatalogDatabaseAsync();
         await _factory.MigrateMediaDatabaseAsync();
+        await _factory.MigrateOrderingDatabaseAsync();
 
         using var client = _factory.CreateClient();
 
@@ -55,7 +56,7 @@ public sealed class HealthCheckTests
 
         Assert.NotNull(health);
         Assert.Equal("Healthy", health.Status);
-        Assert.Equal(4, health.Checks.Count);
+        Assert.Equal(5, health.Checks.Count);
         Assert.Equal(
             "Healthy",
             health.Checks["restaurants-database"].Status);
@@ -65,6 +66,9 @@ public sealed class HealthCheckTests
         Assert.Equal(
             "Healthy",
             health.Checks["media-database"].Status);
+        Assert.Equal(
+            "Healthy",
+            health.Checks["ordering-database"].Status);
         Assert.Equal(
             "Healthy",
             health.Checks["redis"].Status);

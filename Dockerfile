@@ -13,6 +13,14 @@ COPY ["src/Modules/Catalog/RestaurantMenu.Catalog.Domain/RestaurantMenu.Catalog.
 COPY ["src/Modules/Catalog/RestaurantMenu.Catalog.Application/RestaurantMenu.Catalog.Application.csproj", "src/Modules/Catalog/RestaurantMenu.Catalog.Application/"]
 COPY ["src/Modules/Catalog/RestaurantMenu.Catalog.Infrastructure/RestaurantMenu.Catalog.Infrastructure.csproj", "src/Modules/Catalog/RestaurantMenu.Catalog.Infrastructure/"]
 COPY ["src/Modules/Catalog/RestaurantMenu.Catalog.Presentation/RestaurantMenu.Catalog.Presentation.csproj", "src/Modules/Catalog/RestaurantMenu.Catalog.Presentation/"]
+COPY ["src/Modules/Media/RestaurantMenu.Media.Domain/RestaurantMenu.Media.Domain.csproj", "src/Modules/Media/RestaurantMenu.Media.Domain/"]
+COPY ["src/Modules/Media/RestaurantMenu.Media.Application/RestaurantMenu.Media.Application.csproj", "src/Modules/Media/RestaurantMenu.Media.Application/"]
+COPY ["src/Modules/Media/RestaurantMenu.Media.Infrastructure/RestaurantMenu.Media.Infrastructure.csproj", "src/Modules/Media/RestaurantMenu.Media.Infrastructure/"]
+COPY ["src/Modules/Media/RestaurantMenu.Media.Presentation/RestaurantMenu.Media.Presentation.csproj", "src/Modules/Media/RestaurantMenu.Media.Presentation/"]
+COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Domain/RestaurantMenu.Ordering.Domain.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Domain/"]
+COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Application/RestaurantMenu.Ordering.Application.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Application/"]
+COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Infrastructure/RestaurantMenu.Ordering.Infrastructure.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Infrastructure/"]
+COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Presentation/RestaurantMenu.Ordering.Presentation.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Presentation/"]
 COPY ["src/RestaurantMenu.Api/RestaurantMenu.Api.csproj", "src/RestaurantMenu.Api/"]
 
 RUN dotnet restore "src/RestaurantMenu.Api/RestaurantMenu.Api.csproj"

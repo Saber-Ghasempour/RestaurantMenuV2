@@ -30,6 +30,11 @@ using RestaurantMenu.Media.Infrastructure.Storage;
 using RestaurantMenu.Media.Presentation.Assets;
 using RestaurantMenu.Api.Integrations.Media;
 using RestaurantMenu.Media.Application.Abstractions;
+using RestaurantMenu.Ordering.Application.Abstractions;
+using RestaurantMenu.Ordering.Infrastructure;
+using RestaurantMenu.Ordering.Infrastructure.Database;
+using RestaurantMenu.Ordering.Presentation.DiningSessions;
+using RestaurantMenu.Api.Integrations.Ordering;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +56,7 @@ var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog
     ?? throw new InvalidOperationException(
         "Connection string 'Catalog' is not configured.");
 var mediaConnectionString = builder.Configuration.GetConnectionString("Media") ?? catalogConnectionString;
+var orderingConnectionString = builder.Configuration.GetConnectionString("Ordering") ?? restaurantsConnectionString;
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException(
         "Connection string 'Redis' is not configured.");
@@ -88,7 +94,13 @@ builder.Services.AddRateLimiter(options => options.AddPolicy("public-menu-code-r
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0,
             AutoReplenishment = true
-        })));
+        }))
+    .AddPolicy("dining-session-start", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }))
+    .AddPolicy("dining-session-use", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true })));
 builder.Services.AddRestaurantMenuAuthentication(
     builder.Configuration);
 builder.Services.AddRestaurantMenuObservability(
@@ -108,6 +120,9 @@ builder.Services.AddMediaInfrastructure(mediaConnectionString, new ObjectStorage
     builder.Configuration["ObjectStorage:AccessKey"] ?? "minioadmin",
     builder.Configuration["ObjectStorage:SecretKey"] ?? "minioadmin",
     PublicServiceUrl: builder.Configuration["ObjectStorage:PublicServiceUrl"]));
+builder.Services.AddOrderingInfrastructure(orderingConnectionString,
+    builder.Configuration.GetValue("DiningSessions:Lifetime", TimeSpan.FromHours(2)));
+builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>();
 builder.Services.AddScoped<MediaAssetIntegrationService>();
 builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
@@ -137,6 +152,7 @@ builder.Services
         "catalog-database",
         tags: ["ready"])
     .AddDbContextCheck<MediaDbContext>("media-database", tags: ["ready"])
+    .AddDbContextCheck<OrderingDbContext>("ordering-database", tags: ["ready"])
     .AddCheck<RedisHealthCheck>(
         "redis",
         tags: ["ready"]);
@@ -180,6 +196,7 @@ app.MapBranchCategoryPublicationEndpoints();
 app.MapMediaAssetEndpoints();
 app.MapPublicMenuSlugEndpoints();
 app.MapPublicMenuCodeMenuEndpoints();
+app.MapDiningSessionEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

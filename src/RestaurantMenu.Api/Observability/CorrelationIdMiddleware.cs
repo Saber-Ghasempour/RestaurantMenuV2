@@ -71,7 +71,9 @@ public sealed partial class CorrelationIdMiddleware
             : path.StartsWithSegments(
                 "/api/public/menu-codes",
                 out var publicCodePath) && publicCodePath.HasValue
-                ? "/api/public/menu-codes/{code}/menu"
+                ? publicCodePath.Value!.EndsWith("/sessions", StringComparison.OrdinalIgnoreCase)
+                    ? "/api/public/menu-codes/{code}/sessions"
+                    : "/api/public/menu-codes/{code}/menu"
             : path.Value ?? string.Empty;
 
     public static string? GetCorrelationId(HttpContext context)

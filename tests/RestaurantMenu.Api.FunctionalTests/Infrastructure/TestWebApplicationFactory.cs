@@ -17,6 +17,8 @@ using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.Restaurants.Domain.Branches;
 using RestaurantMenu.Media.Infrastructure.Database;
 using RestaurantMenu.Media.Domain.Assets;
+using RestaurantMenu.Ordering.Infrastructure.Database;
+using RestaurantMenu.Ordering.Domain.DiningSessions;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -159,6 +161,21 @@ public sealed class TestWebApplicationFactory
         await using var scope = Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
         await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task MigrateOrderingDatabaseAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        await dbContext.Database.MigrateAsync();
+    }
+
+    public async Task<DiningSession?> FindDiningSessionAsync(Guid sessionId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        return await dbContext.DiningSessions.AsNoTracking()
+            .SingleOrDefaultAsync(session => session.Id == new DiningSessionId(sessionId));
     }
 
     public async Task<MediaAsset> SeedReadyMediaAssetAsync(Guid restaurantId)
