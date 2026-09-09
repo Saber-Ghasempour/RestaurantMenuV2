@@ -83,6 +83,9 @@ public sealed class RestaurantRepositoryTests : IAsyncLifetime
         Assert.Equal(
             "Integration Test Restaurant",
             persistedRestaurant.Name);
+        Assert.Equal("USD", persistedRestaurant.DefaultCurrency);
+        Assert.Equal("en-US", persistedRestaurant.DefaultLocale);
+        Assert.Equal("Etc/UTC", persistedRestaurant.TimeZoneId);
     }
 
     [Fact]

@@ -34,4 +34,16 @@ public static class MenuCategoryApplicationErrors
         ErrorDetail.Conflict(
             "Catalog.CategoryHasChildren",
             $"Menu category with identifier '{categoryId.Value}' cannot be deleted while it has active child categories.");
+
+    public static ErrorDetail PublicationRequiresPublishedParent(
+        MenuCategoryId categoryId) =>
+        ErrorDetail.Validation(
+            "Catalog.CategoryPublicationRequiresPublishedParent",
+            $"Menu category with identifier '{categoryId.Value}' cannot be published while its parent is unpublished.");
+
+    public static ErrorDetail HasPublishedChildren(
+        MenuCategoryId categoryId) =>
+        ErrorDetail.Conflict(
+            "Catalog.CategoryHasPublishedChildren",
+            $"Menu category with identifier '{categoryId.Value}' cannot be unpublished while it has published children.");
 }

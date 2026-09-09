@@ -118,6 +118,11 @@ public sealed class ListMenuItemsQueryHandlerTests
             MenuCategoryId categoryId,
             CancellationToken cancellationToken) =>
             Task.FromResult(false);
+
+        public Task<bool> HasPublishedChildrenAsync(
+            MenuCategoryId categoryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(false);
     }
 
     private sealed class MenuItemReadServiceStub(

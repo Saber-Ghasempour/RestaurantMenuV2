@@ -13,4 +13,8 @@ public interface IMenuCategoryRepository
     Task<bool> HasChildrenAsync(
         MenuCategoryId categoryId,
         CancellationToken cancellationToken);
+
+    Task<bool> HasPublishedChildrenAsync(
+        MenuCategoryId categoryId,
+        CancellationToken cancellationToken);
 }

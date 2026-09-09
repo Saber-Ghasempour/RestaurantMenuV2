@@ -8,6 +8,8 @@ using RestaurantMenu.Catalog.Application.Categories.DeleteMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
+using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategoryContent;
+using RestaurantMenu.Catalog.Application.Categories.ChangeMenuCategoryPublication;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -59,6 +61,27 @@ public static class MenuCategoryEndpoints
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
                 StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPut(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/content",
+                UpdateMenuCategoryContentAsync)
+            .WithName("UpdateMenuCategoryContent")
+            .WithTags("Catalog")
+            .Produces<UpdateMenuCategoryResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPatch(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/publication",
+                ChangeMenuCategoryPublicationAsync)
+            .WithName("ChangeMenuCategoryPublication")
+            .WithTags("Catalog")
+            .Produces<ChangeMenuCategoryPublicationResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.CatalogWrite);
 
         endpoints.MapDelete(
@@ -214,6 +237,37 @@ public static class MenuCategoryEndpoints
             ? result.Error.ToProblem()
             : Results.NoContent();
     }
+
+    private static async Task<IResult> UpdateMenuCategoryContentAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        UpdateMenuCategoryContentRequest request,
+        ICommandHandler<UpdateMenuCategoryContentCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new UpdateMenuCategoryContentCommand(
+            restaurantId, new MenuCategoryId(categoryId), request.Description,
+            request.ExpectedVersion), cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new UpdateMenuCategoryResponse(categoryId, result.Value));
+    }
+
+    private static async Task<IResult> ChangeMenuCategoryPublicationAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        ChangeMenuCategoryPublicationRequest request,
+        ICommandHandler<ChangeMenuCategoryPublicationCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new ChangeMenuCategoryPublicationCommand(
+            restaurantId, new MenuCategoryId(categoryId), request.IsPublished,
+            request.ExpectedVersion), cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new ChangeMenuCategoryPublicationResponse(
+                categoryId, request.IsPublished, result.Value));
+    }
 }
 
 public sealed record CreateMenuCategoryRequest(
@@ -228,6 +282,19 @@ public sealed record UpdateMenuCategoryRequest(
     string? Name,
     int DisplayOrder,
     long ExpectedVersion);
+
+public sealed record UpdateMenuCategoryContentRequest(
+    string? Description,
+    long ExpectedVersion);
+
+public sealed record ChangeMenuCategoryPublicationRequest(
+    bool IsPublished,
+    long ExpectedVersion);
+
+public sealed record ChangeMenuCategoryPublicationResponse(
+    Guid Id,
+    bool IsPublished,
+    long Version);
 
 public sealed record UpdateMenuCategoryResponse(
     Guid Id,

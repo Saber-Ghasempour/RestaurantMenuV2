@@ -317,6 +317,21 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<string>("DefaultCurrency")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("character(3)")
+                        .HasDefaultValue("USD")
+                        .HasColumnName("default_currency");
+
+                    b.Property<string>("DefaultLocale")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("en-US")
+                        .HasColumnName("default_locale");
+
                     b.Property<DateTimeOffset?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at_utc");
@@ -357,6 +372,14 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)")
                         .HasColumnName("telegram_url");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("Etc/UTC")
+                        .HasColumnName("time_zone_id");
 
                     b.Property<string>("TwitterUrl")
                         .HasMaxLength(2048)

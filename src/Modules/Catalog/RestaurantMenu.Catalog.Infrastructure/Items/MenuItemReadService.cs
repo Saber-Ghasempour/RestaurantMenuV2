@@ -41,7 +41,14 @@ public sealed class MenuItemReadService : IMenuItemReadService
                 menuItem.DisplayOrder,
                 menuItem.IsAvailable,
                 menuItem.CreatedAtUtc,
-                menuItem.Version))
+                menuItem.Version,
+                menuItem.Recipe,
+                menuItem.Calories,
+                menuItem.Tags,
+                menuItem.AllergenNotes,
+                menuItem.PreparationTimeMinutes,
+                menuItem.IsFeatured,
+                menuItem.IsPublished))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
@@ -70,7 +77,14 @@ public sealed class MenuItemReadService : IMenuItemReadService
                 menuItem.DisplayOrder,
                 menuItem.IsAvailable,
                 menuItem.CreatedAtUtc,
-                menuItem.Version))
+                menuItem.Version,
+                menuItem.Recipe,
+                menuItem.Calories,
+                menuItem.Tags,
+                menuItem.AllergenNotes,
+                menuItem.PreparationTimeMinutes,
+                menuItem.IsFeatured,
+                menuItem.IsPublished))
             .ToArrayAsync(cancellationToken);
     }
 }

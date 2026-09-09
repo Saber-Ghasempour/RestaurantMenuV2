@@ -43,6 +43,36 @@ internal sealed class MenuItemConfiguration
             .HasColumnName("description")
             .HasMaxLength(MenuItem.MaxDescriptionLength);
 
+        builder.Property(menuItem => menuItem.Recipe)
+            .HasColumnName("recipe")
+            .HasMaxLength(MenuItem.MaxRecipeLength);
+
+        builder.Property(menuItem => menuItem.Calories)
+            .HasColumnName("calories");
+
+        builder.Property(menuItem => menuItem.Tags)
+            .HasColumnName("tags")
+            .HasColumnType("text[]")
+            .HasDefaultValueSql("ARRAY[]::text[]")
+            .IsRequired();
+
+        builder.Property(menuItem => menuItem.AllergenNotes)
+            .HasColumnName("allergen_notes")
+            .HasMaxLength(MenuItem.MaxAllergenNotesLength);
+
+        builder.Property(menuItem => menuItem.PreparationTimeMinutes)
+            .HasColumnName("preparation_time_minutes");
+
+        builder.Property(menuItem => menuItem.IsFeatured)
+            .HasColumnName("is_featured")
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(menuItem => menuItem.IsPublished)
+            .HasColumnName("is_published")
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.OwnsOne(
             menuItem => menuItem.Price,
             priceBuilder =>
@@ -105,6 +135,20 @@ internal sealed class MenuItemConfiguration
             })
             .HasDatabaseName(
                 "ix_menu_items_restaurant_category_display_order");
+
+        builder.HasIndex(menuItem => menuItem.Tags)
+            .HasMethod("gin")
+            .HasDatabaseName("ix_menu_items_tags_gin");
+
+        builder.ToTable(tableBuilder =>
+        {
+            tableBuilder.HasCheckConstraint(
+                "ck_menu_items_calories_non_negative",
+                "calories IS NULL OR calories >= 0");
+            tableBuilder.HasCheckConstraint(
+                "ck_menu_items_preparation_time_minutes_range",
+                $"preparation_time_minutes IS NULL OR (preparation_time_minutes >= 1 AND preparation_time_minutes <= {MenuItem.MaxPreparationTimeMinutes})");
+        });
 
         builder.Ignore(menuItem => menuItem.DomainEvents);
     }

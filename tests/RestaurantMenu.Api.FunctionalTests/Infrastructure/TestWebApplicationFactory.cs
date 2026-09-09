@@ -240,7 +240,8 @@ public sealed class TestWebApplicationFactory
         string name,
         decimal priceAmount,
         string currency,
-        int displayOrder)
+        int displayOrder,
+        bool isPublished = false)
     {
         await using var scope = Services.CreateAsyncScope();
         var dbContext =
@@ -260,6 +261,11 @@ public sealed class TestWebApplicationFactory
         {
             throw new InvalidOperationException(
                 $"Could not seed menu item: {result.Error.Code}");
+        }
+
+        if (isPublished)
+        {
+            result.Value.ChangePublication(true);
         }
 
         dbContext.MenuItems.Add(result.Value);
@@ -310,7 +316,8 @@ public sealed class TestWebApplicationFactory
         Guid restaurantId,
         string name,
         int displayOrder,
-        MenuCategoryId? parentId = null)
+        MenuCategoryId? parentId = null,
+        bool isPublished = false)
     {
         await using var scope =
             Services.CreateAsyncScope();
@@ -330,6 +337,11 @@ public sealed class TestWebApplicationFactory
         {
             throw new InvalidOperationException(
                 $"Could not seed menu category: {result.Error.Code}");
+        }
+
+        if (isPublished)
+        {
+            result.Value.ChangePublication(true);
         }
 
         dbContext.MenuCategories.Add(result.Value);

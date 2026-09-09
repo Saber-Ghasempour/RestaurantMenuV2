@@ -57,6 +57,9 @@ public sealed class GetPublicMenuQueryHandler
                 restaurant.WhatsAppUrl,
                 restaurant.TelegramUrl,
                 restaurant.TwitterUrl,
-                restaurant.Slug));
+                restaurant.Slug,
+                restaurant.DefaultCurrency,
+                restaurant.DefaultLocale,
+                restaurant.TimeZoneId));
     }
 }

@@ -29,6 +29,36 @@ public static class MenuItemErrors
             "Catalog.MenuItemDescriptionTooLong",
             $"The menu item description must not exceed {MenuItem.MaxDescriptionLength} characters.");
 
+    public static readonly ErrorDetail RecipeTooLong =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemRecipeTooLong",
+            $"The menu item recipe must not exceed {MenuItem.MaxRecipeLength} characters.");
+
+    public static readonly ErrorDetail InvalidCalories =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemInvalidCalories",
+            "Calories cannot be negative.");
+
+    public static readonly ErrorDetail AllergenNotesTooLong =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemAllergenNotesTooLong",
+            $"Allergen notes must not exceed {MenuItem.MaxAllergenNotesLength} characters.");
+
+    public static readonly ErrorDetail InvalidPreparationTime =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemInvalidPreparationTime",
+            $"Preparation time must be between 1 and {MenuItem.MaxPreparationTimeMinutes} minutes.");
+
+    public static readonly ErrorDetail TooManyTags =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemTooManyTags",
+            $"A menu item cannot have more than {MenuItem.MaxTagCount} tags.");
+
+    public static readonly ErrorDetail TagTooLong =
+        ErrorDetail.Validation(
+            "Catalog.MenuItemTagTooLong",
+            $"A menu item tag must not exceed {MenuItem.MaxTagLength} characters.");
+
     public static readonly ErrorDetail InvalidDisplayOrder =
         ErrorDetail.Validation(
             "Catalog.InvalidMenuItemDisplayOrder",

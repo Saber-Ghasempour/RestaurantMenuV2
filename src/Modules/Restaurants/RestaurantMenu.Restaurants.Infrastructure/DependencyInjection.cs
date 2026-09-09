@@ -20,6 +20,7 @@ using RestaurantMenu.Restaurants.Application.Restaurants.DeleteRestaurant;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
 using RestaurantMenu.SharedKernel.Results;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantDefaults;
 using RestaurantMenu.Restaurants.Application.Branches.ChangeBranchStatus;
 using RestaurantMenu.Restaurants.Application.Branches.CreateBranch;
 using RestaurantMenu.Restaurants.Application.Branches.DeleteBranch;
@@ -175,6 +176,10 @@ public static class DependencyInjection
                 UpdateRestaurantProfileCommand,
                 Result<long>>,
             UpdateRestaurantProfileCommandHandler>();
+
+        services.AddScoped<
+            ICommandHandler<UpdateRestaurantDefaultsCommand, Result<long>>,
+            UpdateRestaurantDefaultsCommandHandler>();
 
         services.AddScoped<
             ICommandHandler<

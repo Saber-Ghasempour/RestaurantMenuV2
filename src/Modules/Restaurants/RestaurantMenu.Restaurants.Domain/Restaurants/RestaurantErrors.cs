@@ -14,6 +14,21 @@ public static class RestaurantErrors
             "Restaurants.NameTooLong",
             $"The restaurant name must not exceed {Restaurant.MaxNameLength} characters.");
 
+    public static readonly ErrorDetail InvalidDefaultCurrency =
+        ErrorDetail.Validation(
+            "Restaurants.InvalidDefaultCurrency",
+            "The default currency must be a recognized ISO 4217 currency code.");
+
+    public static readonly ErrorDetail InvalidDefaultLocale =
+        ErrorDetail.Validation(
+            "Restaurants.InvalidDefaultLocale",
+            "The default locale must be a recognized culture name up to 16 characters.");
+
+    public static readonly ErrorDetail InvalidTimeZone =
+        ErrorDetail.Validation(
+            "Restaurants.InvalidTimeZone",
+            "The time zone must be a recognized IANA time-zone identifier up to 64 characters.");
+
     public static ErrorDetail NotFound(
         RestaurantId restaurantId) =>
         ErrorDetail.NotFound(

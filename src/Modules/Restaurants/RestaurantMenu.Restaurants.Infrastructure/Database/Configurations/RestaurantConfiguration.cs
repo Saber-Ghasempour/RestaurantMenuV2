@@ -35,6 +35,15 @@ internal sealed class RestaurantConfiguration
             .HasColumnName("about").HasMaxLength(Restaurant.MaxAboutLength);
         builder.Property(restaurant => restaurant.Address)
             .HasColumnName("address").HasMaxLength(Restaurant.MaxAddressLength);
+        builder.Property(restaurant => restaurant.DefaultCurrency)
+            .HasColumnName("default_currency").HasColumnType("character(3)")
+            .HasDefaultValue(Restaurant.InitialDefaultCurrency).IsRequired();
+        builder.Property(restaurant => restaurant.DefaultLocale)
+            .HasColumnName("default_locale").HasMaxLength(16)
+            .HasDefaultValue(Restaurant.InitialDefaultLocale).IsRequired();
+        builder.Property(restaurant => restaurant.TimeZoneId)
+            .HasColumnName("time_zone_id").HasMaxLength(64)
+            .HasDefaultValue(Restaurant.InitialTimeZoneId).IsRequired();
 
         builder.HasKey(restaurant => restaurant.Id);
 

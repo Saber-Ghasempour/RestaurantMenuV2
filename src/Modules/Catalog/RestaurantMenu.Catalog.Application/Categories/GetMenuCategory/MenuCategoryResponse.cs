@@ -7,4 +7,6 @@ public sealed record MenuCategoryResponse(
     string Name,
     int DisplayOrder,
     DateTimeOffset CreatedAtUtc,
-    long Version);
+    long Version,
+    string? Description = null,
+    bool IsPublished = false);

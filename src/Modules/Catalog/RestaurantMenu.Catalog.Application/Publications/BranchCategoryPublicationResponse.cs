@@ -7,4 +7,5 @@ public sealed record BranchCategoryPublicationResponse(
     int CategoryDisplayOrder,
     bool IsPublished,
     int? DisplayOrderOverride,
-    long? Version);
+    long? Version,
+    bool IsCategoryPublished = false);

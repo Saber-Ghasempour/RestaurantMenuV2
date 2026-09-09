@@ -102,6 +102,9 @@ builder.Services.AddScoped<
     RestaurantPublicProfileProvider>();
 builder.Services.AddScoped<IBranchExistenceChecker, BranchExistenceChecker>();
 builder.Services.AddScoped<IBranchPublicProfileProvider, BranchPublicProfileProvider>();
+builder.Services.AddScoped<
+    RestaurantMenu.Restaurants.Application.Abstractions.Caching.IRestaurantPublicMenuInvalidator,
+    RestaurantPublicMenuInvalidator>();
 builder.Services
     .AddHealthChecks()
     .AddCheck(

@@ -16,7 +16,8 @@ public sealed class UpdateMenuItemCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateMenuItemCommandHandler(
             new MenuItemRepositoryStub(menuItem),
-            unitOfWork);
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
 
         var result = await handler.Handle(
             CreateCommand(menuItem),
@@ -38,7 +39,8 @@ public sealed class UpdateMenuItemCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateMenuItemCommandHandler(
             new MenuItemRepositoryStub(menuItem),
-            unitOfWork);
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
         var command = CreateCommand(menuItem) with
         {
             CategoryId = MenuCategoryId.New()
@@ -62,7 +64,8 @@ public sealed class UpdateMenuItemCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateMenuItemCommandHandler(
             new MenuItemRepositoryStub(menuItem),
-            unitOfWork);
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
         var command = CreateCommand(menuItem) with
         {
             ExpectedVersion = 42
@@ -86,7 +89,8 @@ public sealed class UpdateMenuItemCommandHandlerTests
         var unitOfWork = new UnitOfWorkStub();
         var handler = new UpdateMenuItemCommandHandler(
             new MenuItemRepositoryStub(menuItem),
-            unitOfWork);
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
         var command = CreateCommand(menuItem) with
         {
             PriceAmount = -1m
@@ -110,7 +114,8 @@ public sealed class UpdateMenuItemCommandHandlerTests
             new ConcurrencyException("Concurrent update."));
         var handler = new UpdateMenuItemCommandHandler(
             new MenuItemRepositoryStub(menuItem),
-            unitOfWork);
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
 
         var result = await handler.Handle(
             CreateCommand(menuItem),

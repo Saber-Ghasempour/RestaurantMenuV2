@@ -15,13 +15,15 @@ public sealed class BranchCategoryPublicationTests(TestWebApplicationFactory fac
         var restaurant = await factory.SeedRestaurantAsync(
             "Published Bistro", DateTimeOffset.UtcNow);
         var visible = await factory.SeedMenuCategoryAsync(
-            restaurant.Id.Value, "Visible", 2);
+            restaurant.Id.Value, "Visible", 2, isPublished: true);
         var hidden = await factory.SeedMenuCategoryAsync(
-            restaurant.Id.Value, "Hidden", 1);
+            restaurant.Id.Value, "Hidden", 1, isPublished: true);
+        var visibleItem = await factory.SeedMenuItemAsync(
+            restaurant.Id.Value, visible.Id, "Visible item", 10m, "EUR", 1,
+            isPublished: true);
         await factory.SeedMenuItemAsync(
-            restaurant.Id.Value, visible.Id, "Visible item", 10m, "EUR", 1);
-        await factory.SeedMenuItemAsync(
-            restaurant.Id.Value, hidden.Id, "Hidden item", 12m, "EUR", 1);
+            restaurant.Id.Value, hidden.Id, "Hidden item", 12m, "EUR", 1,
+            isPublished: true);
         using var client = factory.CreateClient();
         var branchId = await CreateBranchAsync(client, restaurant.Id.Value, "Downtown");
         var code = await CreateCodeAsync(client, restaurant.Id.Value, branchId);
@@ -70,6 +72,27 @@ public sealed class BranchCategoryPublicationTests(TestWebApplicationFactory fac
         var firstCategory = Assert.Single(
             firstBody.GetProperty("categories").EnumerateArray().ToArray());
         Assert.Equal(visible.Id.Value, firstCategory.GetProperty("id").GetGuid());
+
+        using var metadata = await client.PutAsJsonAsync(
+            $"/api/restaurants/{restaurant.Id.Value}/categories/{visible.Id.Value}/items/{visibleItem.Id.Value}/metadata",
+            new
+            {
+                Recipe = "Fresh ingredients",
+                Calories = (int?)null,
+                Tags = Array.Empty<string>(),
+                AllergenNotes = (string?)null,
+                PreparationTimeMinutes = (int?)null,
+                IsFeatured = false,
+                ExpectedVersion = 2
+            });
+        Assert.Equal(HttpStatusCode.OK, metadata.StatusCode);
+        using var refreshedMenu = await anonymous.GetAsync(
+            $"/api/public/menu-codes/{code}/menu");
+        var refreshedBody = await refreshedMenu.Content.ReadFromJsonAsync<JsonElement>();
+        var refreshedItem = Assert.Single(Assert.Single(
+            refreshedBody.GetProperty("categories").EnumerateArray().ToArray())
+            .GetProperty("items").EnumerateArray().ToArray());
+        Assert.Equal("Fresh ingredients", refreshedItem.GetProperty("recipe").GetString());
 
         using var replace = await client.PutAsJsonAsync(publicationsRoute, new
         {

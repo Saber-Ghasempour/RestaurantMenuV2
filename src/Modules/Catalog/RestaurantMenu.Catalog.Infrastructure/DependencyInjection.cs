@@ -10,12 +10,16 @@ using RestaurantMenu.Catalog.Application.Categories.DeleteMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.GetMenuCategory;
 using RestaurantMenu.Catalog.Application.Categories.ListMenuCategories;
 using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategory;
+using RestaurantMenu.Catalog.Application.Categories.UpdateMenuCategoryContent;
+using RestaurantMenu.Catalog.Application.Categories.ChangeMenuCategoryPublication;
 using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
 using RestaurantMenu.Catalog.Application.Items.DeleteMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
+using RestaurantMenu.Catalog.Application.Items.UpdateMenuItemMetadata;
+using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemPublication;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicMenu;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicBranchMenu;
 using RestaurantMenu.Catalog.Application.Publications;
@@ -72,6 +76,8 @@ public static class DependencyInjection
             new PublicBranchMenuCacheOptions(publicMenuCacheTimeToLive));
         services.AddSingleton<IPublicBranchMenuCache,
             PublicBranchMenuCache>();
+        services.AddScoped<IPublicMenuCacheInvalidator,
+            PublicMenuCacheInvalidator>();
         services.AddScoped<ICatalogUnitOfWork>(
             serviceProvider =>
                 serviceProvider.GetRequiredService<CatalogDbContext>());
@@ -95,6 +101,12 @@ public static class DependencyInjection
                 UpdateMenuCategoryCommand,
                 Result<long>>,
             UpdateMenuCategoryCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<UpdateMenuCategoryContentCommand, Result<long>>,
+            UpdateMenuCategoryContentCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<ChangeMenuCategoryPublicationCommand, Result<long>>,
+            ChangeMenuCategoryPublicationCommandHandler>();
         services.AddScoped<
             ICommandHandler<
                 DeleteMenuCategoryCommand,
@@ -120,6 +132,12 @@ public static class DependencyInjection
                 UpdateMenuItemCommand,
                 Result<long>>,
             UpdateMenuItemCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<UpdateMenuItemMetadataCommand, Result<long>>,
+            UpdateMenuItemMetadataCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<ChangeMenuItemPublicationCommand, Result<long>>,
+            ChangeMenuItemPublicationCommandHandler>();
         services.AddScoped<
             ICommandHandler<
                 ChangeMenuItemAvailabilityCommand,

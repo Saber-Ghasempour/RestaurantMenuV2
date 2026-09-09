@@ -40,4 +40,11 @@ public sealed class MenuCategoryRepository
             category => category.ParentId == categoryId,
             cancellationToken);
     }
+
+    public Task<bool> HasPublishedChildrenAsync(
+        MenuCategoryId categoryId,
+        CancellationToken cancellationToken) =>
+        _dbContext.MenuCategories.AnyAsync(
+            category => category.ParentId == categoryId && category.IsPublished,
+            cancellationToken);
 }

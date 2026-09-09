@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
+using RestaurantMenu.Catalog.Application.Abstractions.Caching;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.SharedKernel.Results;
 
@@ -12,18 +13,22 @@ public sealed class DeleteMenuItemCommandHandler
     private readonly IMenuItemRepository _repository;
     private readonly ICatalogUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
+    private readonly IPublicMenuCacheInvalidator _cacheInvalidator;
 
     public DeleteMenuItemCommandHandler(
         IMenuItemRepository repository,
         ICatalogUnitOfWork unitOfWork,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IPublicMenuCacheInvalidator cacheInvalidator)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(cacheInvalidator);
         _repository = repository;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
+        _cacheInvalidator = cacheInvalidator;
     }
 
     public async Task<Result<MenuItemId>> Handle(
@@ -52,6 +57,7 @@ public sealed class DeleteMenuItemCommandHandler
                     menuItem.Id));
         }
 
+        var wasPublished = menuItem.IsPublished;
         menuItem.Delete(_timeProvider.GetUtcNow());
 
         try
@@ -63,6 +69,12 @@ public sealed class DeleteMenuItemCommandHandler
             return Result.Failure<MenuItemId>(
                 MenuItemApplicationErrors.VersionConflict(
                     menuItem.Id));
+        }
+
+        if (wasPublished)
+        {
+            await _cacheInvalidator.InvalidateRestaurantAsync(
+                menuItem.RestaurantId, cancellationToken);
         }
 
         return Result.Success(menuItem.Id);

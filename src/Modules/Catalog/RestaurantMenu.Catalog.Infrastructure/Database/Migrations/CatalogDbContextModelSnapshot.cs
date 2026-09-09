@@ -37,6 +37,11 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at_utc");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer")
                         .HasColumnName("display_order");
@@ -46,6 +51,12 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_published");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -84,6 +95,15 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AllergenNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("allergen_notes");
+
+                    b.Property<int?>("Calories")
+                        .HasColumnType("integer")
+                        .HasColumnName("calories");
+
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
@@ -117,15 +137,43 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_deleted");
 
+                    b.Property<bool>("IsFeatured")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_featured");
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_published");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
                         .HasColumnName("name");
 
+                    b.Property<short?>("PreparationTimeMinutes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("preparation_time_minutes");
+
+                    b.Property<string>("Recipe")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("recipe");
+
                     b.Property<Guid>("RestaurantId")
                         .HasColumnType("uuid")
                         .HasColumnName("restaurant_id");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("tags")
+                        .HasDefaultValueSql("ARRAY[]::text[]");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
@@ -138,10 +186,20 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("Tags")
+                        .HasDatabaseName("ix_menu_items_tags_gin");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Tags"), "gin");
+
                     b.HasIndex("RestaurantId", "CategoryId", "DisplayOrder")
                         .HasDatabaseName("ix_menu_items_restaurant_category_display_order");
 
-                    b.ToTable("menu_items", "catalog");
+                    b.ToTable("menu_items", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("ck_menu_items_calories_non_negative", "calories IS NULL OR calories >= 0");
+
+                            t.HasCheckConstraint("ck_menu_items_preparation_time_minutes_range", "preparation_time_minutes IS NULL OR (preparation_time_minutes >= 1 AND preparation_time_minutes <= 1440)");
+                        });
                 });
 
             modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Publications.BranchCategoryPublication", b =>

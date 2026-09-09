@@ -28,21 +28,24 @@ public sealed class GetPublicMenuTests
         var category = await _factory.SeedMenuCategoryAsync(
             restaurant.Id.Value,
             "Drinks",
-            1);
+            1,
+            isPublished: true);
         var availableItem = await _factory.SeedMenuItemAsync(
             restaurant.Id.Value,
             category.Id,
             "Espresso",
             2.50m,
             "EUR",
-            1);
+            1,
+            isPublished: true);
         var unavailableItem = await _factory.SeedMenuItemAsync(
             restaurant.Id.Value,
             category.Id,
             "Seasonal Drink",
             4.50m,
             "EUR",
-            2);
+            2,
+            isPublished: true);
         await _factory.SetMenuItemAvailabilityAsync(
             unavailableItem.Id,
             false);
@@ -59,11 +62,15 @@ public sealed class GetPublicMenuTests
         Assert.Equal("QR Bistro", content.RestaurantName);
         var publicCategory = Assert.Single(content.Categories);
         Assert.Equal(category.Id.Value, publicCategory.Id);
-        var publicItem = Assert.Single(publicCategory.Items);
+        Assert.Equal(2, publicCategory.Items.Count);
+        var publicItem = publicCategory.Items[0];
         Assert.Equal(availableItem.Id.Value, publicItem.Id);
         Assert.Equal("Espresso", publicItem.Name);
         Assert.Equal(2.50m, publicItem.PriceAmount);
         Assert.Equal("EUR", publicItem.Currency);
+        Assert.True(publicItem.IsAvailable);
+        Assert.Equal(unavailableItem.Id.Value, publicCategory.Items[1].Id);
+        Assert.False(publicCategory.Items[1].IsAvailable);
     }
 
     [Fact]
@@ -88,25 +95,29 @@ public sealed class GetPublicMenuTests
         var visibleCategory = await _factory.SeedMenuCategoryAsync(
             restaurant.Id.Value,
             "Visible",
-            1);
+            1,
+            isPublished: true);
         var deletedCategory = await _factory.SeedMenuCategoryAsync(
             restaurant.Id.Value,
             "Deleted",
-            2);
+            2,
+            isPublished: true);
         var visibleItem = await _factory.SeedMenuItemAsync(
             restaurant.Id.Value,
             visibleCategory.Id,
             "Visible Item",
             5m,
             "EUR",
-            1);
+            1,
+            isPublished: true);
         var deletedItem = await _factory.SeedMenuItemAsync(
             restaurant.Id.Value,
             visibleCategory.Id,
             "Deleted Item",
             6m,
             "EUR",
-            2);
+            2,
+            isPublished: true);
         await _factory.DeleteMenuItemAsync(deletedItem.Id);
         await _factory.DeleteMenuCategoryAsync(deletedCategory.Id);
         using var client = CreateAnonymousClient();

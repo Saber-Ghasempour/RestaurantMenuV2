@@ -7,6 +7,7 @@ public sealed class MenuCategory
     : AggregateRoot<MenuCategoryId>
 {
     public const int MaxNameLength = 100;
+    public const int MaxDescriptionLength = 500;
 
     private MenuCategory(
         MenuCategoryId id,
@@ -31,6 +32,10 @@ public sealed class MenuCategory
     public string Name { get; private set; }
 
     public int DisplayOrder { get; private set; }
+
+    public string? Description { get; private set; }
+
+    public bool IsPublished { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; }
 
@@ -139,6 +144,40 @@ public sealed class MenuCategory
                 RestaurantId));
 
         return Result.Success(this);
+    }
+
+    public Result<MenuCategory> UpdateContent(string? description)
+    {
+        var normalizedDescription = string.IsNullOrWhiteSpace(description)
+            ? null
+            : description.Trim();
+        if (normalizedDescription?.Length > MaxDescriptionLength)
+        {
+            return Result.Failure<MenuCategory>(MenuCategoryErrors.DescriptionTooLong);
+        }
+
+        if (Description == normalizedDescription)
+        {
+            return Result.Success(this);
+        }
+
+        Description = normalizedDescription;
+        Version++;
+        RaiseDomainEvent(new MenuCategoryContentUpdatedDomainEvent(Id, RestaurantId));
+        return Result.Success(this);
+    }
+
+    public void ChangePublication(bool isPublished)
+    {
+        if (IsPublished == isPublished)
+        {
+            return;
+        }
+
+        IsPublished = isPublished;
+        Version++;
+        RaiseDomainEvent(new MenuCategoryPublicationChangedDomainEvent(
+            Id, RestaurantId, isPublished));
     }
 
     public void Delete(DateTimeOffset deletedAtUtc)

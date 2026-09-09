@@ -187,7 +187,7 @@ public sealed class UpdateMenuCategoryCommandHandlerTests
     private static UpdateMenuCategoryCommandHandler CreateHandler(
         MenuCategoryRepositoryStub repository,
         UnitOfWorkStub unitOfWork) =>
-        new(repository, unitOfWork);
+        new(repository, unitOfWork, new PublicMenuCacheInvalidatorStub());
 
     private static MenuCategory CreateCategory(
         Guid restaurantId,
@@ -220,6 +220,11 @@ public sealed class UpdateMenuCategoryCommandHandlerTests
                     category => category.Id == categoryId));
 
         public Task<bool> HasChildrenAsync(
+            MenuCategoryId categoryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(false);
+
+        public Task<bool> HasPublishedChildrenAsync(
             MenuCategoryId categoryId,
             CancellationToken cancellationToken) =>
             Task.FromResult(false);

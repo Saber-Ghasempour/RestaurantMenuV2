@@ -6,6 +6,7 @@ using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Restaurants.Application.Restaurants.ChangeRestaurantSlug;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantLinks;
 using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantProfile;
+using RestaurantMenu.Restaurants.Application.Restaurants.UpdateRestaurantDefaults;
 using RestaurantMenu.Application.Abstractions.Security;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -112,6 +113,14 @@ public static class RestaurantsEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.RestaurantsWrite);
 
+        group.MapPut("/{restaurantId:guid}/defaults", UpdateDefaultsAsync)
+            .WithName("UpdateRestaurantDefaults")
+            .Produces<UpdateRestaurantResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.RestaurantsWrite);
+
         return endpoints;
     }
 
@@ -167,6 +176,23 @@ public static class RestaurantsEndpoints
             new ChangeRestaurantSlugCommand(new RestaurantId(restaurantId), request.Slug, request.ExpectedVersion),
             cancellationToken);
         return result.IsFailure ? result.Error.ToProblem()
+            : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
+    }
+
+    private static async Task<IResult> UpdateDefaultsAsync(
+        Guid restaurantId,
+        UpdateRestaurantDefaultsRequest request,
+        ICommandHandler<UpdateRestaurantDefaultsCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(handler);
+        var result = await handler.Handle(new UpdateRestaurantDefaultsCommand(
+            new RestaurantId(restaurantId), request.DefaultCurrency,
+            request.DefaultLocale, request.TimeZoneId, request.ExpectedVersion),
+            cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
             : Results.Ok(new UpdateRestaurantResponse(restaurantId, result.Value));
     }
 
@@ -243,7 +269,10 @@ public static class RestaurantsEndpoints
                 result.Value.WhatsAppUrl,
                 result.Value.TelegramUrl,
                 result.Value.TwitterUrl,
-                result.Value.Slug);
+                result.Value.Slug,
+                result.Value.DefaultCurrency,
+                result.Value.DefaultLocale,
+                result.Value.TimeZoneId);
 
         return Results.Ok(response);
     }
@@ -363,6 +392,12 @@ public sealed record UpdateRestaurantLinksRequest(
 
 public sealed record ChangeRestaurantSlugRequest(string? Slug, long ExpectedVersion);
 
+public sealed record UpdateRestaurantDefaultsRequest(
+    string? DefaultCurrency,
+    string? DefaultLocale,
+    string? TimeZoneId,
+    long ExpectedVersion);
+
 public sealed record CreateRestaurantRequest(string? Name);
 
 public sealed record CreateRestaurantResponse(Guid Id);
@@ -381,7 +416,10 @@ public sealed record GetRestaurantResponse(
     string? WhatsAppUrl,
     string? TelegramUrl,
     string? TwitterUrl,
-    string? Slug);
+    string? Slug,
+    string DefaultCurrency,
+    string DefaultLocale,
+    string TimeZoneId);
 
 public sealed record UpdateRestaurantProfileRequest(
     string? Description,

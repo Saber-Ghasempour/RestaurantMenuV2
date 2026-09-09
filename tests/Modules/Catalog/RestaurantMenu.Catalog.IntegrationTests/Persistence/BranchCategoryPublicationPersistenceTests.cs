@@ -84,16 +84,24 @@ public sealed class BranchCategoryPublicationPersistenceTests : IAsyncLifetime
             .Options;
 
     private static MenuCategory CreateCategory(
-        Guid restaurantId, string name, int order) =>
-        MenuCategory.Create(
+        Guid restaurantId, string name, int order)
+    {
+        var category = MenuCategory.Create(
             MenuCategoryId.New(), restaurantId, null, name, order,
             DateTimeOffset.UtcNow).Value;
+        category.ChangePublication(true);
+        return category;
+    }
 
     private static MenuItem CreateItem(
-        Guid restaurantId, MenuCategoryId categoryId, string name) =>
-        MenuItem.Create(
+        Guid restaurantId, MenuCategoryId categoryId, string name)
+    {
+        var item = MenuItem.Create(
             MenuItemId.New(), restaurantId, categoryId, name, null,
             10m, "EUR", 1, DateTimeOffset.UtcNow).Value;
+        item.ChangePublication(true);
+        return item;
+    }
 
     private static BranchCategoryPublication CreatePublication(
         Guid restaurantId,

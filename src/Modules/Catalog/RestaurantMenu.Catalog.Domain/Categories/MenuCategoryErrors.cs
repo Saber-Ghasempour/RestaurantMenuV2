@@ -4,6 +4,11 @@ namespace RestaurantMenu.Catalog.Domain.Categories;
 
 public static class MenuCategoryErrors
 {
+    public static readonly ErrorDetail DescriptionTooLong =
+        ErrorDetail.Validation(
+            "Catalog.CategoryDescriptionTooLong",
+            $"The category description must not exceed {MenuCategory.MaxDescriptionLength} characters.");
+
     public static readonly ErrorDetail RestaurantRequired =
         ErrorDetail.Validation(
             "Catalog.RestaurantRequired",

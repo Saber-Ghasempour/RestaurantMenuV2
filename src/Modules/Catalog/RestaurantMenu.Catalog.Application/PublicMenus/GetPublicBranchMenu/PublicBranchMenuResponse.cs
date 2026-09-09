@@ -23,4 +23,7 @@ public sealed record PublicBranchMenuResponse(
     string? FacebookUrl = null,
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
-    string? TwitterUrl = null);
+    string? TwitterUrl = null,
+    string DefaultCurrency = "USD",
+    string DefaultLocale = "en-US",
+    string TimeZoneId = "Etc/UTC");

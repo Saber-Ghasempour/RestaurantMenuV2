@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
+using RestaurantMenu.Catalog.Application.Abstractions.Caching;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Application.Items.ChangeMenuItemAvailability;
@@ -10,15 +11,19 @@ public sealed class ChangeMenuItemAvailabilityCommandHandler
 {
     private readonly IMenuItemRepository _repository;
     private readonly ICatalogUnitOfWork _unitOfWork;
+    private readonly IPublicMenuCacheInvalidator _cacheInvalidator;
 
     public ChangeMenuItemAvailabilityCommandHandler(
         IMenuItemRepository repository,
-        ICatalogUnitOfWork unitOfWork)
+        ICatalogUnitOfWork unitOfWork,
+        IPublicMenuCacheInvalidator cacheInvalidator)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
+        ArgumentNullException.ThrowIfNull(cacheInvalidator);
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _cacheInvalidator = cacheInvalidator;
     }
 
     public async Task<Result<long>> Handle(
@@ -47,6 +52,7 @@ public sealed class ChangeMenuItemAvailabilityCommandHandler
                     menuItem.Id));
         }
 
+        var previousVersion = menuItem.Version;
         menuItem.ChangeAvailability(command.IsAvailable);
 
         try
@@ -58,6 +64,12 @@ public sealed class ChangeMenuItemAvailabilityCommandHandler
             return Result.Failure<long>(
                 MenuItemApplicationErrors.VersionConflict(
                     menuItem.Id));
+        }
+
+        if (menuItem.IsPublished && menuItem.Version != previousVersion)
+        {
+            await _cacheInvalidator.InvalidateRestaurantAsync(
+                menuItem.RestaurantId, cancellationToken);
         }
 
         return Result.Success(menuItem.Version);

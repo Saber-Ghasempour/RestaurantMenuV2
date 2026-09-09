@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
+using RestaurantMenu.Catalog.Application.Abstractions.Caching;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.SharedKernel.Results;
 
@@ -14,18 +15,22 @@ public sealed class DeleteMenuCategoryCommandHandler
     private readonly IMenuCategoryRepository _repository;
     private readonly ICatalogUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
+    private readonly IPublicMenuCacheInvalidator _cacheInvalidator;
 
     public DeleteMenuCategoryCommandHandler(
         IMenuCategoryRepository repository,
         ICatalogUnitOfWork unitOfWork,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        IPublicMenuCacheInvalidator cacheInvalidator)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(timeProvider);
+        ArgumentNullException.ThrowIfNull(cacheInvalidator);
         _repository = repository;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
+        _cacheInvalidator = cacheInvalidator;
     }
 
     public async Task<Result<MenuCategoryId>> Handle(
@@ -62,6 +67,7 @@ public sealed class DeleteMenuCategoryCommandHandler
                     category.Id));
         }
 
+        var wasPublished = category.IsPublished;
         category.Delete(_timeProvider.GetUtcNow());
 
         try
@@ -73,6 +79,12 @@ public sealed class DeleteMenuCategoryCommandHandler
             return Result.Failure<MenuCategoryId>(
                 MenuCategoryApplicationErrors.VersionConflict(
                     category.Id));
+        }
+
+        if (wasPublished)
+        {
+            await _cacheInvalidator.InvalidateRestaurantAsync(
+                category.RestaurantId, cancellationToken);
         }
 
         return Result.Success(category.Id);

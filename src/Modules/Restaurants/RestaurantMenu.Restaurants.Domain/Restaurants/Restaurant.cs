@@ -1,11 +1,21 @@
 ﻿using RestaurantMenu.SharedKernel.Domain;
 using RestaurantMenu.SharedKernel.Results;
 
+using System.Globalization;
+
 namespace RestaurantMenu.Restaurants.Domain.Restaurants;
 
 public sealed class Restaurant : AggregateRoot<RestaurantId>
 {
     public const int MaxNameLength = 120;
+    public const string InitialDefaultCurrency = "USD";
+    public const string InitialDefaultLocale = "en-US";
+    public const string InitialTimeZoneId = "Etc/UTC";
+
+    private static readonly HashSet<string> KnownCurrencies = CultureInfo
+        .GetCultures(CultureTypes.SpecificCultures)
+        .Select(culture => new RegionInfo(culture.Name).ISOCurrencySymbol)
+        .ToHashSet(StringComparer.Ordinal);
 
     private Restaurant(
         RestaurantId id,
@@ -15,11 +25,20 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
     {
         Name = name;
         CreatedAtUtc = createdAtUtc;
+        DefaultCurrency = InitialDefaultCurrency;
+        DefaultLocale = InitialDefaultLocale;
+        TimeZoneId = InitialTimeZoneId;
     }
 
     public string Name { get; private set; }
 
     public string? Slug { get; private set; }
+
+    public string DefaultCurrency { get; private set; }
+
+    public string DefaultLocale { get; private set; }
+
+    public string TimeZoneId { get; private set; }
 
     public Result<Restaurant> ChangeSlug(string? slug)
     {
@@ -42,6 +61,57 @@ public sealed class Restaurant : AggregateRoot<RestaurantId>
         Slug = slug;
         Version++;
         RaiseDomainEvent(new RestaurantSlugChangedDomainEvent(Id));
+        return Result.Success(this);
+    }
+
+    public Result<Restaurant> UpdateDefaults(
+        string? defaultCurrency,
+        string? defaultLocale,
+        string? timeZoneId)
+    {
+        var normalizedCurrency = defaultCurrency?.Trim().ToUpperInvariant();
+        if (normalizedCurrency is null || !KnownCurrencies.Contains(normalizedCurrency))
+        {
+            return Result.Failure<Restaurant>(RestaurantErrors.InvalidDefaultCurrency);
+        }
+
+        string normalizedLocale;
+        try
+        {
+            normalizedLocale = CultureInfo.GetCultureInfo(defaultLocale?.Trim() ?? string.Empty).Name;
+        }
+        catch (CultureNotFoundException)
+        {
+            return Result.Failure<Restaurant>(RestaurantErrors.InvalidDefaultLocale);
+        }
+
+        if (string.IsNullOrWhiteSpace(defaultLocale) ||
+            normalizedLocale.Length is 0 or > 16)
+        {
+            return Result.Failure<Restaurant>(RestaurantErrors.InvalidDefaultLocale);
+        }
+
+        var normalizedTimeZone = timeZoneId?.Trim();
+        if (string.IsNullOrEmpty(normalizedTimeZone) ||
+            normalizedTimeZone.Length > 64 ||
+            !normalizedTimeZone.Contains('/', StringComparison.Ordinal) ||
+            !TimeZoneInfo.TryFindSystemTimeZoneById(normalizedTimeZone, out _))
+        {
+            return Result.Failure<Restaurant>(RestaurantErrors.InvalidTimeZone);
+        }
+
+        if (DefaultCurrency == normalizedCurrency &&
+            DefaultLocale == normalizedLocale &&
+            TimeZoneId == normalizedTimeZone)
+        {
+            return Result.Success(this);
+        }
+
+        DefaultCurrency = normalizedCurrency;
+        DefaultLocale = normalizedLocale;
+        TimeZoneId = normalizedTimeZone;
+        Version++;
+        RaiseDomainEvent(new RestaurantDefaultsUpdatedDomainEvent(Id));
         return Result.Success(this);
     }
 

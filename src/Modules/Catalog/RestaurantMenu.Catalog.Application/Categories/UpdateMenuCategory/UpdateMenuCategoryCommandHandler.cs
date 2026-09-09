@@ -1,6 +1,7 @@
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
+using RestaurantMenu.Catalog.Application.Abstractions.Caching;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.SharedKernel.Results;
 
@@ -11,15 +12,19 @@ public sealed class UpdateMenuCategoryCommandHandler
 {
     private readonly IMenuCategoryRepository _repository;
     private readonly ICatalogUnitOfWork _unitOfWork;
+    private readonly IPublicMenuCacheInvalidator _cacheInvalidator;
 
     public UpdateMenuCategoryCommandHandler(
         IMenuCategoryRepository repository,
-        ICatalogUnitOfWork unitOfWork)
+        ICatalogUnitOfWork unitOfWork,
+        IPublicMenuCacheInvalidator cacheInvalidator)
     {
         ArgumentNullException.ThrowIfNull(repository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
+        ArgumentNullException.ThrowIfNull(cacheInvalidator);
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _cacheInvalidator = cacheInvalidator;
     }
 
     public async Task<Result<long>> Handle(
@@ -76,6 +81,7 @@ public sealed class UpdateMenuCategoryCommandHandler
             }
         }
 
+        var previousVersion = category.Version;
         var updateResult = category.Update(
             parentId,
             command.Name,
@@ -95,6 +101,12 @@ public sealed class UpdateMenuCategoryCommandHandler
             return Result.Failure<long>(
                 MenuCategoryApplicationErrors.VersionConflict(
                     category.Id));
+        }
+
+        if (category.IsPublished && category.Version != previousVersion)
+        {
+            await _cacheInvalidator.InvalidateRestaurantAsync(
+                category.RestaurantId, cancellationToken);
         }
 
         return Result.Success(category.Version);

@@ -11,4 +11,11 @@ public sealed record MenuItemResponse(
     int DisplayOrder,
     bool IsAvailable,
     DateTimeOffset CreatedAtUtc,
-    long Version);
+    long Version,
+    string? Recipe = null,
+    int? Calories = null,
+    IReadOnlyList<string>? Tags = null,
+    string? AllergenNotes = null,
+    short? PreparationTimeMinutes = null,
+    bool IsFeatured = false,
+    bool IsPublished = false);

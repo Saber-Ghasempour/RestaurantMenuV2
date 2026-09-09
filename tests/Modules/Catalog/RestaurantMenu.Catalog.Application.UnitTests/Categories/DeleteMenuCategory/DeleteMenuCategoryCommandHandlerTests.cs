@@ -130,7 +130,8 @@ public sealed class DeleteMenuCategoryCommandHandlerTests
         new(
             new MenuCategoryRepositoryStub(category, hasChildren),
             unitOfWork,
-            new StubTimeProvider(UtcNow));
+            new StubTimeProvider(UtcNow),
+            new PublicMenuCacheInvalidatorStub());
 
     private static MenuCategory CreateCategory()
     {
@@ -162,6 +163,11 @@ public sealed class DeleteMenuCategoryCommandHandlerTests
             MenuCategoryId categoryId,
             CancellationToken cancellationToken) =>
             Task.FromResult(hasChildren);
+
+        public Task<bool> HasPublishedChildrenAsync(
+            MenuCategoryId categoryId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(false);
     }
 
     private sealed class UnitOfWorkStub(Exception? exception = null)

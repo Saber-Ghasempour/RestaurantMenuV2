@@ -13,14 +13,18 @@ public sealed record PublicMenuResponse(
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
     string? TwitterUrl = null,
-    string? Slug = null);
+    string? Slug = null,
+    string DefaultCurrency = "USD",
+    string DefaultLocale = "en-US",
+    string TimeZoneId = "Etc/UTC");
 
 public sealed record PublicMenuCategoryResponse(
     Guid Id,
     Guid? ParentCategoryId,
     string Name,
     int DisplayOrder,
-    IReadOnlyList<PublicMenuItemResponse> Items);
+    IReadOnlyList<PublicMenuItemResponse> Items,
+    string? Description = null);
 
 public sealed record PublicMenuItemResponse(
     Guid Id,
@@ -28,4 +32,11 @@ public sealed record PublicMenuItemResponse(
     string? Description,
     decimal PriceAmount,
     string Currency,
-    int DisplayOrder);
+    int DisplayOrder,
+    bool IsAvailable = true,
+    string? Recipe = null,
+    int? Calories = null,
+    IReadOnlyList<string>? Tags = null,
+    string? AllergenNotes = null,
+    short? PreparationTimeMinutes = null,
+    bool IsFeatured = false);

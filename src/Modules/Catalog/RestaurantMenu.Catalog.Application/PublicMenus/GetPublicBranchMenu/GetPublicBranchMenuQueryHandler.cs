@@ -61,7 +61,10 @@ public sealed class GetPublicBranchMenuQueryHandler(
             profile.FacebookUrl,
             profile.WhatsAppUrl,
             profile.TelegramUrl,
-            profile.TwitterUrl);
+            profile.TwitterUrl,
+            profile.DefaultCurrency,
+            profile.DefaultLocale,
+            profile.TimeZoneId);
 
         await cache.SetAsync(response, cancellationToken);
         return Result.Success(response);

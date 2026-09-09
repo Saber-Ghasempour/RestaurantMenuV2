@@ -102,7 +102,8 @@ public sealed class DeleteMenuItemCommandHandlerTests
         new(
             new MenuItemRepositoryStub(menuItem),
             unitOfWork,
-            new StubTimeProvider(DeletedAtUtc));
+            new StubTimeProvider(DeletedAtUtc),
+            new PublicMenuCacheInvalidatorStub());
 
     private static DeleteMenuItemCommand CreateCommand(
         MenuItem menuItem) =>

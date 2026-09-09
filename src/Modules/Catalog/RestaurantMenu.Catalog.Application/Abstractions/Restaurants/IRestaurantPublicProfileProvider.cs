@@ -19,4 +19,7 @@ public sealed record RestaurantPublicProfile(
     string? WhatsAppUrl = null,
     string? TelegramUrl = null,
     string? TwitterUrl = null,
-    string? Slug = null);
+    string? Slug = null,
+    string DefaultCurrency = "USD",
+    string DefaultLocale = "en-US",
+    string TimeZoneId = "Etc/UTC");

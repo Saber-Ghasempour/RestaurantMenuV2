@@ -8,12 +8,18 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
 {
     public const int MaxNameLength = 150;
     public const int MaxDescriptionLength = 1000;
+    public const int MaxRecipeLength = 2000;
+    public const int MaxAllergenNotesLength = 1000;
+    public const int MaxTagCount = 20;
+    public const int MaxTagLength = 50;
+    public const int MaxPreparationTimeMinutes = 1440;
 
     private MenuItem()
         : base(default)
     {
         Name = string.Empty;
         Price = null!;
+        Tags = [];
     }
 
     private MenuItem(
@@ -34,6 +40,7 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
         Price = price;
         DisplayOrder = displayOrder;
         CreatedAtUtc = createdAtUtc;
+        Tags = [];
     }
 
     public Guid RestaurantId { get; }
@@ -49,6 +56,20 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
     public int DisplayOrder { get; private set; }
 
     public bool IsAvailable { get; private set; } = true;
+
+    public string? Recipe { get; private set; }
+
+    public int? Calories { get; private set; }
+
+    public string[] Tags { get; private set; }
+
+    public string? AllergenNotes { get; private set; }
+
+    public short? PreparationTimeMinutes { get; private set; }
+
+    public bool IsFeatured { get; private set; }
+
+    public bool IsPublished { get; private set; }
 
     public DateTimeOffset CreatedAtUtc { get; }
 
@@ -220,6 +241,90 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
                 CategoryId,
                 isAvailable));
     }
+
+    public Result<MenuItem> UpdateMetadata(
+        string? recipe,
+        int? calories,
+        IReadOnlyCollection<string>? tags,
+        string? allergenNotes,
+        int? preparationTimeMinutes,
+        bool isFeatured)
+    {
+        var normalizedRecipe = NormalizeOptionalText(recipe);
+        var normalizedAllergenNotes = NormalizeOptionalText(allergenNotes);
+        if (normalizedRecipe?.Length > MaxRecipeLength)
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.RecipeTooLong);
+        }
+
+        if (calories < 0)
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.InvalidCalories);
+        }
+
+        if (normalizedAllergenNotes?.Length > MaxAllergenNotesLength)
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.AllergenNotesTooLong);
+        }
+
+        if (preparationTimeMinutes is <= 0 or > MaxPreparationTimeMinutes)
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.InvalidPreparationTime);
+        }
+
+        var normalizedTags = (tags ?? [])
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Select(tag => tag.Trim().ToLowerInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        if (normalizedTags.Length > MaxTagCount)
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.TooManyTags);
+        }
+
+        if (normalizedTags.Any(tag => tag.Length > MaxTagLength))
+        {
+            return Result.Failure<MenuItem>(MenuItemErrors.TagTooLong);
+        }
+
+        if (Recipe == normalizedRecipe && Calories == calories &&
+            Tags.SequenceEqual(normalizedTags, StringComparer.Ordinal) &&
+            AllergenNotes == normalizedAllergenNotes &&
+            PreparationTimeMinutes == preparationTimeMinutes &&
+            IsFeatured == isFeatured)
+        {
+            return Result.Success(this);
+        }
+
+        Recipe = normalizedRecipe;
+        Calories = calories;
+        Tags = normalizedTags;
+        AllergenNotes = normalizedAllergenNotes;
+        PreparationTimeMinutes = preparationTimeMinutes.HasValue
+            ? checked((short)preparationTimeMinutes.Value)
+            : null;
+        IsFeatured = isFeatured;
+        Version++;
+        RaiseDomainEvent(new MenuItemMetadataUpdatedDomainEvent(Id, RestaurantId, CategoryId));
+        return Result.Success(this);
+    }
+
+    public void ChangePublication(bool isPublished)
+    {
+        if (IsPublished == isPublished)
+        {
+            return;
+        }
+
+        IsPublished = isPublished;
+        Version++;
+        RaiseDomainEvent(new MenuItemPublicationChangedDomainEvent(
+            Id, RestaurantId, CategoryId, isPublished));
+    }
+
+    private static string? NormalizeOptionalText(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     public void Delete(DateTimeOffset deletedAtUtc)
     {

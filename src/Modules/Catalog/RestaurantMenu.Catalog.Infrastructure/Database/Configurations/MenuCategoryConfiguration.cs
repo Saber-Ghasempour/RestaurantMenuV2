@@ -57,6 +57,15 @@ internal sealed class MenuCategoryConfiguration
             .HasMaxLength(MenuCategory.MaxNameLength)
             .IsRequired();
 
+        builder.Property(category => category.Description)
+            .HasColumnName("description")
+            .HasMaxLength(MenuCategory.MaxDescriptionLength);
+
+        builder.Property(category => category.IsPublished)
+            .HasColumnName("is_published")
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.Property(category => category.DisplayOrder)
             .HasColumnName("display_order")
             .IsRequired();

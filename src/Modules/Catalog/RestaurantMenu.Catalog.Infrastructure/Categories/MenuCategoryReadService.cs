@@ -37,7 +37,9 @@ public sealed class MenuCategoryReadService
                 category.Name,
                 category.DisplayOrder,
                 category.CreatedAtUtc,
-                category.Version))
+                category.Version,
+                category.Description,
+                category.IsPublished))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
@@ -62,7 +64,9 @@ public sealed class MenuCategoryReadService
                 category.Name,
                 category.DisplayOrder,
                 category.CreatedAtUtc,
-                category.Version))
+                category.Version,
+                category.Description,
+                category.IsPublished))
             .ToArrayAsync(cancellationToken);
     }
 }

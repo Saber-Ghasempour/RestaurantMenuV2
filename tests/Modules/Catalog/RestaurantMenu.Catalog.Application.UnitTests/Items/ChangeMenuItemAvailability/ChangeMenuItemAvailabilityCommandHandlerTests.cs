@@ -111,7 +111,10 @@ public sealed class ChangeMenuItemAvailabilityCommandHandlerTests
     private static ChangeMenuItemAvailabilityCommandHandler CreateHandler(
         MenuItem menuItem,
         UnitOfWorkStub unitOfWork) =>
-        new(new MenuItemRepositoryStub(menuItem), unitOfWork);
+        new(
+            new MenuItemRepositoryStub(menuItem),
+            unitOfWork,
+            new PublicMenuCacheInvalidatorStub());
 
     private static ChangeMenuItemAvailabilityCommand CreateCommand(
         MenuItem menuItem,

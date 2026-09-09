@@ -9,6 +9,8 @@ using RestaurantMenu.Catalog.Application.Items.DeleteMenuItem;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 using RestaurantMenu.Catalog.Application.Items.ListMenuItems;
 using RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
+using RestaurantMenu.Catalog.Application.Items.UpdateMenuItemMetadata;
+using RestaurantMenu.Catalog.Application.Items.ChangeMenuItemPublication;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Presentation.Abstractions.Authorization;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -63,6 +65,27 @@ public static class MenuItemEndpoints
             .WithTags("Catalog")
             .Produces<ChangeMenuItemAvailabilityResponse>(
                 StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPut(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}/metadata",
+                UpdateMenuItemMetadataAsync)
+            .WithName("UpdateMenuItemMetadata")
+            .WithTags("Catalog")
+            .Produces<UpdateMenuItemResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRestaurantAccess(Permissions.CatalogWrite);
+
+        endpoints.MapPatch(
+                "/api/restaurants/{restaurantId:guid}/categories/{categoryId:guid}/items/{menuItemId:guid}/publication",
+                ChangeMenuItemPublicationAsync)
+            .WithName("ChangeMenuItemPublication")
+            .WithTags("Catalog")
+            .Produces<ChangeMenuItemPublicationResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .RequireRestaurantAccess(Permissions.CatalogWrite);
@@ -260,6 +283,41 @@ public static class MenuItemEndpoints
             ? result.Error.ToProblem()
             : Results.NoContent();
     }
+
+    private static async Task<IResult> UpdateMenuItemMetadataAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        UpdateMenuItemMetadataRequest request,
+        ICommandHandler<UpdateMenuItemMetadataCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new UpdateMenuItemMetadataCommand(
+            restaurantId, new(categoryId), new(menuItemId), request.Recipe,
+            request.Calories, request.Tags, request.AllergenNotes,
+            request.PreparationTimeMinutes, request.IsFeatured,
+            request.ExpectedVersion), cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new UpdateMenuItemResponse(menuItemId, result.Value));
+    }
+
+    private static async Task<IResult> ChangeMenuItemPublicationAsync(
+        Guid restaurantId,
+        Guid categoryId,
+        Guid menuItemId,
+        ChangeMenuItemPublicationRequest request,
+        ICommandHandler<ChangeMenuItemPublicationCommand, Result<long>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new ChangeMenuItemPublicationCommand(
+            restaurantId, new(categoryId), new(menuItemId), request.IsPublished,
+            request.ExpectedVersion), cancellationToken);
+        return result.IsFailure
+            ? result.Error.ToProblem()
+            : Results.Ok(new ChangeMenuItemPublicationResponse(
+                menuItemId, request.IsPublished, result.Value));
+    }
 }
 
 public sealed record CreateMenuItemRequest(
@@ -290,4 +348,22 @@ public sealed record ChangeMenuItemAvailabilityRequest(
 public sealed record ChangeMenuItemAvailabilityResponse(
     Guid Id,
     bool IsAvailable,
+    long Version);
+
+public sealed record UpdateMenuItemMetadataRequest(
+    string? Recipe,
+    int? Calories,
+    IReadOnlyCollection<string>? Tags,
+    string? AllergenNotes,
+    int? PreparationTimeMinutes,
+    bool IsFeatured,
+    long ExpectedVersion);
+
+public sealed record ChangeMenuItemPublicationRequest(
+    bool IsPublished,
+    long ExpectedVersion);
+
+public sealed record ChangeMenuItemPublicationResponse(
+    Guid Id,
+    bool IsPublished,
     long Version);

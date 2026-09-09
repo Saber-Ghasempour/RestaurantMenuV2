@@ -16,7 +16,9 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
     {
         var categories = await dbContext.MenuCategories
             .AsNoTracking()
-            .Where(category => category.RestaurantId == restaurantId)
+            .Where(category =>
+                category.RestaurantId == restaurantId &&
+                category.IsPublished)
             .OrderBy(category => category.DisplayOrder)
             .ThenBy(category => category.Name)
             .ThenBy(category => category.Id)
@@ -27,7 +29,8 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
                     ? category.ParentId.Value.Value
                     : (Guid?)null,
                 category.Name,
-                category.DisplayOrder
+                category.DisplayOrder,
+                category.Description
             })
             .ToArrayAsync(cancellationToken);
 
@@ -35,7 +38,7 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
             .AsNoTracking()
             .Where(menuItem =>
                 menuItem.RestaurantId == restaurantId &&
-                menuItem.IsAvailable)
+                menuItem.IsPublished)
             .OrderBy(menuItem => menuItem.DisplayOrder)
             .ThenBy(menuItem => menuItem.Name)
             .ThenBy(menuItem => menuItem.Id)
@@ -47,7 +50,14 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
                 menuItem.Description,
                 PriceAmount = menuItem.Price.Amount,
                 Currency = menuItem.Price.Currency,
-                menuItem.DisplayOrder
+                menuItem.DisplayOrder,
+                menuItem.IsAvailable,
+                menuItem.Recipe,
+                menuItem.Calories,
+                menuItem.Tags,
+                menuItem.AllergenNotes,
+                menuItem.PreparationTimeMinutes,
+                menuItem.IsFeatured
             })
             .ToArrayAsync(cancellationToken);
 
@@ -67,8 +77,16 @@ public sealed class PublicMenuReadService(CatalogDbContext dbContext)
                         menuItem.Description,
                         menuItem.PriceAmount,
                         menuItem.Currency,
-                        menuItem.DisplayOrder))
-                    .ToArray()))
+                        menuItem.DisplayOrder,
+                        menuItem.IsAvailable,
+                        menuItem.Recipe,
+                        menuItem.Calories,
+                        menuItem.Tags,
+                        menuItem.AllergenNotes,
+                        menuItem.PreparationTimeMinutes,
+                        menuItem.IsFeatured))
+                    .ToArray(),
+                category.Description))
             .ToArray();
     }
 }

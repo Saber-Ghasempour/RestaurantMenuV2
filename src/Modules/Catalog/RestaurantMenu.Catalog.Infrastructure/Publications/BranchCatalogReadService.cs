@@ -31,7 +31,8 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 category.DisplayOrder,
                 publication != null && publication.IsPublished,
                 publication == null ? null : publication.DisplayOrderOverride,
-                publication == null ? null : publication.Version))
+                publication == null ? null : publication.Version,
+                category.IsPublished))
         .ToArrayAsync(cancellationToken);
 
     public async Task<IReadOnlyList<PublicMenuCategoryResponse>> GetPublicMenuAsync(
@@ -45,6 +46,7 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 on new { category.RestaurantId, CategoryId = category.Id }
                 equals new { publication.RestaurantId, publication.CategoryId }
             where category.RestaurantId == restaurantId &&
+                  category.IsPublished &&
                   publication.BranchId == branchId &&
                   publication.IsPublished
             orderby publication.DisplayOrderOverride ?? category.DisplayOrder,
@@ -57,7 +59,8 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                     ? category.ParentId.Value.Value
                     : (Guid?)null,
                 category.Name,
-                DisplayOrder = publication.DisplayOrderOverride ?? category.DisplayOrder
+                DisplayOrder = publication.DisplayOrderOverride ?? category.DisplayOrder,
+                category.Description
             }).ToArrayAsync(cancellationToken);
 
         var items = await (
@@ -66,7 +69,7 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 on new { item.RestaurantId, item.CategoryId }
                 equals new { publication.RestaurantId, publication.CategoryId }
             where item.RestaurantId == restaurantId &&
-                  item.IsAvailable &&
+                  item.IsPublished &&
                   publication.BranchId == branchId &&
                   publication.IsPublished
             orderby item.DisplayOrder, item.Name, item.Id
@@ -78,7 +81,14 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 item.Description,
                 Amount = item.Price.Amount,
                 Currency = item.Price.Currency,
-                item.DisplayOrder
+                item.DisplayOrder,
+                item.IsAvailable,
+                item.Recipe,
+                item.Calories,
+                item.Tags,
+                item.AllergenNotes,
+                item.PreparationTimeMinutes,
+                item.IsFeatured
             }).ToArrayAsync(cancellationToken);
         var itemsByCategory = items.ToLookup(item => item.CategoryId);
 
@@ -93,6 +103,14 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 item.Description,
                 item.Amount,
                 item.Currency,
-                item.DisplayOrder)).ToArray())).ToArray();
+                item.DisplayOrder,
+                item.IsAvailable,
+                item.Recipe,
+                item.Calories,
+                item.Tags,
+                item.AllergenNotes,
+                item.PreparationTimeMinutes,
+                item.IsFeatured)).ToArray(),
+            category.Description)).ToArray();
     }
 }
