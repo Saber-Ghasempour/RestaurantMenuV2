@@ -19,6 +19,7 @@ using RestaurantMenu.Media.Infrastructure.Database;
 using RestaurantMenu.Media.Domain.Assets;
 using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Domain.DiningSessions;
+using RestaurantMenu.Ordering.Domain.Orders;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -176,6 +177,21 @@ public sealed class TestWebApplicationFactory
         var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
         return await dbContext.DiningSessions.AsNoTracking()
             .SingleOrDefaultAsync(session => session.Id == new DiningSessionId(sessionId));
+    }
+
+    public async Task<Order?> FindOrderAsync(Guid orderId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        return await dbContext.Orders.AsNoTracking().Include(order => order.Lines)
+            .SingleOrDefaultAsync(order => order.Id == new OrderId(orderId));
+    }
+
+    public async Task<int> CountOrdersAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        return await scope.ServiceProvider.GetRequiredService<OrderingDbContext>()
+            .Orders.CountAsync();
     }
 
     public async Task<MediaAsset> SeedReadyMediaAssetAsync(Guid restaurantId)
@@ -339,6 +355,15 @@ public sealed class TestWebApplicationFactory
             item => item.Id == menuItemId);
 
         menuItem.ChangeAvailability(isAvailable);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task SetMenuItemPublicationAsync(MenuItemId menuItemId, bool isPublished)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var menuItem = await dbContext.MenuItems.SingleAsync(item => item.Id == menuItemId);
+        menuItem.ChangePublication(isPublished);
         await dbContext.SaveChangesAsync();
     }
 

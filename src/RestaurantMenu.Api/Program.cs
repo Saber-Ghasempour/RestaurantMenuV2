@@ -34,6 +34,7 @@ using RestaurantMenu.Ordering.Application.Abstractions;
 using RestaurantMenu.Ordering.Infrastructure;
 using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Presentation.DiningSessions;
+using RestaurantMenu.Ordering.Presentation.Orders;
 using RestaurantMenu.Api.Integrations.Ordering;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -123,6 +124,8 @@ builder.Services.AddMediaInfrastructure(mediaConnectionString, new ObjectStorage
 builder.Services.AddOrderingInfrastructure(orderingConnectionString,
     builder.Configuration.GetValue("DiningSessions:Lifetime", TimeSpan.FromHours(2)));
 builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>();
+builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotProvider>();
+builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
 builder.Services.AddScoped<MediaAssetIntegrationService>();
 builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
@@ -197,6 +200,7 @@ app.MapMediaAssetEndpoints();
 app.MapPublicMenuSlugEndpoints();
 app.MapPublicMenuCodeMenuEndpoints();
 app.MapDiningSessionEndpoints();
+app.MapOrderEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions
