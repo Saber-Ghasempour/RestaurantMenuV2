@@ -75,7 +75,7 @@ public sealed partial class PublicBranchMenuCache(
     }
 
     private static string GetKey(Guid restaurantId, Guid branchId) =>
-        $"public-menu:v2:restaurants:{restaurantId:N}:branches:{branchId:N}";
+        $"public-menu:v3:restaurants:{restaurantId:N}:branches:{branchId:N}";
 
     [LoggerMessage(3001, LogLevel.Warning,
         "Public Branch menu cache {Operation} failed for restaurant {RestaurantId} and branch {BranchId}.")]

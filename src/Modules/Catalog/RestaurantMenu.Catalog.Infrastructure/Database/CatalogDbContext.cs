@@ -5,6 +5,7 @@ using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Domain.Publications;
+using RestaurantMenu.Catalog.Domain.Variants;
 
 namespace RestaurantMenu.Catalog.Infrastructure.Database;
 
@@ -24,6 +25,8 @@ public sealed class CatalogDbContext
         Set<MenuCategory>();
 
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
+    public DbSet<MenuItemVariant> MenuItemVariants => Set<MenuItemVariant>();
 
     public DbSet<BranchCategoryPublication> BranchCategoryPublications =>
         Set<BranchCategoryPublication>();

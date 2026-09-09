@@ -1,90 +1,80 @@
 using Microsoft.EntityFrameworkCore;
-
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Items.GetMenuItem;
+using RestaurantMenu.Catalog.Application.Variants;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 
 namespace RestaurantMenu.Catalog.Infrastructure.Items;
 
-public sealed class MenuItemReadService : IMenuItemReadService
+public sealed class MenuItemReadService(CatalogDbContext dbContext)
+    : IMenuItemReadService
 {
-    private readonly CatalogDbContext _dbContext;
-
-    public MenuItemReadService(CatalogDbContext dbContext)
-    {
-        ArgumentNullException.ThrowIfNull(dbContext);
-        _dbContext = dbContext;
-    }
-
-    public Task<MenuItemResponse?> GetByIdAsync(
-        Guid restaurantId,
-        MenuCategoryId categoryId,
-        MenuItemId menuItemId,
+    public async Task<MenuItemResponse?> GetByIdAsync(
+        Guid restaurantId, MenuCategoryId categoryId, MenuItemId menuItemId,
         CancellationToken cancellationToken)
     {
-        return _dbContext.MenuItems
-            .AsNoTracking()
-            .Where(menuItem =>
-                menuItem.RestaurantId == restaurantId &&
-                menuItem.CategoryId == categoryId &&
-                menuItem.Id == menuItemId)
-            .Select(menuItem => new MenuItemResponse(
-                menuItem.Id.Value,
-                menuItem.RestaurantId,
-                menuItem.CategoryId.Value,
-                menuItem.Name,
-                menuItem.Description,
-                menuItem.Price.Amount,
-                menuItem.Price.Currency,
-                menuItem.DisplayOrder,
-                menuItem.IsAvailable,
-                menuItem.CreatedAtUtc,
-                menuItem.Version,
-                menuItem.Recipe,
-                menuItem.Calories,
-                menuItem.Tags,
-                menuItem.AllergenNotes,
-                menuItem.PreparationTimeMinutes,
-                menuItem.IsFeatured,
-                menuItem.IsPublished))
-            .SingleOrDefaultAsync(cancellationToken);
+        var items = await ReadItemsAsync(
+            restaurantId, categoryId, menuItemId, cancellationToken);
+        return items.SingleOrDefault();
     }
 
-    public async Task<IReadOnlyList<MenuItemResponse>>
-        GetByCategoryIdAsync(
-            Guid restaurantId,
-            MenuCategoryId categoryId,
-            CancellationToken cancellationToken)
+    public Task<IReadOnlyList<MenuItemResponse>> GetByCategoryIdAsync(
+        Guid restaurantId, MenuCategoryId categoryId,
+        CancellationToken cancellationToken) =>
+        ReadItemsAsync(restaurantId, categoryId, null, cancellationToken);
+
+    private async Task<IReadOnlyList<MenuItemResponse>> ReadItemsAsync(
+        Guid restaurantId, MenuCategoryId categoryId, MenuItemId? menuItemId,
+        CancellationToken cancellationToken)
     {
-        return await _dbContext.MenuItems
-            .AsNoTracking()
-            .Where(menuItem =>
-                menuItem.RestaurantId == restaurantId &&
-                menuItem.CategoryId == categoryId)
-            .OrderBy(menuItem => menuItem.DisplayOrder)
-            .ThenBy(menuItem => menuItem.Name)
-            .ThenBy(menuItem => menuItem.Id)
-            .Select(menuItem => new MenuItemResponse(
-                menuItem.Id.Value,
-                menuItem.RestaurantId,
-                menuItem.CategoryId.Value,
-                menuItem.Name,
-                menuItem.Description,
-                menuItem.Price.Amount,
-                menuItem.Price.Currency,
-                menuItem.DisplayOrder,
-                menuItem.IsAvailable,
-                menuItem.CreatedAtUtc,
-                menuItem.Version,
-                menuItem.Recipe,
-                menuItem.Calories,
-                menuItem.Tags,
-                menuItem.AllergenNotes,
-                menuItem.PreparationTimeMinutes,
-                menuItem.IsFeatured,
-                menuItem.IsPublished))
+        var items = await dbContext.MenuItems.AsNoTracking()
+            .Where(item => item.RestaurantId == restaurantId &&
+                item.CategoryId == categoryId &&
+                (!menuItemId.HasValue || item.Id == menuItemId.Value))
+            .OrderBy(item => item.DisplayOrder)
+            .ThenBy(item => item.Name)
+            .ThenBy(item => item.Id)
+            .Select(item => new
+            {
+                Id = item.Id.Value, item.RestaurantId,
+                CategoryId = item.CategoryId.Value, item.Name, item.Description,
+                item.DisplayOrder, item.IsAvailable, item.CreatedAtUtc,
+                item.Version, item.Recipe, item.Calories, item.Tags,
+                item.AllergenNotes, item.PreparationTimeMinutes,
+                item.IsFeatured, item.IsPublished
+            }).ToArrayAsync(cancellationToken);
+
+        var variants = await (
+            from variant in dbContext.MenuItemVariants.AsNoTracking()
+            join item in dbContext.MenuItems.AsNoTracking()
+                on new { variant.RestaurantId, variant.MenuItemId }
+                equals new { item.RestaurantId, MenuItemId = item.Id }
+            where item.RestaurantId == restaurantId &&
+                  item.CategoryId == categoryId &&
+                  (!menuItemId.HasValue || item.Id == menuItemId.Value)
+            orderby variant.IsDefault descending, variant.DisplayOrder,
+                variant.Name, variant.Id
+            select new MenuItemVariantResponse(
+                variant.Id.Value, variant.RestaurantId, variant.MenuItemId.Value,
+                variant.Name, variant.Description, variant.Price.Amount,
+                variant.Price.Currency, variant.DisplayOrder, variant.IsDefault,
+                variant.IsAvailable, variant.CreatedAtUtc, variant.Version))
             .ToArrayAsync(cancellationToken);
+        var byItem = variants.ToLookup(variant => variant.MenuItemId);
+
+        return items.Select(item =>
+        {
+            var itemVariants = byItem[item.Id].ToArray();
+            var defaultVariant = itemVariants.Single(variant => variant.IsDefault);
+            return new MenuItemResponse(
+                item.Id, item.RestaurantId, item.CategoryId, item.Name,
+                item.Description, defaultVariant.PriceAmount,
+                defaultVariant.Currency, item.DisplayOrder, item.IsAvailable,
+                item.CreatedAtUtc, item.Version, item.Recipe, item.Calories,
+                item.Tags, item.AllergenNotes, item.PreparationTimeMinutes,
+                item.IsFeatured, item.IsPublished, itemVariants);
+        }).ToArray();
     }
 }

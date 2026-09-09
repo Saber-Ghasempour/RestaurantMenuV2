@@ -39,4 +39,15 @@ public sealed record PublicMenuItemResponse(
     IReadOnlyList<string>? Tags = null,
     string? AllergenNotes = null,
     short? PreparationTimeMinutes = null,
-    bool IsFeatured = false);
+    bool IsFeatured = false,
+    IReadOnlyList<PublicMenuVariantResponse>? Variants = null);
+
+public sealed record PublicMenuVariantResponse(
+    Guid Id,
+    string Name,
+    string? Description,
+    decimal PriceAmount,
+    string Currency,
+    int DisplayOrder,
+    bool IsDefault,
+    bool IsAvailable);

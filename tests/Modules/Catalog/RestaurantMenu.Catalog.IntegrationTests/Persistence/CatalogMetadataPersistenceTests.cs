@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Infrastructure.Items;
 using Testcontainers.PostgreSql;
@@ -31,7 +32,10 @@ public sealed class CatalogMetadataPersistenceTests : IAsyncLifetime
         category.ChangePublication(true);
         var item = MenuItem.Create(
             MenuItemId.New(), restaurantId, category.Id, "Tomato", null,
-            8m, "EUR", 1, DateTimeOffset.UtcNow).Value;
+            1, DateTimeOffset.UtcNow).Value;
+        var variant = MenuItemVariant.Create(
+            MenuItemVariantId.New(), restaurantId, item.Id, "Default", null,
+            8m, "EUR", 0, true, DateTimeOffset.UtcNow).Value;
         item.UpdateMetadata("Tomatoes", 0, ["vegan", "quick"], "Nuts", 15, true);
         item.ChangePublication(true);
 
@@ -40,6 +44,7 @@ public sealed class CatalogMetadataPersistenceTests : IAsyncLifetime
             await context.Database.MigrateAsync();
             context.MenuCategories.Add(category);
             context.MenuItems.Add(item);
+            context.MenuItemVariants.Add(variant);
             await context.SaveChangesAsync();
         }
 

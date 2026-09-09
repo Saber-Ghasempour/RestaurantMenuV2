@@ -5,6 +5,7 @@ using RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
 using RestaurantMenu.Catalog.Application.Items;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 
 namespace RestaurantMenu.Catalog.Application.UnitTests.Items.CreateMenuItem;
 
@@ -19,10 +20,12 @@ public sealed class CreateMenuItemCommandHandlerTests
         var restaurantId = Guid.CreateVersion7();
         var category = CreateCategory(restaurantId);
         var itemRepository = new MenuItemRepositorySpy();
+        var variantRepository = new MenuItemVariantRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var handler = CreateHandler(
             category,
             itemRepository,
+            variantRepository,
             unitOfWork,
             restaurantExists: true);
 
@@ -41,8 +44,11 @@ public sealed class CreateMenuItemCommandHandlerTests
         Assert.NotNull(itemRepository.AddedItem);
         Assert.Equal(result.Value, itemRepository.AddedItem.Id);
         Assert.Equal("Carbonara", itemRepository.AddedItem.Name);
-        Assert.Equal(14.50m, itemRepository.AddedItem.Price.Amount);
-        Assert.Equal("EUR", itemRepository.AddedItem.Price.Currency);
+        Assert.NotNull(variantRepository.AddedVariant);
+        Assert.Equal(itemRepository.AddedItem.Id, variantRepository.AddedVariant.MenuItemId);
+        Assert.Equal(14.50m, variantRepository.AddedVariant.Price.Amount);
+        Assert.Equal("EUR", variantRepository.AddedVariant.Price.Currency);
+        Assert.True(variantRepository.AddedVariant.IsDefault);
         Assert.Equal(UtcNow, itemRepository.AddedItem.CreatedAtUtc);
         Assert.Equal(1, unitOfWork.SaveChangesCallCount);
     }
@@ -52,10 +58,12 @@ public sealed class CreateMenuItemCommandHandlerTests
     {
         var restaurantId = Guid.CreateVersion7();
         var itemRepository = new MenuItemRepositorySpy();
+        var variantRepository = new MenuItemVariantRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var handler = CreateHandler(
             null,
             itemRepository,
+            variantRepository,
             unitOfWork,
             restaurantExists: false);
 
@@ -77,10 +85,12 @@ public sealed class CreateMenuItemCommandHandlerTests
         var restaurantId = Guid.CreateVersion7();
         var category = CreateCategory(Guid.CreateVersion7());
         var itemRepository = new MenuItemRepositorySpy();
+        var variantRepository = new MenuItemVariantRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var handler = CreateHandler(
             category,
             itemRepository,
+            variantRepository,
             unitOfWork,
             restaurantExists: true);
 
@@ -103,10 +113,12 @@ public sealed class CreateMenuItemCommandHandlerTests
         var restaurantId = Guid.CreateVersion7();
         var category = CreateCategory(restaurantId);
         var itemRepository = new MenuItemRepositorySpy();
+        var variantRepository = new MenuItemVariantRepositorySpy();
         var unitOfWork = new UnitOfWorkSpy();
         var handler = CreateHandler(
             category,
             itemRepository,
+            variantRepository,
             unitOfWork,
             restaurantExists: true);
 
@@ -126,11 +138,13 @@ public sealed class CreateMenuItemCommandHandlerTests
     private static CreateMenuItemCommandHandler CreateHandler(
         MenuCategory? category,
         MenuItemRepositorySpy itemRepository,
+        MenuItemVariantRepositorySpy variantRepository,
         UnitOfWorkSpy unitOfWork,
         bool restaurantExists) =>
         new(
             new MenuCategoryRepositoryStub(category),
             itemRepository,
+            variantRepository,
             new RestaurantExistenceCheckerStub(restaurantExists),
             unitOfWork,
             new StubTimeProvider(UtcNow));
@@ -193,6 +207,22 @@ public sealed class CreateMenuItemCommandHandlerTests
         public Task<MenuItem?> GetByIdAsync(
             MenuItemId menuItemId,
             CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class MenuItemVariantRepositorySpy : IMenuItemVariantRepository
+    {
+        public MenuItemVariant? AddedVariant { get; private set; }
+        public void Add(MenuItemVariant variant) => AddedVariant = variant;
+        public Task<MenuItemVariant?> GetByIdAsync(MenuItemVariantId variantId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+        public Task<MenuItemVariant?> GetDefaultAsync(MenuItemId menuItemId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+        public Task<bool> NameExistsAsync(MenuItemId menuItemId, string normalizedName, MenuItemVariantId? excludingVariantId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+        public Task<bool> HasDifferentCurrencyAsync(MenuItemId menuItemId, string currency, MenuItemVariantId? excludingVariantId, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+        public Task<bool> SwitchDefaultAsync(MenuItemVariant currentDefault, MenuItemVariant newDefault, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
 

@@ -33,6 +33,16 @@ using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Infrastructure.Items;
 using RestaurantMenu.Catalog.Infrastructure.PublicMenus;
 using RestaurantMenu.Catalog.Infrastructure.Publications;
+using RestaurantMenu.Catalog.Infrastructure.Variants;
+using RestaurantMenu.Catalog.Application.Variants;
+using RestaurantMenu.Catalog.Application.Variants.CreateMenuItemVariant;
+using RestaurantMenu.Catalog.Application.Variants.UpdateMenuItemVariant;
+using RestaurantMenu.Catalog.Application.Variants.ChangeMenuItemVariantAvailability;
+using RestaurantMenu.Catalog.Application.Variants.SetDefaultMenuItemVariant;
+using RestaurantMenu.Catalog.Application.Variants.DeleteMenuItemVariant;
+using RestaurantMenu.Catalog.Application.Variants.GetMenuItemVariant;
+using RestaurantMenu.Catalog.Application.Variants.ListMenuItemVariants;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Infrastructure;
@@ -66,6 +76,10 @@ public static class DependencyInjection
             MenuItemRepository>();
         services.AddScoped<IMenuItemReadService,
             MenuItemReadService>();
+        services.AddScoped<IMenuItemVariantRepository,
+            MenuItemVariantRepository>();
+        services.AddScoped<IMenuItemVariantReadService,
+            MenuItemVariantReadService>();
         services.AddScoped<IPublicMenuReadService,
             PublicMenuReadService>();
         services.AddScoped<IBranchCategoryPublicationRepository,
@@ -148,6 +162,28 @@ public static class DependencyInjection
                 DeleteMenuItemCommand,
                 Result<MenuItemId>>,
             DeleteMenuItemCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<CreateMenuItemVariantCommand, Result<MenuItemVariantId>>,
+            CreateMenuItemVariantCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<UpdateMenuItemVariantCommand, Result<long>>,
+            UpdateMenuItemVariantCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<ChangeMenuItemVariantAvailabilityCommand, Result<long>>,
+            ChangeMenuItemVariantAvailabilityCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<SetDefaultMenuItemVariantCommand, Result<long>>,
+            SetDefaultMenuItemVariantCommandHandler>();
+        services.AddScoped<
+            ICommandHandler<DeleteMenuItemVariantCommand, Result<MenuItemVariantId>>,
+            DeleteMenuItemVariantCommandHandler>();
+        services.AddScoped<
+            IQueryHandler<GetMenuItemVariantQuery, Result<MenuItemVariantResponse>>,
+            GetMenuItemVariantQueryHandler>();
+        services.AddScoped<
+            IQueryHandler<ListMenuItemVariantsQuery,
+                Result<IReadOnlyList<MenuItemVariantResponse>>>,
+            ListMenuItemVariantsQueryHandler>();
         services.AddScoped<
             IQueryHandler<
                 GetPublicMenuQuery,

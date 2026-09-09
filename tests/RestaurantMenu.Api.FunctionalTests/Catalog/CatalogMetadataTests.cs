@@ -74,6 +74,9 @@ public sealed class CatalogMetadataTests(TestWebApplicationFactory factory)
         Assert.False(publicItem.IsAvailable);
         Assert.Equal(0, publicItem.Calories);
         Assert.Equal(["quick", "vegan"], publicItem.Tags);
+        var publicVariant = Assert.Single(publicItem.Variants ?? []);
+        Assert.True(publicVariant.IsDefault);
+        Assert.Equal(8m, publicVariant.PriceAmount);
     }
 
     [Fact]

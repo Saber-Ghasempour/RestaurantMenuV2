@@ -249,6 +249,93 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Variants.MenuItemVariant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<bool>("IsAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_available");
+
+                    b.Property<bool>("IsDefault")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_default");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid>("MenuItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("menu_item_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("RestaurantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restaurant_id");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L)
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId", "IsDefault")
+                        .IsUnique()
+                        .HasDatabaseName("ux_menu_item_variants_one_default")
+                        .HasFilter("is_default = TRUE AND is_deleted = FALSE");
+
+                    b.HasIndex("MenuItemId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ux_menu_item_variants_active_name")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.HasIndex("RestaurantId", "MenuItemId", "DisplayOrder")
+                        .HasDatabaseName("ix_menu_item_variants_restaurant_item_display_order");
+
+                    b.ToTable("menu_item_variants", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("ck_menu_item_variants_currency_format", "price_currency ~ '^[A-Z]{3}$'");
+
+                            t.HasCheckConstraint("ck_menu_item_variants_display_order_non_negative", "display_order >= 0");
+
+                            t.HasCheckConstraint("ck_menu_item_variants_price_non_negative", "price_amount >= 0");
+                        });
+                });
+
             modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Categories.MenuCategory", b =>
                 {
                     b.HasOne("RestaurantMenu.Catalog.Domain.Categories.MenuCategory", null)
@@ -264,10 +351,30 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Publications.BranchCategoryPublication", b =>
+                {
+                    b.HasOne("RestaurantMenu.Catalog.Domain.Categories.MenuCategory", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId", "CategoryId")
+                        .HasPrincipalKey("RestaurantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Variants.MenuItemVariant", b =>
+                {
+                    b.HasOne("RestaurantMenu.Catalog.Domain.Items.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId", "MenuItemId")
+                        .HasPrincipalKey("RestaurantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.OwnsOne("RestaurantMenu.Catalog.Domain.Items.Money", "Price", b1 =>
                         {
-                            b1.Property<Guid>("MenuItemId")
+                            b1.Property<Guid>("MenuItemVariantId")
                                 .HasColumnType("uuid");
 
                             b1.Property<decimal>("Amount")
@@ -280,25 +387,15 @@ namespace RestaurantMenu.Catalog.Infrastructure.Database.Migrations
                                 .HasColumnType("character(3)")
                                 .HasColumnName("price_currency");
 
-                            b1.HasKey("MenuItemId");
+                            b1.HasKey("MenuItemVariantId");
 
-                            b1.ToTable("menu_items", "catalog");
+                            b1.ToTable("menu_item_variants", "catalog");
 
                             b1.WithOwner()
-                                .HasForeignKey("MenuItemId");
+                                .HasForeignKey("MenuItemVariantId");
                         });
 
                     b.Navigation("Price")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RestaurantMenu.Catalog.Domain.Publications.BranchCategoryPublication", b =>
-                {
-                    b.HasOne("RestaurantMenu.Catalog.Domain.Categories.MenuCategory", null)
-                        .WithMany()
-                        .HasForeignKey("RestaurantId", "CategoryId")
-                        .HasPrincipalKey("RestaurantId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

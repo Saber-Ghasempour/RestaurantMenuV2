@@ -96,5 +96,5 @@ public sealed class MenuItemMetadataTests
     private static MenuItem CreateItem() =>
         MenuItem.Create(
             MenuItemId.New(), Guid.CreateVersion7(), MenuCategoryId.New(),
-            "Soup", null, 10m, "USD", 1, DateTimeOffset.UtcNow).Value;
+            "Soup", null, 1, DateTimeOffset.UtcNow).Value;
 }

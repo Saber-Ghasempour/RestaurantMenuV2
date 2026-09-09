@@ -73,24 +73,6 @@ internal sealed class MenuItemConfiguration
             .HasDefaultValue(false)
             .IsRequired();
 
-        builder.OwnsOne(
-            menuItem => menuItem.Price,
-            priceBuilder =>
-            {
-                priceBuilder.Property(price => price.Amount)
-                    .HasColumnName("price_amount")
-                    .HasPrecision(18, 2)
-                    .IsRequired();
-
-                priceBuilder.Property(price => price.Currency)
-                    .HasColumnName("price_currency")
-                    .HasColumnType("character(3)")
-                    .IsRequired();
-            });
-
-        builder.Navigation(menuItem => menuItem.Price)
-            .IsRequired();
-
         builder.Property(menuItem => menuItem.DisplayOrder)
             .HasColumnName("display_order")
             .IsRequired();
@@ -135,6 +117,12 @@ internal sealed class MenuItemConfiguration
             })
             .HasDatabaseName(
                 "ix_menu_items_restaurant_category_display_order");
+
+        builder.HasAlternateKey(menuItem => new
+            {
+                menuItem.RestaurantId,
+                menuItem.Id
+            });
 
         builder.HasIndex(menuItem => menuItem.Tags)
             .HasMethod("gin")

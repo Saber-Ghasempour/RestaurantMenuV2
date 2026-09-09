@@ -21,8 +21,6 @@ public sealed class MenuItemTests
             categoryId,
             " Carbonara ",
             " Classic pasta ",
-            14.50m,
-            "eur",
             10,
             CreatedAtUtc);
 
@@ -32,8 +30,6 @@ public sealed class MenuItemTests
         Assert.Equal(categoryId, result.Value.CategoryId);
         Assert.Equal("Carbonara", result.Value.Name);
         Assert.Equal("Classic pasta", result.Value.Description);
-        Assert.Equal(14.50m, result.Value.Price.Amount);
-        Assert.Equal("EUR", result.Value.Price.Currency);
         Assert.Equal(10, result.Value.DisplayOrder);
         Assert.True(result.Value.IsAvailable);
         Assert.Equal(CreatedAtUtc, result.Value.CreatedAtUtc);
@@ -93,15 +89,11 @@ public sealed class MenuItemTests
         var result = menuItem.Update(
             " Updated Item ",
             " Updated description ",
-            12.75m,
-            "usd",
             20);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Updated Item", menuItem.Name);
         Assert.Equal("Updated description", menuItem.Description);
-        Assert.Equal(12.75m, menuItem.Price.Amount);
-        Assert.Equal("USD", menuItem.Price.Currency);
         Assert.Equal(20, menuItem.DisplayOrder);
         Assert.Equal(2, menuItem.Version);
         var domainEvent = Assert.IsType<MenuItemUpdatedDomainEvent>(
@@ -119,8 +111,6 @@ public sealed class MenuItemTests
         var result = menuItem.Update(
             menuItem.Name,
             "   ",
-            menuItem.Price.Amount,
-            menuItem.Price.Currency,
             menuItem.DisplayOrder);
 
         Assert.True(result.IsSuccess);
@@ -137,34 +127,9 @@ public sealed class MenuItemTests
         var result = menuItem.Update(
             " Item ",
             " Description ",
-            10.00m,
-            "eur",
             1);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1, menuItem.Version);
-        Assert.Empty(menuItem.DomainEvents);
-    }
-
-    [Fact]
-    public void UpdateShouldRejectInvalidMoneyWithoutChangingState()
-    {
-        var menuItem = CreateMenuItem().Value;
-        menuItem.ClearDomainEvents();
-
-        var result = menuItem.Update(
-            "Changed",
-            "Changed",
-            -1m,
-            "EUR",
-            2);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(MenuItemErrors.NegativePrice, result.Error);
-        Assert.Equal("Item", menuItem.Name);
-        Assert.Equal("Description", menuItem.Description);
-        Assert.Equal(10m, menuItem.Price.Amount);
-        Assert.Equal(1, menuItem.DisplayOrder);
         Assert.Equal(1, menuItem.Version);
         Assert.Empty(menuItem.DomainEvents);
     }
@@ -247,8 +212,6 @@ public sealed class MenuItemTests
             MenuCategoryId.New(),
             name,
             description,
-            10m,
-            "EUR",
             displayOrder,
             CreatedAtUtc);
 }

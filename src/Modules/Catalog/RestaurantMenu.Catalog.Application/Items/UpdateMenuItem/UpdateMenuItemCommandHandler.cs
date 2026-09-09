@@ -2,6 +2,8 @@ using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Application.Abstractions.Caching;
+using RestaurantMenu.Catalog.Application.Variants;
+using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Application.Items.UpdateMenuItem;
@@ -11,17 +13,21 @@ public sealed class UpdateMenuItemCommandHandler
 {
     private readonly IMenuItemRepository _repository;
     private readonly ICatalogUnitOfWork _unitOfWork;
+    private readonly IMenuItemVariantRepository _variantRepository;
     private readonly IPublicMenuCacheInvalidator _cacheInvalidator;
 
     public UpdateMenuItemCommandHandler(
         IMenuItemRepository repository,
+        IMenuItemVariantRepository variantRepository,
         ICatalogUnitOfWork unitOfWork,
         IPublicMenuCacheInvalidator cacheInvalidator)
     {
         ArgumentNullException.ThrowIfNull(repository);
+        ArgumentNullException.ThrowIfNull(variantRepository);
         ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(cacheInvalidator);
         _repository = repository;
+        _variantRepository = variantRepository;
         _unitOfWork = unitOfWork;
         _cacheInvalidator = cacheInvalidator;
     }
@@ -53,16 +59,55 @@ public sealed class UpdateMenuItemCommandHandler
         }
 
         var previousVersion = menuItem.Version;
+        var defaultVariant = await _variantRepository.GetDefaultAsync(
+            menuItem.Id, cancellationToken);
+        if (defaultVariant is null)
+        {
+            return Result.Failure<long>(
+                MenuItemVariantApplicationErrors.DefaultRequired);
+        }
+
+        var money = Money.Create(command.PriceAmount, command.Currency);
+        if (money.IsFailure)
+        {
+            return Result.Failure<long>(money.Error);
+        }
+
+        if (await _variantRepository.HasDifferentCurrencyAsync(
+            menuItem.Id, money.Value.Currency, defaultVariant.Id,
+            cancellationToken))
+        {
+            return Result.Failure<long>(
+                MenuItemVariantApplicationErrors.CurrencyMismatch);
+        }
+
+        var previousVariantVersion = defaultVariant.Version;
+
         var updateResult = menuItem.Update(
             command.Name,
             command.Description,
-            command.PriceAmount,
-            command.Currency,
             command.DisplayOrder);
 
         if (updateResult.IsFailure)
         {
             return Result.Failure<long>(updateResult.Error);
+        }
+
+        var priceResult = defaultVariant.Update(
+            defaultVariant.Name,
+            defaultVariant.Description,
+            command.PriceAmount,
+            command.Currency,
+            defaultVariant.DisplayOrder);
+        if (priceResult.IsFailure)
+        {
+            return Result.Failure<long>(priceResult.Error);
+        }
+
+        if (menuItem.Version == previousVersion &&
+            defaultVariant.Version != previousVariantVersion)
+        {
+            menuItem.MarkDefaultVariantPriceUpdated();
         }
 
         try

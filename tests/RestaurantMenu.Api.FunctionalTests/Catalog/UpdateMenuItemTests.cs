@@ -58,8 +58,10 @@ public sealed class UpdateMenuItemTests
         Assert.NotNull(persisted);
         Assert.Equal("Updated Item", persisted.Name);
         Assert.Equal("Updated description", persisted.Description);
-        Assert.Equal(19.95m, persisted.Price.Amount);
-        Assert.Equal("USD", persisted.Price.Currency);
+        var variant = await _factory.FindDefaultMenuItemVariantAsync(menuItem.Id.Value);
+        Assert.NotNull(variant);
+        Assert.Equal(19.95m, variant.Price.Amount);
+        Assert.Equal("USD", variant.Price.Currency);
         Assert.Equal(20, persisted.DisplayOrder);
         Assert.Equal(2, persisted.Version);
     }

@@ -54,8 +54,10 @@ public sealed class CreateMenuItemTests
         Assert.Equal(category.Id, persisted.CategoryId);
         Assert.Equal("Carbonara", persisted.Name);
         Assert.Equal("Classic pasta", persisted.Description);
-        Assert.Equal(14.50m, persisted.Price.Amount);
-        Assert.Equal("EUR", persisted.Price.Currency);
+        var variant = await _factory.FindDefaultMenuItemVariantAsync(content.Id);
+        Assert.NotNull(variant);
+        Assert.Equal(14.50m, variant.Price.Amount);
+        Assert.Equal("EUR", variant.Price.Currency);
         Assert.True(persisted.IsAvailable);
     }
 

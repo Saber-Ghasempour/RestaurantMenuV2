@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantMenu.Catalog.Application.PublicMenus.GetPublicMenu;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.Catalog.Domain.Publications;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Infrastructure.Publications;
@@ -27,15 +28,18 @@ public sealed class BranchCategoryPublicationPersistenceTests : IAsyncLifetime
         var first = CreateCategory(restaurantId, "First", 1);
         var second = CreateCategory(restaurantId, "Second", 2);
         var hidden = CreateCategory(restaurantId, "Hidden", 0);
+        var firstItem = CreateItem(restaurantId, first.Id, "First item");
+        var secondItem = CreateItem(restaurantId, second.Id, "Second item");
+        var hiddenItem = CreateItem(restaurantId, hidden.Id, "Hidden item");
 
         await using (var context = new CatalogDbContext(options))
         {
             await context.Database.MigrateAsync();
             context.MenuCategories.AddRange(first, second, hidden);
-            context.MenuItems.AddRange(
-                CreateItem(restaurantId, first.Id, "First item"),
-                CreateItem(restaurantId, second.Id, "Second item"),
-                CreateItem(restaurantId, hidden.Id, "Hidden item"));
+            context.MenuItems.AddRange(firstItem, secondItem, hiddenItem);
+            context.MenuItemVariants.AddRange(
+                CreateVariant(firstItem), CreateVariant(secondItem),
+                CreateVariant(hiddenItem));
             context.BranchCategoryPublications.AddRange(
                 CreatePublication(restaurantId, branchId, first.Id, true, 20),
                 CreatePublication(restaurantId, branchId, second.Id, true, 10),
@@ -98,10 +102,15 @@ public sealed class BranchCategoryPublicationPersistenceTests : IAsyncLifetime
     {
         var item = MenuItem.Create(
             MenuItemId.New(), restaurantId, categoryId, name, null,
-            10m, "EUR", 1, DateTimeOffset.UtcNow).Value;
+            1, DateTimeOffset.UtcNow).Value;
         item.ChangePublication(true);
         return item;
     }
+
+    private static MenuItemVariant CreateVariant(MenuItem item) =>
+        MenuItemVariant.Create(MenuItemVariantId.New(), item.RestaurantId,
+            item.Id, "Default", null, 10m, "EUR", 0, true,
+            DateTimeOffset.UtcNow).Value;
 
     private static BranchCategoryPublication CreatePublication(
         Guid restaurantId,

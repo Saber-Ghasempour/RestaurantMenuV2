@@ -146,7 +146,7 @@ public sealed class CatalogMetadataCommandHandlerTests
 
     private static MenuItem CreateItem() => MenuItem.Create(
         MenuItemId.New(), Guid.CreateVersion7(), MenuCategoryId.New(), "Soup",
-        null, 10m, "USD", 1, DateTimeOffset.UtcNow).Value;
+        null, 1, DateTimeOffset.UtcNow).Value;
 
     private sealed class CategoryRepositoryStub(
         MenuCategory category,

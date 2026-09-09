@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.Catalog.Infrastructure.Categories;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Catalog.Infrastructure.Items;
@@ -271,8 +272,6 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             category.Id,
             "Carbonara",
             "Classic pasta",
-            14.50m,
-            "EUR",
             1,
             new DateTimeOffset(
                 2026,
@@ -289,6 +288,10 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             await context.Database.MigrateAsync();
             context.MenuCategories.Add(category);
             new MenuItemRepository(context).Add(itemResult.Value);
+            context.MenuItemVariants.Add(MenuItemVariant.Create(
+                MenuItemVariantId.New(), restaurantId, itemResult.Value.Id,
+                "Default", null, 14.50m, "EUR", 0, true,
+                DateTimeOffset.UtcNow).Value);
             await context.SaveChangesAsync();
         }
 
@@ -301,8 +304,11 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.Equal(category.Id, persisted.CategoryId);
         Assert.Equal("Carbonara", persisted.Name);
         Assert.Equal("Classic pasta", persisted.Description);
-        Assert.Equal(14.50m, persisted.Price.Amount);
-        Assert.Equal("EUR", persisted.Price.Currency);
+        var persistedVariant = await verificationContext.MenuItemVariants
+            .AsNoTracking()
+            .SingleAsync(variant => variant.MenuItemId == persisted.Id);
+        Assert.Equal(14.50m, persistedVariant.Price.Amount);
+        Assert.Equal("EUR", persistedVariant.Price.Currency);
         Assert.True(persisted.IsAvailable);
         Assert.Equal(1, persisted.Version);
     }
@@ -349,6 +355,10 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             await context.Database.MigrateAsync();
             context.MenuCategories.AddRange(category, otherCategory);
             context.MenuItems.AddRange(second, excluded, first);
+            context.MenuItemVariants.AddRange(
+                CreateVariant(first, 8.25m),
+                CreateVariant(second, 6.50m),
+                CreateVariant(excluded, 1m));
             await context.SaveChangesAsync();
         }
 
@@ -421,8 +431,6 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
                 loaded.Update(
                     " Updated ",
                     " New description ",
-                    19.95m,
-                    "usd",
                     5).IsSuccess);
             await updateContext.SaveChangesAsync();
         }
@@ -434,8 +442,6 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             .SingleAsync(candidate => candidate.Id == menuItem.Id);
         Assert.Equal("Updated", persisted.Name);
         Assert.Equal("New description", persisted.Description);
-        Assert.Equal(19.95m, persisted.Price.Amount);
-        Assert.Equal("USD", persisted.Price.Currency);
         Assert.Equal(5, persisted.DisplayOrder);
         Assert.Equal(2, persisted.Version);
     }
@@ -483,15 +489,11 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             first.Update(
                 "First Update",
                 null,
-                11m,
-                "EUR",
                 1).IsSuccess);
         Assert.True(
             second.Update(
                 "Second Update",
                 null,
-                12m,
-                "EUR",
                 1).IsSuccess);
         await firstContext.SaveChangesAsync();
 
@@ -583,8 +585,6 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
             categoryId,
             name,
             null,
-            price,
-            "EUR",
             displayOrder,
             new DateTimeOffset(
                 2026,
@@ -597,4 +597,9 @@ public sealed class MenuCategoryRepositoryTests : IAsyncLifetime
         Assert.True(result.IsSuccess);
         return result.Value;
     }
+
+    private static MenuItemVariant CreateVariant(MenuItem item, decimal price) =>
+        MenuItemVariant.Create(MenuItemVariantId.New(), item.RestaurantId,
+            item.Id, "Default", null, price, "EUR", 0, true,
+            DateTimeOffset.UtcNow).Value;
 }

@@ -18,7 +18,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
         : base(default)
     {
         Name = string.Empty;
-        Price = null!;
         Tags = [];
     }
 
@@ -28,7 +27,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
         MenuCategoryId categoryId,
         string name,
         string? description,
-        Money price,
         int displayOrder,
         DateTimeOffset createdAtUtc)
         : base(id)
@@ -37,7 +35,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
         CategoryId = categoryId;
         Name = name;
         Description = description;
-        Price = price;
         DisplayOrder = displayOrder;
         CreatedAtUtc = createdAtUtc;
         Tags = [];
@@ -50,8 +47,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
     public string Name { get; private set; }
 
     public string? Description { get; private set; }
-
-    public Money Price { get; private set; }
 
     public int DisplayOrder { get; private set; }
 
@@ -85,8 +80,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
         MenuCategoryId categoryId,
         string? name,
         string? description,
-        decimal priceAmount,
-        string? currency,
         int displayOrder,
         DateTimeOffset createdAtUtc)
     {
@@ -133,20 +126,12 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
                 MenuItemErrors.InvalidDisplayOrder);
         }
 
-        var moneyResult = Money.Create(priceAmount, currency);
-
-        if (moneyResult.IsFailure)
-        {
-            return Result.Failure<MenuItem>(moneyResult.Error);
-        }
-
         var menuItem = new MenuItem(
             id,
             restaurantId,
             categoryId,
             normalizedName,
             normalizedDescription,
-            moneyResult.Value,
             displayOrder,
             createdAtUtc);
 
@@ -159,8 +144,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
     public Result<MenuItem> Update(
         string? name,
         string? description,
-        decimal priceAmount,
-        string? currency,
         int displayOrder)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -194,16 +177,8 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
                 MenuItemErrors.InvalidDisplayOrder);
         }
 
-        var moneyResult = Money.Create(priceAmount, currency);
-
-        if (moneyResult.IsFailure)
-        {
-            return Result.Failure<MenuItem>(moneyResult.Error);
-        }
-
         if (Name == normalizedName &&
             Description == normalizedDescription &&
-            Price == moneyResult.Value &&
             DisplayOrder == displayOrder)
         {
             return Result.Success(this);
@@ -211,7 +186,6 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
 
         Name = normalizedName;
         Description = normalizedDescription;
-        Price = moneyResult.Value;
         DisplayOrder = displayOrder;
         Version++;
 
@@ -240,6 +214,13 @@ public sealed class MenuItem : AggregateRoot<MenuItemId>
                 RestaurantId,
                 CategoryId,
                 isAvailable));
+    }
+
+    public void MarkDefaultVariantPriceUpdated()
+    {
+        Version++;
+        RaiseDomainEvent(new MenuItemUpdatedDomainEvent(
+            Id, RestaurantId, CategoryId));
     }
 
     public Result<MenuItem> UpdateMetadata(

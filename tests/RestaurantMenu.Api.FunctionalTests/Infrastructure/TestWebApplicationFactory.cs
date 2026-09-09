@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Application.Abstractions.Caching;
 using RestaurantMenu.Restaurants.Application.Restaurants.GetRestaurant;
@@ -225,6 +226,17 @@ public sealed class TestWebApplicationFactory
             .SingleOrDefaultAsync(menuItem => menuItem.Id == id);
     }
 
+    public async Task<MenuItemVariant?> FindDefaultMenuItemVariantAsync(
+        Guid menuItemId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+        var id = new MenuItemId(menuItemId);
+        return await dbContext.MenuItemVariants.AsNoTracking()
+            .SingleOrDefaultAsync(variant =>
+                variant.MenuItemId == id && variant.IsDefault);
+    }
+
     public async Task<int> CountMenuItemsAsync()
     {
         await using var scope = Services.CreateAsyncScope();
@@ -252,8 +264,6 @@ public sealed class TestWebApplicationFactory
             categoryId,
             name,
             null,
-            priceAmount,
-            currency,
             displayOrder,
             DateTimeOffset.UtcNow);
 
@@ -268,7 +278,12 @@ public sealed class TestWebApplicationFactory
             result.Value.ChangePublication(true);
         }
 
+        var variant = MenuItemVariant.Create(
+            MenuItemVariantId.New(), restaurantId, result.Value.Id,
+            "Default", null, priceAmount, currency, 0, true,
+            DateTimeOffset.UtcNow).Value;
         dbContext.MenuItems.Add(result.Value);
+        dbContext.MenuItemVariants.Add(variant);
         await dbContext.SaveChangesAsync();
         return result.Value;
     }

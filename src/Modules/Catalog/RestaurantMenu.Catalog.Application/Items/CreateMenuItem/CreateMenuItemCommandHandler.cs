@@ -4,6 +4,7 @@ using RestaurantMenu.Catalog.Application.Abstractions.Restaurants;
 using RestaurantMenu.Catalog.Application.Items;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
+using RestaurantMenu.Catalog.Domain.Variants;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Catalog.Application.Items.CreateMenuItem;
@@ -13,6 +14,7 @@ public sealed class CreateMenuItemCommandHandler
 {
     private readonly IMenuCategoryRepository _categoryRepository;
     private readonly IMenuItemRepository _menuItemRepository;
+    private readonly IMenuItemVariantRepository _variantRepository;
     private readonly IRestaurantExistenceChecker _restaurantChecker;
     private readonly ICatalogUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
@@ -20,17 +22,20 @@ public sealed class CreateMenuItemCommandHandler
     public CreateMenuItemCommandHandler(
         IMenuCategoryRepository categoryRepository,
         IMenuItemRepository menuItemRepository,
+        IMenuItemVariantRepository variantRepository,
         IRestaurantExistenceChecker restaurantChecker,
         ICatalogUnitOfWork unitOfWork,
         TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(categoryRepository);
         ArgumentNullException.ThrowIfNull(menuItemRepository);
+        ArgumentNullException.ThrowIfNull(variantRepository);
         ArgumentNullException.ThrowIfNull(restaurantChecker);
         ArgumentNullException.ThrowIfNull(unitOfWork);
         ArgumentNullException.ThrowIfNull(timeProvider);
         _categoryRepository = categoryRepository;
         _menuItemRepository = menuItemRepository;
+        _variantRepository = variantRepository;
         _restaurantChecker = restaurantChecker;
         _unitOfWork = unitOfWork;
         _timeProvider = timeProvider;
@@ -70,8 +75,6 @@ public sealed class CreateMenuItemCommandHandler
             categoryId,
             command.Name,
             command.Description,
-            command.PriceAmount,
-            command.Currency,
             command.DisplayOrder,
             _timeProvider.GetUtcNow());
 
@@ -81,7 +84,18 @@ public sealed class CreateMenuItemCommandHandler
                 menuItemResult.Error);
         }
 
+        var variantResult = MenuItemVariant.Create(
+            MenuItemVariantId.New(), command.RestaurantId,
+            menuItemResult.Value.Id, "Default", null,
+            command.PriceAmount, command.Currency, 0, true,
+            _timeProvider.GetUtcNow());
+        if (variantResult.IsFailure)
+        {
+            return Result.Failure<MenuItemId>(variantResult.Error);
+        }
+
         _menuItemRepository.Add(menuItemResult.Value);
+        _variantRepository.Add(variantResult.Value);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success(menuItemResult.Value.Id);

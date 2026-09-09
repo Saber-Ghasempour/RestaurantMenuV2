@@ -63,7 +63,7 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                 category.Description
             }).ToArrayAsync(cancellationToken);
 
-        var items = await (
+        var publishedItems =
             from item in dbContext.MenuItems.AsNoTracking()
             join publication in dbContext.BranchCategoryPublications.AsNoTracking()
                 on new { item.RestaurantId, item.CategoryId }
@@ -72,15 +72,18 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
                   item.IsPublished &&
                   publication.BranchId == branchId &&
                   publication.IsPublished
-            orderby item.DisplayOrder, item.Name, item.Id
-            select new
+            select item;
+
+        var items = await publishedItems
+            .OrderBy(item => item.DisplayOrder)
+            .ThenBy(item => item.Name)
+            .ThenBy(item => item.Id)
+            .Select(item => new
             {
                 Id = item.Id.Value,
                 CategoryId = item.CategoryId.Value,
                 item.Name,
                 item.Description,
-                Amount = item.Price.Amount,
-                Currency = item.Price.Currency,
                 item.DisplayOrder,
                 item.IsAvailable,
                 item.Recipe,
@@ -92,25 +95,46 @@ public sealed class BranchCatalogReadService(CatalogDbContext dbContext)
             }).ToArrayAsync(cancellationToken);
         var itemsByCategory = items.ToLookup(item => item.CategoryId);
 
+        var variants = await (
+            from variant in dbContext.MenuItemVariants.AsNoTracking()
+            join item in publishedItems
+                on new { variant.RestaurantId, variant.MenuItemId }
+                equals new { item.RestaurantId, MenuItemId = item.Id }
+            orderby variant.IsDefault descending, variant.DisplayOrder,
+                variant.Name, variant.Id
+            select new
+            {
+                Id = variant.Id.Value,
+                MenuItemId = variant.MenuItemId.Value,
+                variant.Name,
+                variant.Description,
+                Amount = variant.Price.Amount,
+                Currency = variant.Price.Currency,
+                variant.DisplayOrder,
+                variant.IsDefault,
+                variant.IsAvailable
+            }).ToArrayAsync(cancellationToken);
+        var variantsByItem = variants.ToLookup(variant => variant.MenuItemId);
+
         return categories.Select(category => new PublicMenuCategoryResponse(
             category.Id,
             category.ParentId,
             category.Name,
             category.DisplayOrder,
-            itemsByCategory[category.Id].Select(item => new PublicMenuItemResponse(
-                item.Id,
-                item.Name,
-                item.Description,
-                item.Amount,
-                item.Currency,
-                item.DisplayOrder,
-                item.IsAvailable,
-                item.Recipe,
-                item.Calories,
-                item.Tags,
-                item.AllergenNotes,
-                item.PreparationTimeMinutes,
-                item.IsFeatured)).ToArray(),
+            itemsByCategory[category.Id].Select(item =>
+            {
+                var itemVariants = variantsByItem[item.Id].ToArray();
+                var defaultVariant = itemVariants.Single(variant => variant.IsDefault);
+                return new PublicMenuItemResponse(
+                    item.Id, item.Name, item.Description, defaultVariant.Amount,
+                    defaultVariant.Currency, item.DisplayOrder, item.IsAvailable,
+                    item.Recipe, item.Calories, item.Tags, item.AllergenNotes,
+                    item.PreparationTimeMinutes, item.IsFeatured,
+                    itemVariants.Select(variant => new PublicMenuVariantResponse(
+                        variant.Id, variant.Name, variant.Description,
+                        variant.Amount, variant.Currency, variant.DisplayOrder,
+                        variant.IsDefault, variant.IsAvailable)).ToArray());
+            }).ToArray(),
             category.Description)).ToArray();
     }
 }

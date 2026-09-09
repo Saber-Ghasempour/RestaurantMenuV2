@@ -1,3 +1,5 @@
+using RestaurantMenu.Catalog.Application.Variants;
+
 namespace RestaurantMenu.Catalog.Application.Items.GetMenuItem;
 
 public sealed record MenuItemResponse(
@@ -18,4 +20,5 @@ public sealed record MenuItemResponse(
     string? AllergenNotes = null,
     short? PreparationTimeMinutes = null,
     bool IsFeatured = false,
-    bool IsPublished = false);
+    bool IsPublished = false,
+    IReadOnlyList<MenuItemVariantResponse>? Variants = null);

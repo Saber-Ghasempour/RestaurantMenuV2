@@ -134,8 +134,6 @@ public sealed class ChangeMenuItemAvailabilityCommandHandlerTests
             MenuCategoryId.New(),
             "Item",
             null,
-            10m,
-            "EUR",
             1,
             DateTimeOffset.UtcNow);
         Assert.True(result.IsSuccess);

@@ -121,8 +121,6 @@ public sealed class DeleteMenuItemCommandHandlerTests
             MenuCategoryId.New(),
             "Item",
             null,
-            10m,
-            "EUR",
             1,
             DeletedAtUtc.AddHours(-1));
         Assert.True(result.IsSuccess);
