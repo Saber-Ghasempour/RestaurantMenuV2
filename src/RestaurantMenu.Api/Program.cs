@@ -37,6 +37,7 @@ using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Presentation.DiningSessions;
 using RestaurantMenu.Ordering.Presentation.Orders;
 using RestaurantMenu.Api.Integrations.Ordering;
+using RestaurantMenu.Ordering.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,8 @@ var orderingConnectionString = builder.Configuration.GetConnectionString("Orderi
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException(
         "Connection string 'Redis' is not configured.");
+var rabbitMqConnectionString = builder.Configuration.GetConnectionString("RabbitMq")
+    ?? throw new InvalidOperationException("Connection string 'RabbitMq' is not configured.");
 var restaurantCacheTimeToLive = builder.Configuration.GetValue(
     "Caching:Restaurants:TimeToLive",
     TimeSpan.FromMinutes(5));
@@ -123,7 +126,14 @@ builder.Services.AddMediaInfrastructure(mediaConnectionString, new ObjectStorage
     builder.Configuration["ObjectStorage:SecretKey"] ?? "minioadmin",
     PublicServiceUrl: builder.Configuration["ObjectStorage:PublicServiceUrl"]));
 builder.Services.AddOrderingInfrastructure(orderingConnectionString,
-    builder.Configuration.GetValue("DiningSessions:Lifetime", TimeSpan.FromHours(2)));
+    builder.Configuration.GetValue("DiningSessions:Lifetime", TimeSpan.FromHours(2)),
+    new MessagingOptions(rabbitMqConnectionString,
+        builder.Configuration["Messaging:ExchangeName"] ?? MessagingOptions.DefaultExchange,
+        builder.Configuration.GetValue("Messaging:BatchSize", 50),
+        builder.Configuration.GetValue("Messaging:PollingInterval", TimeSpan.FromSeconds(1)),
+        builder.Configuration.GetValue("Messaging:InitialRetryDelay", TimeSpan.FromSeconds(1)),
+        builder.Configuration.GetValue("Messaging:MaximumAttempts", 10),
+        builder.Configuration.GetValue("Messaging:ClaimDuration", TimeSpan.FromMinutes(1))));
 builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>();
 builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotProvider>();
 builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
@@ -160,7 +170,8 @@ builder.Services
     .AddDbContextCheck<OrderingDbContext>("ordering-database", tags: ["ready"])
     .AddCheck<RedisHealthCheck>(
         "redis",
-        tags: ["ready"]);
+        tags: ["ready"])
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
 
 var app = builder.Build();
 

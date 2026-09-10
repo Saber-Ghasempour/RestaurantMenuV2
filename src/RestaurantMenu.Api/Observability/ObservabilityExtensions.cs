@@ -3,6 +3,7 @@ using Npgsql;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using RestaurantMenu.Ordering.Infrastructure.Messaging;
 
 namespace RestaurantMenu.Api.Observability;
 
@@ -61,7 +62,8 @@ public static class ObservabilityExtensions
                 metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddMeter(MessagingTelemetry.MeterName);
 
                 if (hasOtlpExporter)
                 {

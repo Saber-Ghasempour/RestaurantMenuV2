@@ -23,6 +23,7 @@ using RestaurantMenu.Ordering.Domain.Orders;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
+using Testcontainers.RabbitMq;
 
 namespace RestaurantMenu.Api.FunctionalTests.Infrastructure;
 
@@ -38,6 +39,8 @@ public sealed class TestWebApplicationFactory
 
     private const string RedisConnectionStringVariable =
         "ConnectionStrings__Redis";
+    private const string RabbitMqConnectionStringVariable =
+        "ConnectionStrings__RabbitMq";
 
     private static readonly object EnvironmentVariableLock =
         new();
@@ -49,19 +52,23 @@ public sealed class TestWebApplicationFactory
     private readonly RedisContainer _redis =
         new RedisBuilder("redis:8.10.1-alpine")
             .Build();
+    private readonly RabbitMqContainer _rabbitMq =
+        new RabbitMqBuilder("rabbitmq:4.3.5-alpine").Build();
 
     async Task IAsyncLifetime.InitializeAsync()
     {
         await Task.WhenAll(
             _postgres.StartAsync(),
-            _redis.StartAsync());
+            _redis.StartAsync(),
+            _rabbitMq.StartAsync());
     }
 
     async Task IAsyncLifetime.DisposeAsync()
     {
         await Task.WhenAll(
             _postgres.DisposeAsync().AsTask(),
-            _redis.DisposeAsync().AsTask());
+            _redis.DisposeAsync().AsTask(),
+            _rabbitMq.DisposeAsync().AsTask());
 
         Dispose();
     }
@@ -101,6 +108,8 @@ public sealed class TestWebApplicationFactory
             var previousRedisConnectionString =
                 Environment.GetEnvironmentVariable(
                     RedisConnectionStringVariable);
+            var previousRabbitMqConnectionString = Environment.GetEnvironmentVariable(
+                RabbitMqConnectionStringVariable);
             var connectionString =
                 _postgres.GetConnectionString();
 
@@ -113,6 +122,8 @@ public sealed class TestWebApplicationFactory
             Environment.SetEnvironmentVariable(
                 RedisConnectionStringVariable,
                 _redis.GetConnectionString());
+            Environment.SetEnvironmentVariable(RabbitMqConnectionStringVariable,
+                _rabbitMq.GetConnectionString());
 
             try
             {
@@ -129,6 +140,8 @@ public sealed class TestWebApplicationFactory
                 Environment.SetEnvironmentVariable(
                     RedisConnectionStringVariable,
                     previousRedisConnectionString);
+                Environment.SetEnvironmentVariable(RabbitMqConnectionStringVariable,
+                    previousRabbitMqConnectionString);
             }
         }
     }

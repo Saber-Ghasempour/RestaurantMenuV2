@@ -89,7 +89,8 @@ public sealed class Order : AggregateRoot<OrderId>
             tableDisplayName, diningSessionId, customerNote, orderCurrency!, total, createdAtUtc, built);
         order._statusHistory.Add(new OrderStatusHistory(Guid.CreateVersion7(), id, null,
             OrderStatus.Placed, OrderActorType.Guest, null, null, createdAtUtc));
-        order.RaiseDomainEvent(new OrderPlacedDomainEvent(id, restaurantId, branchId, diningSessionId, total, orderCurrency!, createdAtUtc));
+        order.RaiseDomainEvent(new OrderPlacedDomainEvent(id, restaurantId, branchId, diningSessionId,
+            total, orderCurrency!, order.Version, createdAtUtc));
         return Result.Success(order);
     }
 
@@ -142,7 +143,7 @@ public sealed class Order : AggregateRoot<OrderId>
         _statusHistory.Add(new OrderStatusHistory(Guid.CreateVersion7(), Id, from, target,
             actorType, subject, reason, changedAtUtc));
         RaiseDomainEvent(new OrderStatusChangedDomainEvent(Id, RestaurantId, BranchId,
-            from, target, changedAtUtc));
+            from, target, Version, changedAtUtc));
         return Result.Success(this);
     }
 

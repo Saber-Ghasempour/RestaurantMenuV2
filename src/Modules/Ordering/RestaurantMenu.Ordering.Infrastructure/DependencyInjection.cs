@@ -12,13 +12,14 @@ using RestaurantMenu.Ordering.Infrastructure.Orders;
 using RestaurantMenu.Ordering.Application.Orders.Transitions;
 using RestaurantMenu.Ordering.Application.Orders.Queues;
 using RestaurantMenu.Ordering.Application.Orders.GuestOrders;
+using RestaurantMenu.Ordering.Infrastructure.Messaging;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Ordering.Infrastructure;
 public static class DependencyInjection
 {
     public static IServiceCollection AddOrderingInfrastructure(this IServiceCollection services,
-        string connectionString, TimeSpan sessionLifetime)
+        string connectionString, TimeSpan sessionLifetime, MessagingOptions? messagingOptions = null)
     {
         if (sessionLifetime <= TimeSpan.Zero || sessionLifetime > TimeSpan.FromHours(24))
             throw new ArgumentOutOfRangeException(nameof(sessionLifetime), "Dining-session lifetime must be between zero and 24 hours.");
@@ -51,6 +52,20 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetCashierQueueQuery, Result<IReadOnlyList<OrderQueueItem>>>, GetCashierQueueQueryHandler>();
         services.AddScoped<IQueryHandler<GetWaiterQueueQuery, Result<IReadOnlyList<OrderQueueItem>>>, GetWaiterQueueQueryHandler>();
         services.AddScoped<IQueryHandler<GetOrderTimelineQuery, Result<IReadOnlyList<OrderTimelineEntry>>>, GetOrderTimelineQueryHandler>();
+        if (messagingOptions is not null)
+        {
+            if (!Uri.TryCreate(messagingOptions.ConnectionString, UriKind.Absolute, out _) ||
+                messagingOptions.BatchSize <= 0 || messagingOptions.PollingInterval <= TimeSpan.Zero ||
+                messagingOptions.InitialRetryDelay <= TimeSpan.Zero || messagingOptions.MaximumAttempts <= 0 ||
+                messagingOptions.ClaimDuration <= TimeSpan.Zero)
+                throw new ArgumentException("Messaging options are invalid.", nameof(messagingOptions));
+            services.AddSingleton(messagingOptions);
+            services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>();
+            services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+            services.AddScoped<OutboxDispatcher>();
+            services.AddScoped<InboxProcessor>();
+            services.AddHostedService<OutboxPublisherWorker>();
+        }
         return services;
     }
 }
