@@ -48,6 +48,10 @@ jobs:
       - name: Build
         run: dotnet build RestaurantMenu.slnx --configuration Release --no-restore
 
+      - name: Validate delivery contracts
+        shell: pwsh
+        run: ./tests/deployment/DeliveryContract.Tests.ps1
+
       - name: Test with coverage
         run: >-
           dotnet test RestaurantMenu.slnx

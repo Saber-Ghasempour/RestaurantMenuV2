@@ -215,9 +215,19 @@ builder.Services.Configure<HealthCheckPublisherOptions>(options =>
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+var migrationOnly = args.Contains(
+    "--migrate",
+    StringComparer.OrdinalIgnoreCase);
+
+if (migrationOnly ||
+    app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 {
-    await app.ApplyDatabaseMigrationsAsync();
+    await app.ApplyDatabaseMigrationsAsync(app.Lifetime.ApplicationStopping);
+}
+
+if (migrationOnly)
+{
+    return;
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
