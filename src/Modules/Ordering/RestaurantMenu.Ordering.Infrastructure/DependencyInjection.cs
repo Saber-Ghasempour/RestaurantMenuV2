@@ -66,7 +66,9 @@ public static class DependencyInjection
             services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
             services.AddScoped<OutboxDispatcher>();
             services.AddScoped<InboxProcessor>();
+            services.AddScoped<MessagingBacklogMonitor>();
             services.AddHostedService<OutboxPublisherWorker>();
+            services.AddHostedService<MessagingBacklogMonitorWorker>();
         }
         return services;
     }

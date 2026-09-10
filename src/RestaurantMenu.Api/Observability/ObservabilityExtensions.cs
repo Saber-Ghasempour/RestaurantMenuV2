@@ -1,6 +1,7 @@
 using Npgsql;
 
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using RestaurantMenu.Ordering.Infrastructure.Messaging;
@@ -38,6 +39,7 @@ public static class ObservabilityExtensions
             tracing =>
             {
                 tracing
+                    .AddSource(MessagingTelemetry.ActivitySourceName)
                     .AddAspNetCoreInstrumentation(
                         options =>
                             options.Filter = context =>
@@ -63,7 +65,8 @@ public static class ObservabilityExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation()
-                    .AddMeter(MessagingTelemetry.MeterName);
+                    .AddMeter(MessagingTelemetry.MeterName)
+                    .AddMeter(ApiTelemetry.MeterName);
 
                 if (hasOtlpExporter)
                 {
@@ -72,5 +75,27 @@ public static class ObservabilityExtensions
             });
 
         return services;
+    }
+
+    public static ILoggingBuilder AddRestaurantMenuTelemetryLogging(
+        this ILoggingBuilder logging,
+        IConfiguration configuration)
+    {
+        var serviceName = configuration["OpenTelemetry:ServiceName"] ?? DefaultServiceName;
+        var endpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ??
+            configuration["OpenTelemetry:OtlpEndpoint"];
+        logging.Configure(options => options.ActivityTrackingOptions =
+            ActivityTrackingOptions.TraceId |
+            ActivityTrackingOptions.SpanId |
+            ActivityTrackingOptions.ParentId);
+        logging.AddOpenTelemetry(options =>
+        {
+            options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName));
+            options.IncludeFormattedMessage = true;
+            options.IncludeScopes = true;
+            if (Uri.TryCreate(endpoint, UriKind.Absolute, out _))
+                options.AddOtlpExporter();
+        });
+        return logging;
     }
 }

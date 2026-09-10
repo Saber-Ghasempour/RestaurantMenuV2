@@ -1,7 +1,8 @@
 namespace RestaurantMenu.Ordering.Application.Abstractions;
 
 public sealed record IntegrationEventEnvelope(Guid Id, string Name, int Version,
-    Guid AggregateId, long AggregateVersion, DateTimeOffset OccurredAtUtc, string Payload);
+    Guid AggregateId, long AggregateVersion, DateTimeOffset OccurredAtUtc, string Payload,
+    string? TraceParent = null, string? TraceState = null);
 
 public interface IIntegrationEventPublisher
 {

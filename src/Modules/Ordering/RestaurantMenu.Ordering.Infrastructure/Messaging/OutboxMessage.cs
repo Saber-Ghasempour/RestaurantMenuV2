@@ -11,6 +11,7 @@ public sealed class OutboxMessage
         Id = envelope.Id; Name = envelope.Name; EventVersion = envelope.Version;
         AggregateId = envelope.AggregateId; AggregateVersion = envelope.AggregateVersion;
         OccurredAtUtc = envelope.OccurredAtUtc; Payload = envelope.Payload;
+        TraceParent = envelope.TraceParent; TraceState = envelope.TraceState;
         NextAttemptAtUtc = envelope.OccurredAtUtc;
     }
 
@@ -21,6 +22,8 @@ public sealed class OutboxMessage
     public long AggregateVersion { get; private set; }
     public DateTimeOffset OccurredAtUtc { get; private set; }
     public string Payload { get; private set; }
+    public string? TraceParent { get; private set; }
+    public string? TraceState { get; private set; }
     public int AttemptCount { get; private set; }
     public DateTimeOffset NextAttemptAtUtc { get; private set; }
     public DateTimeOffset? ProcessedAtUtc { get; private set; }
@@ -30,7 +33,7 @@ public sealed class OutboxMessage
     public DateTimeOffset? LockedUntilUtc { get; private set; }
 
     public IntegrationEventEnvelope ToEnvelope() => new(Id, Name, EventVersion,
-        AggregateId, AggregateVersion, OccurredAtUtc, Payload);
+        AggregateId, AggregateVersion, OccurredAtUtc, Payload, TraceParent, TraceState);
 
     internal void Claim(Guid lockId, DateTimeOffset lockedUntilUtc)
     { LockId = lockId; LockedUntilUtc = lockedUntilUtc; }

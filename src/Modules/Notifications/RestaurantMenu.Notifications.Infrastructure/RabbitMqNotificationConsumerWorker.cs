@@ -135,7 +135,9 @@ public sealed class RabbitMqNotificationConsumerWorker(IRabbitMqConnection conne
         return new IntegrationEventEnvelope(id, delivery.BasicProperties.Type, version,
             aggregateId, aggregateVersion,
             DateTimeOffset.FromUnixTimeSeconds(delivery.BasicProperties.Timestamp.UnixTime),
-            Encoding.UTF8.GetString(delivery.Body.Span));
+            Encoding.UTF8.GetString(delivery.Body.Span),
+            ReadTraceHeader(delivery.BasicProperties.Headers, "traceparent", 55),
+            ReadTraceHeader(delivery.BasicProperties.Headers, "tracestate", 512));
     }
 
     private static bool TryReadGuid(IDictionary<string, object?>? headers, string name,
@@ -156,5 +158,14 @@ public sealed class RabbitMqNotificationConsumerWorker(IRabbitMqConnection conne
             ReadOnlyMemory<byte> bytes => Encoding.UTF8.GetString(bytes.Span),
             _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)
         };
+    }
+
+    private static string? ReadTraceHeader(
+        IDictionary<string, object?>? headers,
+        string name,
+        int maximumLength)
+    {
+        var value = ReadString(headers, name);
+        return value is not null && value.Length <= maximumLength ? value : null;
     }
 }
