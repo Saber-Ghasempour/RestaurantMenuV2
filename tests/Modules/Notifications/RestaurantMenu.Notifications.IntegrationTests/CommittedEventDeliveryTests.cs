@@ -64,7 +64,8 @@ public sealed class CommittedEventDeliveryTests : IAsyncLifetime
 
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            using (var readyTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
+                await worker.WaitUntilReadyAsync(readyTimeout.Token);
             var unsupported = new IntegrationEventEnvelope(Guid.NewGuid(),
                 "ordering.order-placed", 99, Guid.NewGuid(), 1, DateTimeOffset.UtcNow, "{}");
             await services.GetRequiredService<IIntegrationEventPublisher>()

@@ -21,6 +21,11 @@ public sealed class RabbitMqNotificationConsumerWorker(IRabbitMqConnection conne
         LoggerMessage.Define<string>(LogLevel.Warning,
             new EventId(4202, "NotificationMessageRejected"),
             "A malformed notification message was rejected from {RoutingKey}.");
+    private readonly TaskCompletionSource _ready =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task WaitUntilReadyAsync(CancellationToken cancellationToken) =>
+        _ready.Task.WaitAsync(cancellationToken);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -66,6 +71,7 @@ public sealed class RabbitMqNotificationConsumerWorker(IRabbitMqConnection conne
         consumer.ShutdownAsync += (_, _) => { stopped.TrySetResult(); return Task.CompletedTask; };
         await channel.BasicConsumeAsync(options.QueueName, autoAck: false, consumer,
             cancellationToken: cancellationToken);
+        _ready.TrySetResult();
         await stopped.Task.WaitAsync(cancellationToken);
         throw new InvalidOperationException("The RabbitMQ notification consumer was disconnected.");
     }
