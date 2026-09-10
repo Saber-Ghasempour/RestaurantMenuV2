@@ -5,7 +5,7 @@ using RestaurantMenu.Ordering.Infrastructure.Database;
 
 namespace RestaurantMenu.Ordering.Infrastructure.Orders;
 
-public sealed class OrderReadService(OrderingDbContext dbContext) : IOrderReadService
+public sealed class OrderReadService(OrderingDbContext dbContext) : IOrderReadService, IOrderFeedbackReadService
 {
     public async Task<IReadOnlyList<OrderQueueItem>> ListQueueAsync(Guid restaurantId,
         Guid branchId, IReadOnlyCollection<OrderStatus> statuses, CancellationToken cancellationToken)
@@ -50,8 +50,19 @@ public sealed class OrderReadService(OrderingDbContext dbContext) : IOrderReadSe
         return order is null ? null : new GuestOrderDetail(order.Id.Value, order.PublicNumber,
             order.Status.ToString(), order.TableDisplayName, order.SubtotalAmount, order.TotalAmount,
             order.Currency, order.CustomerNote, order.CreatedAtUtc, order.Version,
-            order.Lines.Select(line => new GuestOrderLine(line.MenuItemId, line.VariantId,
+            order.Lines.Select(line => new GuestOrderLine(line.Id.Value, line.MenuItemId, line.VariantId,
                 line.ItemName, line.VariantName, line.UnitPriceAmount, line.Currency,
                 line.Quantity, line.LineTotalAmount, line.Note)).ToArray());
+    }
+
+    public async Task<OrderFeedbackEligibility?> GetFeedbackEligibilityAsync(Guid restaurantId,
+        Guid branchId, Guid diningSessionId, OrderId orderId, CancellationToken cancellationToken)
+    {
+        var order = await dbContext.Orders.AsNoTracking().Include(x => x.Lines)
+            .SingleOrDefaultAsync(x => x.Id == orderId && x.RestaurantId == restaurantId &&
+                x.BranchId == branchId && x.DiningSessionId == diningSessionId &&
+                x.Status == OrderStatus.Completed, cancellationToken);
+        return order?.CompletedAtUtc is not DateTimeOffset completed ? null :
+            new(order.Id.Value, completed, order.Lines.Select(x => x.Id.Value).ToHashSet());
     }
 }

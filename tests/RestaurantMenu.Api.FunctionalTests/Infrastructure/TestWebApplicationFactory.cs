@@ -21,6 +21,7 @@ using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Domain.DiningSessions;
 using RestaurantMenu.Ordering.Domain.Orders;
 using RestaurantMenu.Ordering.Infrastructure.DiningSessions;
+using RestaurantMenu.Feedback.Infrastructure.Database;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -185,6 +186,12 @@ public sealed class TestWebApplicationFactory
         await dbContext.Database.MigrateAsync();
     }
 
+    public async Task MigrateFeedbackDatabaseAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<FeedbackDbContext>().Database.MigrateAsync();
+    }
+
     public async Task<DiningSession?> FindDiningSessionAsync(Guid sessionId)
     {
         await using var scope = Services.CreateAsyncScope();
@@ -219,7 +226,7 @@ public sealed class TestWebApplicationFactory
     }
 
     public async Task<(string Token, Order Order)> SeedGuestOrderAsync(Guid restaurantId,
-        Guid branchId)
+        Guid branchId, OrderStatus status = OrderStatus.Placed)
     {
         await using var scope = Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
@@ -233,6 +240,7 @@ public sealed class TestWebApplicationFactory
             branchId, session.DiningTableId, "Table 1", sessionId.Value, null,
             [new OrderLineSnapshot(Guid.NewGuid(), null, "Soup", null, 5m, "EUR", 1, null)],
             now).Value;
+        AdvanceOrder(order, status);
         dbContext.DiningSessions.Add(session);
         dbContext.Orders.Add(order);
         await dbContext.SaveChangesAsync();

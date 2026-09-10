@@ -40,6 +40,10 @@ using RestaurantMenu.Api.Integrations.Ordering;
 using RestaurantMenu.Ordering.Infrastructure.Messaging;
 using RestaurantMenu.Notifications.Infrastructure;
 using RestaurantMenu.Notifications.Presentation;
+using RestaurantMenu.Feedback.Application.Abstractions;
+using RestaurantMenu.Feedback.Infrastructure;
+using RestaurantMenu.Feedback.Infrastructure.Database;
+using RestaurantMenu.Feedback.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +66,7 @@ var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog
         "Connection string 'Catalog' is not configured.");
 var mediaConnectionString = builder.Configuration.GetConnectionString("Media") ?? catalogConnectionString;
 var orderingConnectionString = builder.Configuration.GetConnectionString("Ordering") ?? restaurantsConnectionString;
+var feedbackConnectionString = builder.Configuration.GetConnectionString("Feedback") ?? orderingConnectionString;
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException(
         "Connection string 'Redis' is not configured.");
@@ -136,6 +141,8 @@ builder.Services.AddOrderingInfrastructure(orderingConnectionString,
         builder.Configuration.GetValue("Messaging:InitialRetryDelay", TimeSpan.FromSeconds(1)),
         builder.Configuration.GetValue("Messaging:MaximumAttempts", 10),
         builder.Configuration.GetValue("Messaging:ClaimDuration", TimeSpan.FromMinutes(1))));
+builder.Services.AddFeedbackInfrastructure(feedbackConnectionString,
+    builder.Configuration.GetValue("Feedback:SubmissionWindow", TimeSpan.FromDays(7)));
 builder.Services.AddNotificationsPresentation();
 builder.Services.AddNotificationsInfrastructure(new NotificationMessagingOptions(
     builder.Configuration["Notifications:QueueName"] ??
@@ -145,6 +152,7 @@ builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>
 builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotProvider>();
 builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
 builder.Services.AddScoped<IOrderStaffAccessProvider, OrderStaffAccessProvider>();
+builder.Services.AddScoped<IFeedbackEligibilityProvider, FeedbackEligibilityProvider>();
 builder.Services.AddScoped<MediaAssetIntegrationService>();
 builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
@@ -175,6 +183,7 @@ builder.Services
         tags: ["ready"])
     .AddDbContextCheck<MediaDbContext>("media-database", tags: ["ready"])
     .AddDbContextCheck<OrderingDbContext>("ordering-database", tags: ["ready"])
+    .AddDbContextCheck<FeedbackDbContext>("feedback-database", tags: ["ready"])
     .AddCheck<RedisHealthCheck>(
         "redis",
         tags: ["ready"])
@@ -223,6 +232,7 @@ app.MapPublicMenuCodeMenuEndpoints();
 app.MapDiningSessionEndpoints();
 app.MapOrderEndpoints();
 app.MapStaffOrderEndpoints();
+app.MapFeedbackEndpoints();
 app.MapNotificationHubs();
 app.MapHealthChecks(
         "/health/live",

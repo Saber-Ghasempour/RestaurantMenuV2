@@ -41,6 +41,9 @@
     <ProjectReference Include="..\Modules\Ordering\RestaurantMenu.Ordering.Presentation\RestaurantMenu.Ordering.Presentation.csproj" />
     <ProjectReference Include="..\Modules\Notifications\RestaurantMenu.Notifications.Infrastructure\RestaurantMenu.Notifications.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules\Notifications\RestaurantMenu.Notifications.Presentation\RestaurantMenu.Notifications.Presentation.csproj" />
+    <ProjectReference Include="..\Modules\Feedback\RestaurantMenu.Feedback.Application\RestaurantMenu.Feedback.Application.csproj" />
+    <ProjectReference Include="..\Modules\Feedback\RestaurantMenu.Feedback.Infrastructure\RestaurantMenu.Feedback.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\Feedback\RestaurantMenu.Feedback.Presentation\RestaurantMenu.Feedback.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

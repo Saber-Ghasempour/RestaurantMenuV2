@@ -38,6 +38,10 @@
     <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Application\RestaurantMenu.Notifications.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Infrastructure\RestaurantMenu.Notifications.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Presentation\RestaurantMenu.Notifications.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Feedback\RestaurantMenu.Feedback.Domain\RestaurantMenu.Feedback.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Feedback\RestaurantMenu.Feedback.Application\RestaurantMenu.Feedback.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Feedback\RestaurantMenu.Feedback.Infrastructure\RestaurantMenu.Feedback.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Feedback\RestaurantMenu.Feedback.Presentation\RestaurantMenu.Feedback.Presentation.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
   </ItemGroup>

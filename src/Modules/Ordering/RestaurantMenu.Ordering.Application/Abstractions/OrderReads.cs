@@ -7,7 +7,7 @@ public sealed record OrderQueueItem(Guid Id, string PublicNumber, Guid DiningTab
     DateTimeOffset CreatedAtUtc, long Version);
 public sealed record OrderTimelineEntry(Guid Id, string? FromStatus, string ToStatus,
     string ChangedByType, string? ChangedBySubject, string? Reason, DateTimeOffset CreatedAtUtc);
-public sealed record GuestOrderLine(Guid? MenuItemId, Guid? VariantId, string ItemName,
+public sealed record GuestOrderLine(Guid OrderLineId, Guid? MenuItemId, Guid? VariantId, string ItemName,
     string? VariantName, decimal UnitPriceAmount, string Currency, int Quantity,
     decimal LineTotalAmount, string? Note);
 public sealed record GuestOrderDetail(Guid OrderId, string PublicNumber, string Status,
@@ -22,5 +22,12 @@ public interface IOrderReadService
     Task<IReadOnlyList<OrderTimelineEntry>?> GetTimelineAsync(Guid restaurantId, Guid branchId,
         OrderId orderId, CancellationToken cancellationToken);
     Task<GuestOrderDetail?> GetGuestOrderAsync(Guid restaurantId, Guid branchId,
+        Guid diningSessionId, OrderId orderId, CancellationToken cancellationToken);
+}
+public sealed record OrderFeedbackEligibility(Guid OrderId, DateTimeOffset CompletedAtUtc,
+    IReadOnlySet<Guid> OrderLineIds);
+public interface IOrderFeedbackReadService
+{
+    Task<OrderFeedbackEligibility?> GetFeedbackEligibilityAsync(Guid restaurantId, Guid branchId,
         Guid diningSessionId, OrderId orderId, CancellationToken cancellationToken);
 }

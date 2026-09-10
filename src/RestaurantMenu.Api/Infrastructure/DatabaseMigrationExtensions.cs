@@ -4,6 +4,7 @@ using RestaurantMenu.Catalog.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Media.Infrastructure.Database;
 using RestaurantMenu.Ordering.Infrastructure.Database;
+using RestaurantMenu.Feedback.Infrastructure.Database;
 
 namespace RestaurantMenu.Api.Infrastructure;
 
@@ -25,10 +26,12 @@ public static class DatabaseMigrationExtensions
                 CatalogDbContext>();
         var mediaDbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
         var orderingDbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        var feedbackDbContext = scope.ServiceProvider.GetRequiredService<FeedbackDbContext>();
 
         await restaurantsDbContext.Database.MigrateAsync();
         await catalogDbContext.Database.MigrateAsync();
         await mediaDbContext.Database.MigrateAsync();
         await orderingDbContext.Database.MigrateAsync();
+        await feedbackDbContext.Database.MigrateAsync();
     }
 }

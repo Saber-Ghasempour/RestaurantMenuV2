@@ -28,7 +28,9 @@ public static class DependencyInjection
         services.AddScoped<IDiningSessionRepository, DiningSessionRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
-        services.AddScoped<IOrderReadService, OrderReadService>();
+        services.AddScoped<OrderReadService>();
+        services.AddScoped<IOrderReadService>(sp => sp.GetRequiredService<OrderReadService>());
+        services.AddScoped<IOrderFeedbackReadService>(sp => sp.GetRequiredService<OrderReadService>());
         services.AddScoped<IOrderingUnitOfWork>(sp => sp.GetRequiredService<OrderingDbContext>());
         services.AddSingleton<IDiningSessionTokenGenerator, CryptographicDiningSessionTokenGenerator>();
         services.AddSingleton(new DiningSessionOptions(sessionLifetime));

@@ -19,6 +19,12 @@
     <Project Path="src/Modules/Ordering/RestaurantMenu.Ordering.Infrastructure/RestaurantMenu.Ordering.Infrastructure.csproj" />
     <Project Path="src/Modules/Ordering/RestaurantMenu.Ordering.Presentation/RestaurantMenu.Ordering.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Feedback/">
+    <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Application/RestaurantMenu.Feedback.Application.csproj" />
+    <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Domain/RestaurantMenu.Feedback.Domain.csproj" />
+    <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/RestaurantMenu.Feedback.Infrastructure.csproj" />
+    <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/RestaurantMenu.Feedback.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Media/">
     <Project Path="src/Modules/Media/RestaurantMenu.Media.Application/RestaurantMenu.Media.Application.csproj" />
     <Project Path="src/Modules/Media/RestaurantMenu.Media.Domain/RestaurantMenu.Media.Domain.csproj" />
@@ -42,6 +48,11 @@
     <Project Path="tests/RestaurantMenu.ArchitectureTests/RestaurantMenu.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Feedback/">
+    <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.Application.UnitTests/RestaurantMenu.Feedback.Application.UnitTests.csproj" />
+    <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.Domain.UnitTests/RestaurantMenu.Feedback.Domain.UnitTests.csproj" />
+    <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.IntegrationTests/RestaurantMenu.Feedback.IntegrationTests.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/Notifications/">
     <Project Path="tests/Modules/Notifications/RestaurantMenu.Notifications.IntegrationTests/RestaurantMenu.Notifications.IntegrationTests.csproj" />
   </Folder>
