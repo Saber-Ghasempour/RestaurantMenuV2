@@ -18,6 +18,10 @@ public sealed class RestaurantMembershipRepository(
 
         dbContext.RestaurantMemberships.Add(membership);
     }
+    public Task<RestaurantMembership?> GetAsync(RestaurantId restaurantId, string subject, CancellationToken cancellationToken) => dbContext.RestaurantMemberships.SingleOrDefaultAsync(x => x.RestaurantId == restaurantId && x.Subject == subject, cancellationToken);
+    public Task<int> CountActiveOwnersAsync(RestaurantId restaurantId, CancellationToken cancellationToken) => dbContext.RestaurantMemberships.CountAsync(x => x.RestaurantId == restaurantId && x.Role == RestaurantMembershipRole.Owner && x.Status == RestaurantMembershipStatus.Active, cancellationToken);
+    public async Task<IReadOnlyList<RestaurantMenu.Restaurants.Application.Memberships.MemberResponse>> ListAsync(RestaurantId restaurantId, CancellationToken cancellationToken)
+    { var values = await dbContext.RestaurantMemberships.AsNoTracking().Where(x => x.RestaurantId == restaurantId).OrderBy(x => x.Subject).ToArrayAsync(cancellationToken); return values.Select(x => new RestaurantMenu.Restaurants.Application.Memberships.MemberResponse(x.Subject, x.Role.ToString(), x.Status.ToString(), x.Version)).ToArray(); }
 
     public Task<bool> HasAccessAsync(
         RestaurantId restaurantId,
@@ -31,7 +35,7 @@ public sealed class RestaurantMembershipRepository(
             .AnyAsync(
                 membership =>
                     membership.RestaurantId == restaurantId &&
-                    membership.Subject == subject,
+                    membership.Subject == subject && membership.Status == RestaurantMembershipStatus.Active,
                 cancellationToken);
     }
 }

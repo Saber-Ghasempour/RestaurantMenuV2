@@ -23,4 +23,7 @@ public static class RestaurantMembershipErrors
         ErrorDetail.Validation(
             "RestaurantMembership.RoleInvalid",
             "The restaurant membership role is invalid.");
+
+    public static readonly ErrorDetail StatusInvalid = ErrorDetail.Validation(
+        "RestaurantMembership.StatusInvalid", "The restaurant membership status is invalid.");
 }

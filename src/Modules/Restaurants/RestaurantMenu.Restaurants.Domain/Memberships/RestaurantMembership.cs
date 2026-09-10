@@ -19,11 +19,20 @@ public sealed class RestaurantMembership
         CreatedAtUtc = createdAtUtc;
     }
 
+    private RestaurantMembership(RestaurantId restaurantId, string subject,
+        RestaurantMembershipRole role, RestaurantMembershipStatus status,
+        DateTimeOffset createdAtUtc, long version) : this(restaurantId, subject, role, createdAtUtc)
+    { Status = status; Version = version; }
+
     public RestaurantId RestaurantId { get; }
 
     public string Subject { get; }
 
     public RestaurantMembershipRole Role { get; private set; }
+
+    public RestaurantMembershipStatus Status { get; private set; } = RestaurantMembershipStatus.Active;
+
+    public long Version { get; private set; } = 1;
 
     public DateTimeOffset CreatedAtUtc { get; }
 
@@ -66,4 +75,16 @@ public sealed class RestaurantMembership
                 role,
                 createdAtUtc));
     }
+
+    public Result<RestaurantMembership> Change(RestaurantMembershipRole role,
+        RestaurantMembershipStatus status)
+    {
+        if (!Enum.IsDefined(role)) return Result.Failure<RestaurantMembership>(RestaurantMembershipErrors.RoleInvalid);
+        if (!Enum.IsDefined(status)) return Result.Failure<RestaurantMembership>(RestaurantMembershipErrors.StatusInvalid);
+        if (Role == role && Status == status) return Result.Success(this);
+        Role = role; Status = status; Version++;
+        return Result.Success(this);
+    }
 }
+
+public enum RestaurantMembershipStatus { Active = 1, Suspended = 2, Revoked = 3 }

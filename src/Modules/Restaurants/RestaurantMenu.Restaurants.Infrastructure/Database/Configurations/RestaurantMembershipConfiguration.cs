@@ -40,6 +40,8 @@ internal sealed class RestaurantMembershipConfiguration
             .HasConversion<string>()
             .HasMaxLength(32)
             .IsRequired();
+        builder.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(24).HasDefaultValue(RestaurantMembershipStatus.Active).IsRequired();
+        builder.Property(x => x.Version).HasColumnName("version").HasDefaultValue(1L).IsConcurrencyToken().IsRequired();
 
         builder.Property(membership => membership.CreatedAtUtc)
             .HasColumnName("created_at_utc")

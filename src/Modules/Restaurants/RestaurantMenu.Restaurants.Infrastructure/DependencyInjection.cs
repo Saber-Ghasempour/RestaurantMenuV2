@@ -46,6 +46,7 @@ using RestaurantMenu.Restaurants.Domain.PublicMenuCodes;
 using RestaurantMenu.Restaurants.Infrastructure.DiningTables;
 using RestaurantMenu.Restaurants.Infrastructure.PublicMenuCodes;
 using RestaurantMenu.Restaurants.Application.Memberships.AssignBranchMembership;
+using RestaurantMenu.Restaurants.Application.Memberships;
 
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
@@ -57,7 +58,8 @@ public static class DependencyInjection
         string redisConnectionString,
         TimeSpan cacheTimeToLive,
         int redisConnectTimeoutMilliseconds,
-        int redisOperationTimeoutMilliseconds)
+        int redisOperationTimeoutMilliseconds,
+        KeycloakAdminOptions? keycloakAdminOptions = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
@@ -216,6 +218,18 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<RevokePublicMenuCodeCommand, Result<long>>, RevokePublicMenuCodeCommandHandler>();
         services.AddScoped<IQueryHandler<ResolvePublicMenuCodeQuery, Result<ResolvedPublicMenuCode>>, ResolvePublicMenuCodeQueryHandler>();
         services.AddScoped<ICommandHandler<AssignBranchMembershipCommand, Result<BranchMembershipResponse>>, AssignBranchMembershipCommandHandler>();
+        services.AddScoped<IMembershipInvitationRepository, MembershipInvitationRepository>();
+        services.AddSingleton<IInvitationTokenGenerator, CryptographicInvitationTokenGenerator>();
+        if (keycloakAdminOptions is null) services.AddScoped<IIdentityProvisioner, UnconfiguredIdentityProvisioner>();
+        else { services.AddSingleton(keycloakAdminOptions); services.AddSingleton(new HttpClient()); services.AddScoped<IIdentityProvisioner, KeycloakIdentityProvisioner>(); }
+        services.AddSingleton(new InvitationOptions(TimeSpan.FromDays(2)));
+        services.AddScoped<ICommandHandler<InviteMemberCommand, Result<InvitationResponse>>, InviteMemberCommandHandler>();
+        services.AddScoped<ICommandHandler<AcceptInvitationCommand, Result<MemberResponse>>, AcceptInvitationCommandHandler>();
+        services.AddScoped<ICommandHandler<ChangeMemberCommand, Result<MemberResponse>>, ChangeMemberCommandHandler>();
+        services.AddScoped<ICommandHandler<RevokeInvitationCommand, Result<InvitationResponse>>, RevokeInvitationCommandHandler>();
+        services.AddScoped<IQueryHandler<ListInvitationsQuery, Result<IReadOnlyList<InvitationResponse>>>, ListInvitationsQueryHandler>();
+        services.AddScoped<IQueryHandler<ListMembersQuery, Result<IReadOnlyList<MemberResponse>>>, ListMembersQueryHandler>();
+        services.AddScoped<IQueryHandler<ListMembershipAuditQuery, Result<IReadOnlyList<AuditResponse>>>, ListMembershipAuditQueryHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

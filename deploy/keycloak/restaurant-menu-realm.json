@@ -19,7 +19,9 @@
         { "name": "catalog.read" },
         { "name": "catalog.write" },
         { "name": "media.read" },
-        { "name": "media.write" }
+        { "name": "media.write" },
+        { "name": "members.read" },
+        { "name": "members.write" }
       ]
     }
   },
@@ -146,7 +148,9 @@
           "catalog.read",
           "catalog.write",
           "media.read",
-          "media.write"
+          "media.write",
+          "members.read",
+          "members.write"
         ]
       }
     },

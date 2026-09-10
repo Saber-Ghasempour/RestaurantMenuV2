@@ -23,6 +23,10 @@ services:
       Authentication__ValidIssuer: http://localhost:${KEYCLOAK_PORT:-8081}/realms/restaurant-menu
       Authentication__Audience: restaurant-menu-api
       Authentication__RequireHttpsMetadata: "false"
+      KeycloakAdmin__BaseUrl: http://keycloak:8080/
+      KeycloakAdmin__Realm: restaurant-menu
+      KeycloakAdmin__ClientId: ${KEYCLOAK_PROVISIONING_CLIENT_ID:-}
+      KeycloakAdmin__ClientSecret: ${KEYCLOAK_PROVISIONING_CLIENT_SECRET:-}
       ObjectStorage__BucketName: restaurant-menu-media
       ObjectStorage__ServiceUrl: http://minio:9000
       ObjectStorage__PublicServiceUrl: http://localhost:${MINIO_PORT:-9000}

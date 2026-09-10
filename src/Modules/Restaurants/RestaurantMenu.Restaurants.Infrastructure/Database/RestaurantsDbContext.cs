@@ -1,7 +1,9 @@
 ﻿using System.Reflection.Emit;
 
 using Microsoft.EntityFrameworkCore;
+
 using Npgsql;
+
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 
 using RestaurantMenu.Application.Abstractions.Data;
@@ -31,6 +33,8 @@ public sealed class RestaurantsDbContext
     public DbSet<RestaurantMembership> RestaurantMemberships =>
         Set<RestaurantMembership>();
     public DbSet<BranchMembership> BranchMemberships => Set<BranchMembership>();
+    public DbSet<MembershipInvitation> MembershipInvitations => Set<MembershipInvitation>();
+    public DbSet<MembershipAuditEntry> MembershipAuditEntries => Set<MembershipAuditEntry>();
 
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<DiningTable> DiningTables => Set<DiningTable>();
@@ -44,6 +48,9 @@ public sealed class RestaurantsDbContext
             return await base.SaveChangesAsync(
                 cancellationToken);
         }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "ux_membership_invitations_active_email" })
+        { throw new ActiveInvitationExistsException("Active invitation already exists.", exception); }
         catch (DbUpdateException exception) when (
             exception.InnerException is PostgresException
             {

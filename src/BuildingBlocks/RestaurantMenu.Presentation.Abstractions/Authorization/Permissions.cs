@@ -34,6 +34,8 @@ public static class Permissions
     public const string OrdersCancel = "orders.cancel";
     public const string FeedbackRead = "feedback.read";
     public const string FeedbackModerate = "feedback.moderate";
+    public const string MembersRead = "members.read";
+    public const string MembersWrite = "members.write";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -56,6 +58,8 @@ public static class Permissions
         OrdersComplete,
         OrdersCancel,
         FeedbackRead,
-        FeedbackModerate
+        FeedbackModerate,
+        MembersRead,
+        MembersWrite
     ];
 }

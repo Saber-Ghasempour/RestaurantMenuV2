@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
+using RestaurantMenu.Restaurants.Application.Abstractions.Security;
 
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
@@ -83,6 +86,8 @@ public sealed class TestWebApplicationFactory
         builder.ConfigureTestServices(
             services =>
             {
+                services.RemoveAll<IIdentityProvisioner>();
+                services.AddScoped<IIdentityProvisioner, TestIdentityProvisioner>();
                 services
                     .AddAuthentication(
                         TestAuthenticationHandler.AuthenticationScheme)
@@ -93,6 +98,9 @@ public sealed class TestWebApplicationFactory
                             _ => { });
             });
     }
+
+    private sealed class TestIdentityProvisioner : IIdentityProvisioner
+    { public Task<string?> EnsureUserAsync(string email, CancellationToken cancellationToken) => Task.FromResult<string?>($"subject:{email}"); }
 
     protected override IHost CreateHost(
         IHostBuilder builder)

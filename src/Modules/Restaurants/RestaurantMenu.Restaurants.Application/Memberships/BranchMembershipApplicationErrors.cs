@@ -11,4 +11,6 @@ public static class BranchMembershipApplicationErrors
         "Restaurants.RestaurantMemberRequired", "The subject must be a Restaurant member before Branch assignment.");
     public static readonly ErrorDetail VersionConflict = ErrorDetail.Conflict(
         "Restaurants.BranchMembershipVersionConflict", "The Branch membership changed since it was read.");
+    public static readonly ErrorDetail ForbiddenRole = ErrorDetail.Conflict(
+        "Restaurants.BranchMembershipRoleEscalation", "The Branch role exceeds the actor's authority.");
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
@@ -11,9 +12,11 @@ using RestaurantMenu.Restaurants.Infrastructure.Database;
 namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(RestaurantsDbContext))]
-    partial class RestaurantsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260910161316_AddMembershipLifecycle")]
+    partial class AddMembershipLifecycle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,56 +247,6 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
 
                             t.HasCheckConstraint("ck_branch_memberships_status", "status IN ('Active', 'Suspended')");
                         });
-                });
-
-            modelBuilder.Entity("RestaurantMenu.Restaurants.Domain.Memberships.MembershipAuditEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("action");
-
-                    b.Property<string>("ActorSubject")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("actor_subject");
-
-                    b.Property<string>("Changes")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("changes");
-
-                    b.Property<DateTimeOffset>("OccurredAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_at_utc");
-
-                    b.Property<string>("ResourceId")
-                        .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)")
-                        .HasColumnName("resource_id");
-
-                    b.Property<string>("ResourceType")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("resource_type");
-
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("restaurant_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RestaurantId", "OccurredAtUtc")
-                        .HasDatabaseName("ix_membership_audit_restaurant_occurred");
-
-                    b.ToTable("membership_audit_entries", "restaurants");
                 });
 
             modelBuilder.Entity("RestaurantMenu.Restaurants.Domain.Memberships.MembershipInvitation", b =>
@@ -649,15 +602,6 @@ namespace RestaurantMenu.Restaurants.Infrastructure.Database.Migrations
                     b.HasOne("RestaurantMenu.Restaurants.Domain.Memberships.RestaurantMembership", null)
                         .WithMany()
                         .HasForeignKey("RestaurantId", "Subject")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RestaurantMenu.Restaurants.Domain.Memberships.MembershipAuditEntry", b =>
-                {
-                    b.HasOne("RestaurantMenu.Restaurants.Domain.Restaurants.Restaurant", null)
-                        .WithMany()
-                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

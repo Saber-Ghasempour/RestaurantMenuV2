@@ -19,6 +19,7 @@ using RestaurantMenu.Catalog.Presentation.Variants;
 using RestaurantMenu.Catalog.Presentation.PublicMenus;
 using RestaurantMenu.Catalog.Presentation.Publications;
 using RestaurantMenu.Restaurants.Infrastructure;
+using RestaurantMenu.Restaurants.Infrastructure.Memberships;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using RestaurantMenu.Restaurants.Presentation.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Branches;
@@ -122,7 +123,12 @@ builder.Services.AddRestaurantsInfrastructure(
     redisConnectionString,
     restaurantCacheTimeToLive,
     redisConnectTimeoutMilliseconds,
-    redisOperationTimeoutMilliseconds);
+    redisOperationTimeoutMilliseconds,
+    Uri.TryCreate(builder.Configuration["KeycloakAdmin:BaseUrl"], UriKind.Absolute, out var keycloakBase) &&
+        !string.IsNullOrWhiteSpace(builder.Configuration["KeycloakAdmin:Realm"]) &&
+        !string.IsNullOrWhiteSpace(builder.Configuration["KeycloakAdmin:ClientId"]) &&
+        !string.IsNullOrWhiteSpace(builder.Configuration["KeycloakAdmin:ClientSecret"])
+        ? new KeycloakAdminOptions(keycloakBase, builder.Configuration["KeycloakAdmin:Realm"]!, builder.Configuration["KeycloakAdmin:ClientId"]!, builder.Configuration["KeycloakAdmin:ClientSecret"]!) : null);
 builder.Services.AddCatalogInfrastructure(
     catalogConnectionString,
     restaurantCacheTimeToLive);
