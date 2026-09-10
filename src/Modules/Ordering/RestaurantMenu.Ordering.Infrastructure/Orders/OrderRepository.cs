@@ -11,4 +11,9 @@ public sealed class OrderRepository(OrderingDbContext dbContext) : IOrderReposit
     public Task<Order?> GetByIdAsync(OrderId id, CancellationToken cancellationToken) =>
         dbContext.Orders.AsNoTracking().Include(order => order.Lines)
             .SingleOrDefaultAsync(order => order.Id == id, cancellationToken);
+    public Task<Order?> GetForUpdateAsync(Guid restaurantId, Guid branchId, OrderId id,
+        CancellationToken cancellationToken) => dbContext.Orders
+        .Include(order => order.StatusHistory)
+        .SingleOrDefaultAsync(order => order.Id == id && order.RestaurantId == restaurantId &&
+            order.BranchId == branchId, cancellationToken);
 }

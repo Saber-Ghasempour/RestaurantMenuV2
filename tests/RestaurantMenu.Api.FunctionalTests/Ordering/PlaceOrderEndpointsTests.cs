@@ -4,6 +4,7 @@ using System.Text.Json;
 using RestaurantMenu.Api.FunctionalTests.Infrastructure;
 using RestaurantMenu.Ordering.Presentation.DiningSessions;
 using RestaurantMenu.Ordering.Presentation.Orders;
+using RestaurantMenu.Ordering.Domain.Orders;
 
 namespace RestaurantMenu.Api.FunctionalTests.Ordering;
 
@@ -57,6 +58,29 @@ public sealed class PlaceOrderEndpointsTests(TestWebApplicationFactory factory)
         using var changedRequest = CreateRequest(token, "order-key", item.Id.Value, variant.Id.Value, 3);
         using var changed = await client.SendAsync(changedRequest);
         Assert.Equal(HttpStatusCode.Conflict, changed.StatusCode);
+
+        var otherToken = await StartSessionAsync(client, restaurant.Id.Value, branchId, tableId);
+        using var wrongSessionRead = new HttpRequestMessage(HttpMethod.Get, $"/api/public/orders/{orderId}");
+        wrongSessionRead.Headers.Add(DiningSessionEndpoints.HeaderName, otherToken);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.SendAsync(wrongSessionRead)).StatusCode);
+
+        using var read = new HttpRequestMessage(HttpMethod.Get, $"/api/public/orders/{orderId}");
+        read.Headers.Add(DiningSessionEndpoints.HeaderName, token);
+        using var readResponse = await client.SendAsync(read);
+        readResponse.EnsureSuccessStatusCode();
+        Assert.Equal(17.50m, (await readResponse.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("totalAmount").GetDecimal());
+
+        using var cancel = new HttpRequestMessage(HttpMethod.Post, $"/api/public/orders/{orderId}/cancel")
+        { Content = JsonContent.Create(new { ExpectedVersion = 1, Reason = "Changed our minds" }) };
+        cancel.Headers.Add(DiningSessionEndpoints.HeaderName, token);
+        using var cancelResponse = await client.SendAsync(cancel);
+        cancelResponse.EnsureSuccessStatusCode();
+        var cancelled = await factory.FindOrderAsync(orderId);
+        Assert.NotNull(cancelled);
+        Assert.Equal(OrderStatus.Cancelled, cancelled.Status);
+        Assert.Equal(OrderActorType.Guest, cancelled.StatusHistory.Last().ChangedByType);
+        Assert.Equal("Changed our minds", cancelled.StatusHistory.Last().Reason);
     }
 
     [Fact]

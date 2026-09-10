@@ -30,6 +30,7 @@ public sealed class RestaurantsDbContext
 
     public DbSet<RestaurantMembership> RestaurantMemberships =>
         Set<RestaurantMembership>();
+    public DbSet<BranchMembership> BranchMemberships => Set<BranchMembership>();
 
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<DiningTable> DiningTables => Set<DiningTable>();

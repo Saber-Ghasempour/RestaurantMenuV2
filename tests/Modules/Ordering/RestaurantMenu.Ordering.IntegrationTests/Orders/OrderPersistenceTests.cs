@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Ordering.Application.Abstractions;
 using RestaurantMenu.Ordering.Domain.Orders;
 using RestaurantMenu.Ordering.Infrastructure.Database;
@@ -25,11 +26,46 @@ public sealed class OrderPersistenceTests : IAsyncLifetime
             await context.SaveChangesAsync();
         }
         await using var verify = new OrderingDbContext(options);
-        var saved = await verify.Orders.AsNoTracking().Include(value => value.Lines).SingleAsync();
+        var saved = await verify.Orders.AsNoTracking().Include(value => value.Lines)
+            .Include(value => value.StatusHistory).SingleAsync();
         Assert.Equal(21m, saved.TotalAmount);
         Assert.Equal("Table 4", saved.TableDisplayName);
         Assert.Equal(21m, Assert.Single(saved.Lines).LineTotalAmount);
+        var placed = Assert.Single(saved.StatusHistory);
+        Assert.Null(placed.FromStatus);
+        Assert.Equal(OrderStatus.Placed, placed.ToStatus);
+        Assert.Equal(OrderActorType.Guest, placed.ChangedByType);
         Assert.Single(await verify.IdempotencyRecords.AsNoTracking().ToArrayAsync());
+    }
+
+    [Fact]
+    public async Task ConcurrentTransitionsShouldRejectTheStaleWriterAndAppendOneHistoryEntry()
+    {
+        var options = Options();
+        var order = CreateOrder(Guid.NewGuid(), "O-STATE-RACE");
+        await using (var setup = new OrderingDbContext(options))
+        {
+            await setup.Database.MigrateAsync();
+            setup.Orders.Add(order);
+            await setup.SaveChangesAsync();
+        }
+
+        await using var first = new OrderingDbContext(options);
+        await using var second = new OrderingDbContext(options);
+        var firstOrder = await first.Orders.Include(value => value.StatusHistory).SingleAsync();
+        var secondOrder = await second.Orders.Include(value => value.StatusHistory).SingleAsync();
+        firstOrder.Accept("cashier-a", DateTimeOffset.UtcNow);
+        secondOrder.Accept("cashier-b", DateTimeOffset.UtcNow);
+
+        await first.SaveChangesAsync();
+        await Assert.ThrowsAsync<ConcurrencyException>(() => second.SaveChangesAsync());
+
+        await using var verify = new OrderingDbContext(options);
+        var saved = await verify.Orders.AsNoTracking().Include(value => value.StatusHistory).SingleAsync();
+        Assert.Equal(OrderStatus.Accepted, saved.Status);
+        Assert.Equal(2, saved.Version);
+        Assert.Equal(2, saved.StatusHistory.Count);
+        Assert.Single(saved.StatusHistory, value => value.ToStatus == OrderStatus.Accepted);
     }
 
     [Fact]

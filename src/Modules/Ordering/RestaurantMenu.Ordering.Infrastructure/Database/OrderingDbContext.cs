@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Ordering.Application.Abstractions;
 using RestaurantMenu.Ordering.Domain.DiningSessions;
 using RestaurantMenu.Ordering.Domain.Orders;
@@ -13,6 +14,7 @@ public sealed class OrderingDbContext(DbContextOptions<OrderingDbContext> option
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderLine> OrderLines => Set<OrderLine>();
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+    public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -25,6 +27,8 @@ public sealed class OrderingDbContext(DbContextOptions<OrderingDbContext> option
             { SqlState: PostgresErrorCodes.UniqueViolation,
               ConstraintName: "ux_idempotency_records_scope_key" })
         { throw new IdempotencyKeyAlreadyExistsException("Idempotency key already exists in this scope.", exception); }
+        catch (DbUpdateConcurrencyException exception)
+        { throw new ConcurrencyException("A concurrent Ordering database update was detected.", exception); }
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

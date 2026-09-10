@@ -24,6 +24,7 @@ using RestaurantMenu.Restaurants.Presentation.Restaurants;
 using RestaurantMenu.Restaurants.Presentation.Branches;
 using RestaurantMenu.Restaurants.Presentation.DiningTables;
 using RestaurantMenu.Restaurants.Presentation.PublicMenuCodes;
+using RestaurantMenu.Restaurants.Presentation.Memberships;
 using RestaurantMenu.Media.Infrastructure;
 using RestaurantMenu.Media.Infrastructure.Database;
 using RestaurantMenu.Media.Infrastructure.Storage;
@@ -126,6 +127,7 @@ builder.Services.AddOrderingInfrastructure(orderingConnectionString,
 builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>();
 builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotProvider>();
 builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
+builder.Services.AddScoped<IOrderStaffAccessProvider, OrderStaffAccessProvider>();
 builder.Services.AddScoped<MediaAssetIntegrationService>();
 builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
@@ -191,6 +193,7 @@ app.MapRestaurantsEndpoints();
 app.MapBranchesEndpoints();
 app.MapDiningTablesEndpoints();
 app.MapPublicMenuCodesEndpoints();
+app.MapBranchMembershipEndpoints();
 app.MapMenuCategoryEndpoints();
 app.MapMenuItemEndpoints();
 app.MapMenuItemVariantEndpoints();
@@ -201,6 +204,7 @@ app.MapPublicMenuSlugEndpoints();
 app.MapPublicMenuCodeMenuEndpoints();
 app.MapDiningSessionEndpoints();
 app.MapOrderEndpoints();
+app.MapStaffOrderEndpoints();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

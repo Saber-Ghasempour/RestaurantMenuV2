@@ -45,6 +45,7 @@ using RestaurantMenu.Restaurants.Domain.DiningTables;
 using RestaurantMenu.Restaurants.Domain.PublicMenuCodes;
 using RestaurantMenu.Restaurants.Infrastructure.DiningTables;
 using RestaurantMenu.Restaurants.Infrastructure.PublicMenuCodes;
+using RestaurantMenu.Restaurants.Application.Memberships.AssignBranchMembership;
 
 namespace RestaurantMenu.Restaurants.Infrastructure;
 
@@ -109,6 +110,9 @@ public static class DependencyInjection
             serviceProvider =>
                 serviceProvider.GetRequiredService<
                     RestaurantMembershipRepository>());
+        services.AddScoped<BranchMembershipRepository>();
+        services.AddScoped<IBranchMembershipRepository>(sp => sp.GetRequiredService<BranchMembershipRepository>());
+        services.AddScoped<IBranchMembershipReadService>(sp => sp.GetRequiredService<BranchMembershipRepository>());
 
         var redisConfiguration =
             ConfigurationOptions.Parse(redisConnectionString);
@@ -211,6 +215,7 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<RotatePublicMenuCodeCommand, Result<IssuedPublicMenuCode>>, RotatePublicMenuCodeCommandHandler>();
         services.AddScoped<ICommandHandler<RevokePublicMenuCodeCommand, Result<long>>, RevokePublicMenuCodeCommandHandler>();
         services.AddScoped<IQueryHandler<ResolvePublicMenuCodeQuery, Result<ResolvedPublicMenuCode>>, ResolvePublicMenuCodeQueryHandler>();
+        services.AddScoped<ICommandHandler<AssignBranchMembershipCommand, Result<BranchMembershipResponse>>, AssignBranchMembershipCommandHandler>();
 
         services.AddSingleton(TimeProvider.System);
 

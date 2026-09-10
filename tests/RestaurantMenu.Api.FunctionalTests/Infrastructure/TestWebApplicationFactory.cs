@@ -184,7 +184,62 @@ public sealed class TestWebApplicationFactory
         await using var scope = Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
         return await dbContext.Orders.AsNoTracking().Include(order => order.Lines)
+            .Include(order => order.StatusHistory)
             .SingleOrDefaultAsync(order => order.Id == new OrderId(orderId));
+    }
+
+    public async Task<Order> SeedOrderAsync(Guid restaurantId, Guid branchId,
+        OrderStatus status = OrderStatus.Placed)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        var id = OrderId.New();
+        var order = Order.Create(id, $"T-{Guid.NewGuid():N}"[..20], restaurantId, branchId,
+            Guid.NewGuid(), "Table 1", Guid.NewGuid(), null,
+            [new OrderLineSnapshot(Guid.NewGuid(), null, "Soup", null, 5m, "EUR", 1, null)],
+            DateTimeOffset.UtcNow).Value;
+        AdvanceOrder(order, status);
+        dbContext.Orders.Add(order);
+        await dbContext.SaveChangesAsync();
+        return order;
+    }
+
+    public async Task SeedRestaurantMemberAsync(Guid restaurantId, string subject)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantsDbContext>();
+        dbContext.RestaurantMemberships.Add(RestaurantMembership.Create(new RestaurantId(restaurantId),
+            subject, RestaurantMembershipRole.Staff, DateTimeOffset.UtcNow).Value);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task SeedBranchMembershipAsync(Guid restaurantId, Guid branchId, string subject,
+        BranchMembershipRole role, BranchMembershipStatus status = BranchMembershipStatus.Active)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<RestaurantsDbContext>();
+        var membership = BranchMembership.Create(new RestaurantId(restaurantId), new BranchId(branchId),
+            subject, role, DateTimeOffset.UtcNow, status).Value;
+        dbContext.BranchMemberships.Add(membership);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static void AdvanceOrder(Order order, OrderStatus status)
+    {
+        const string subject = "seed-staff";
+        var now = DateTimeOffset.UtcNow;
+        if (status == OrderStatus.Placed) return;
+        if (status == OrderStatus.Rejected) { order.Reject(subject, "seed rejection", now); return; }
+        if (status == OrderStatus.Cancelled) { order.Cancel(subject, "seed cancellation", now); return; }
+        order.Accept(subject, now);
+        if (status == OrderStatus.Accepted) return;
+        order.StartPreparing(subject, now);
+        if (status == OrderStatus.Preparing) return;
+        order.MarkReady(subject, now);
+        if (status == OrderStatus.Ready) return;
+        order.MarkServed(subject, now);
+        if (status == OrderStatus.Served) return;
+        order.Complete(subject, now);
     }
 
     public async Task<int> CountOrdersAsync()

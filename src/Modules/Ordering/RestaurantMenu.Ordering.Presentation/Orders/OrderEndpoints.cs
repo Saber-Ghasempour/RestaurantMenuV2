@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Ordering.Application.Orders.PlaceOrder;
+using RestaurantMenu.Ordering.Application.Abstractions;
+using RestaurantMenu.Ordering.Application.Orders.GuestOrders;
+using RestaurantMenu.Ordering.Application.Orders.Transitions;
+using RestaurantMenu.Ordering.Domain.Orders;
 using RestaurantMenu.Ordering.Domain.DiningSessions;
 using RestaurantMenu.Ordering.Presentation.DiningSessions;
 using RestaurantMenu.Presentation.Abstractions.Results;
@@ -22,6 +26,10 @@ public static class OrderEndpoints
             .Produces<PlaceOrderResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem().ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status409Conflict);
+        endpoints.MapGet("/api/public/orders/{orderId:guid}", GetAsync)
+            .WithTags("Orders").AllowAnonymous().RequireRateLimiting("dining-session-use");
+        endpoints.MapPost("/api/public/orders/{orderId:guid}/cancel", CancelAsync)
+            .WithTags("Orders").AllowAnonymous().RequireRateLimiting("dining-session-use");
         return endpoints;
     }
 
@@ -39,7 +47,30 @@ public static class OrderEndpoints
         return result.IsFailure ? result.Error.ToProblem()
             : Results.Created($"/api/public/orders/{result.Value.OrderId}", result.Value);
     }
+
+    private static async Task<IResult> GetAsync(Guid orderId, HttpContext context,
+        IQueryHandler<GetGuestOrderQuery, Result<GuestOrderDetail>> handler,
+        CancellationToken cancellationToken)
+    {
+        var token = DiningSessionEndpoints.ReadToken(context.Request);
+        if (token is null) return DiningSessionErrors.InvalidCapability.ToProblem();
+        var result = await handler.Handle(new GetGuestOrderQuery(token, new OrderId(orderId)), cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem() : Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> CancelAsync(Guid orderId, CancelGuestOrderRequest request,
+        HttpContext context,
+        ICommandHandler<CancelGuestOrderCommand, Result<OrderTransitionResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var token = DiningSessionEndpoints.ReadToken(context.Request);
+        if (token is null) return DiningSessionErrors.InvalidCapability.ToProblem();
+        var result = await handler.Handle(new CancelGuestOrderCommand(token, new OrderId(orderId),
+            request.ExpectedVersion, request.Reason), cancellationToken);
+        return result.IsFailure ? result.Error.ToProblem() : Results.Ok(result.Value);
+    }
 }
 
 public sealed record PlaceOrderRequest(string? CustomerNote, IReadOnlyList<PlaceOrderLineRequest>? Lines);
 public sealed record PlaceOrderLineRequest(Guid MenuItemId, Guid? VariantId, int Quantity, string? Note);
+public sealed record CancelGuestOrderRequest(long ExpectedVersion, string? Reason);

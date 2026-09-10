@@ -18,4 +18,9 @@ public static class OrderErrors
     public static readonly ErrorDetail LineNoteTooLong = ErrorDetail.Validation("Ordering.OrderLineNoteTooLong", "An order line note is too long.");
     public static readonly ErrorDetail CustomerNoteTooLong = ErrorDetail.Validation("Ordering.CustomerNoteTooLong", "The customer note is too long.");
     public static readonly ErrorDetail TableNameRequired = ErrorDetail.Validation("Ordering.TableNameRequired", "A trusted table display name is required.");
+    public static readonly ErrorDetail StaffSubjectRequired = ErrorDetail.Validation("Ordering.StaffSubjectRequired", "A staff subject is required.");
+    public static readonly ErrorDetail TransitionReasonRequired = ErrorDetail.Validation("Ordering.TransitionReasonRequired", "A reason is required for this transition.");
+    public static readonly ErrorDetail TransitionReasonTooLong = ErrorDetail.Validation("Ordering.TransitionReasonTooLong", $"A transition reason cannot exceed {OrderStatusHistory.MaxReasonLength} characters.");
+    public static ErrorDetail InvalidTransition(OrderStatus from, OrderStatus to) =>
+        ErrorDetail.Conflict("Ordering.InvalidOrderTransition", $"An order cannot transition from {from} to {to}.");
 }

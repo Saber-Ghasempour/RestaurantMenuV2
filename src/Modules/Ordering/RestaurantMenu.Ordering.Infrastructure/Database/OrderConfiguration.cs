@@ -12,6 +12,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         {
             table.HasCheckConstraint("ck_orders_amounts", "subtotal_amount >= 0 AND total_amount >= 0");
             table.HasCheckConstraint("ck_orders_currency", "char_length(currency) = 3");
+            table.HasCheckConstraint("ck_orders_status", "status IN ('Placed', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed', 'Rejected', 'Cancelled')");
         });
         builder.HasKey(order => order.Id);
         builder.Property(order => order.Id).HasConversion(id => id.Value, value => new OrderId(value)).HasColumnName("id").ValueGeneratedNever();
@@ -36,6 +37,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(order => new { order.DiningSessionId, order.CreatedAtUtc }).HasDatabaseName("ix_orders_dining_session");
         builder.HasMany(order => order.Lines).WithOne().HasForeignKey(line => line.OrderId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(order => order.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.HasMany(order => order.StatusHistory).WithOne().HasForeignKey(value => value.OrderId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(order => order.StatusHistory).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Ignore(order => order.DomainEvents);
     }
 }

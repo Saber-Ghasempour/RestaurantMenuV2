@@ -10,6 +10,7 @@ public sealed class Order : AggregateRoot<OrderId>
     public const int MaxTableDisplayNameLength = 80;
     public const int MaxCustomerNoteLength = 1000;
     private readonly List<OrderLine> _lines = [];
+    private readonly List<OrderStatusHistory> _statusHistory = [];
 
     private Order() : base(default) { PublicNumber = string.Empty; TableDisplayName = string.Empty; Currency = string.Empty; }
     private Order(OrderId id, string publicNumber, Guid restaurantId, Guid branchId,
@@ -39,6 +40,7 @@ public sealed class Order : AggregateRoot<OrderId>
     public DateTimeOffset? CancelledAtUtc { get; private set; }
     public long Version { get; private set; } = 1;
     public IReadOnlyCollection<OrderLine> Lines => _lines.AsReadOnly();
+    public IReadOnlyCollection<OrderStatusHistory> StatusHistory => _statusHistory.AsReadOnly();
 
     public static Result<Order> Create(OrderId id, string? publicNumber, Guid restaurantId,
         Guid branchId, Guid diningTableId, string? tableDisplayName, Guid diningSessionId,
@@ -85,9 +87,74 @@ public sealed class Order : AggregateRoot<OrderId>
         }
         var order = new Order(id, publicNumber, restaurantId, branchId, diningTableId,
             tableDisplayName, diningSessionId, customerNote, orderCurrency!, total, createdAtUtc, built);
+        order._statusHistory.Add(new OrderStatusHistory(Guid.CreateVersion7(), id, null,
+            OrderStatus.Placed, OrderActorType.Guest, null, null, createdAtUtc));
         order.RaiseDomainEvent(new OrderPlacedDomainEvent(id, restaurantId, branchId, diningSessionId, total, orderCurrency!, createdAtUtc));
         return Result.Success(order);
     }
+
+    public Result<Order> Accept(string? subject, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Accepted, OrderActorType.Staff, subject, null, changedAtUtc);
+
+    public Result<Order> Reject(string? subject, string? reason, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Rejected, OrderActorType.Staff, subject, reason, changedAtUtc, reasonRequired: true);
+
+    public Result<Order> StartPreparing(string? subject, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Preparing, OrderActorType.Staff, subject, null, changedAtUtc);
+
+    public Result<Order> MarkReady(string? subject, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Ready, OrderActorType.Staff, subject, null, changedAtUtc);
+
+    public Result<Order> MarkServed(string? subject, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Served, OrderActorType.Staff, subject, null, changedAtUtc);
+
+    public Result<Order> Complete(string? subject, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Completed, OrderActorType.Staff, subject, null, changedAtUtc);
+
+    public Result<Order> CompleteBySystem(DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Completed, OrderActorType.System, null, null, changedAtUtc);
+
+    public Result<Order> Cancel(string? subject, string? reason, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Cancelled, OrderActorType.Staff, subject, reason, changedAtUtc, reasonRequired: true);
+
+    public Result<Order> CancelByGuest(string? reason, DateTimeOffset changedAtUtc) =>
+        Transition(OrderStatus.Cancelled, OrderActorType.Guest, null, reason, changedAtUtc, reasonRequired: true);
+
+    private Result<Order> Transition(OrderStatus target, OrderActorType actorType,
+        string? subject, string? reason, DateTimeOffset changedAtUtc, bool reasonRequired = false)
+    {
+        if (!IsAllowed(Status, target))
+            return Result.Failure<Order>(OrderErrors.InvalidTransition(Status, target));
+        subject = Normalize(subject);
+        if (actorType == OrderActorType.Staff &&
+            (subject is null || subject.Length > OrderStatusHistory.MaxSubjectLength))
+            return Result.Failure<Order>(OrderErrors.StaffSubjectRequired);
+        reason = Normalize(reason);
+        if (reasonRequired && reason is null)
+            return Result.Failure<Order>(OrderErrors.TransitionReasonRequired);
+        if (reason?.Length > OrderStatusHistory.MaxReasonLength)
+            return Result.Failure<Order>(OrderErrors.TransitionReasonTooLong);
+
+        var from = Status; Status = target; Version++;
+        if (target == OrderStatus.Accepted) AcceptedAtUtc = changedAtUtc;
+        if (target == OrderStatus.Completed) CompletedAtUtc = changedAtUtc;
+        if (target == OrderStatus.Cancelled) CancelledAtUtc = changedAtUtc;
+        _statusHistory.Add(new OrderStatusHistory(Guid.CreateVersion7(), Id, from, target,
+            actorType, subject, reason, changedAtUtc));
+        RaiseDomainEvent(new OrderStatusChangedDomainEvent(Id, RestaurantId, BranchId,
+            from, target, changedAtUtc));
+        return Result.Success(this);
+    }
+
+    private static bool IsAllowed(OrderStatus from, OrderStatus to) => (from, to) switch
+    {
+        (OrderStatus.Placed, OrderStatus.Accepted or OrderStatus.Rejected or OrderStatus.Cancelled) => true,
+        (OrderStatus.Accepted, OrderStatus.Preparing or OrderStatus.Cancelled) => true,
+        (OrderStatus.Preparing, OrderStatus.Ready or OrderStatus.Cancelled) => true,
+        (OrderStatus.Ready, OrderStatus.Served) => true,
+        (OrderStatus.Served, OrderStatus.Completed) => true,
+        _ => false
+    };
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

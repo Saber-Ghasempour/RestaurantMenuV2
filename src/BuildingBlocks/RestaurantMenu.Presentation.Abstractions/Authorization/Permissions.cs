@@ -26,6 +26,13 @@ public static class Permissions
 
     public const string MediaWrite = "media.write";
 
+    public const string OrdersRead = "orders.read";
+    public const string OrdersAccept = "orders.accept";
+    public const string OrdersPrepare = "orders.prepare";
+    public const string OrdersServe = "orders.serve";
+    public const string OrdersComplete = "orders.complete";
+    public const string OrdersCancel = "orders.cancel";
+
     public static readonly IReadOnlyList<string> All =
     [
         RestaurantsRead,
@@ -39,6 +46,12 @@ public static class Permissions
         CatalogRead,
         CatalogWrite,
         MediaRead,
-        MediaWrite
+        MediaWrite,
+        OrdersRead,
+        OrdersAccept,
+        OrdersPrepare,
+        OrdersServe,
+        OrdersComplete,
+        OrdersCancel
     ];
 }

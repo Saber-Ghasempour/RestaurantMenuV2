@@ -86,6 +86,8 @@ public sealed class PlaceOrderHandlerTests
         private IdempotencyRecord? _record; public Order? Added { get; private set; }
         public void Add(Order order) => Added = order;
         public Task<Order?> GetByIdAsync(OrderId id, CancellationToken ct) => Task.FromResult(Added?.Id == id ? Added : null);
+        public Task<Order?> GetForUpdateAsync(Guid restaurantId, Guid branchId, OrderId id, CancellationToken ct) =>
+            Task.FromResult(Added?.Id == id && Added.RestaurantId == restaurantId && Added.BranchId == branchId ? Added : null);
         public void Add(IdempotencyRecord record) => _record = record;
         public Task<IdempotencyRecord?> GetAsync(string scope, string key, DateTimeOffset now, CancellationToken ct) => Task.FromResult(_record is { } x && x.Scope == scope && x.Key == key ? x : null);
     }

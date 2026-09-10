@@ -6,6 +6,8 @@ public interface IOrderRepository
 {
     void Add(Order order);
     Task<Order?> GetByIdAsync(OrderId id, CancellationToken cancellationToken);
+    Task<Order?> GetForUpdateAsync(Guid restaurantId, Guid branchId, OrderId id,
+        CancellationToken cancellationToken);
 }
 
 public interface IIdempotencyRepository

@@ -9,6 +9,9 @@ using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Infrastructure.DiningSessions;
 using RestaurantMenu.Ordering.Application.Orders.PlaceOrder;
 using RestaurantMenu.Ordering.Infrastructure.Orders;
+using RestaurantMenu.Ordering.Application.Orders.Transitions;
+using RestaurantMenu.Ordering.Application.Orders.Queues;
+using RestaurantMenu.Ordering.Application.Orders.GuestOrders;
 using RestaurantMenu.SharedKernel.Results;
 
 namespace RestaurantMenu.Ordering.Infrastructure;
@@ -24,13 +27,30 @@ public static class DependencyInjection
         services.AddScoped<IDiningSessionRepository, DiningSessionRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IIdempotencyRepository, IdempotencyRepository>();
+        services.AddScoped<IOrderReadService, OrderReadService>();
         services.AddScoped<IOrderingUnitOfWork>(sp => sp.GetRequiredService<OrderingDbContext>());
         services.AddSingleton<IDiningSessionTokenGenerator, CryptographicDiningSessionTokenGenerator>();
         services.AddSingleton(new DiningSessionOptions(sessionLifetime));
+        services.AddSingleton(new GuestOrderOptions(TimeSpan.FromMinutes(5)));
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<ICommandHandler<StartDiningSessionCommand, Result<IssuedDiningSession>>, StartDiningSessionCommandHandler>();
         services.AddScoped<IQueryHandler<ResolveDiningSessionQuery, Result<DiningSessionScope>>, ResolveDiningSessionQueryHandler>();
         services.AddScoped<ICommandHandler<PlaceOrderCommand, Result<PlaceOrderResponse>>, PlaceOrderCommandHandler>();
+        services.AddScoped<IQueryHandler<GetGuestOrderQuery, Result<GuestOrderDetail>>, GetGuestOrderQueryHandler>();
+        services.AddScoped<ICommandHandler<CancelGuestOrderCommand, Result<OrderTransitionResponse>>, CancelGuestOrderCommandHandler>();
+        services.AddScoped<OrderTransitionService>();
+        services.AddScoped<ICommandHandler<AcceptOrderCommand, Result<OrderTransitionResponse>>, AcceptOrderCommandHandler>();
+        services.AddScoped<ICommandHandler<RejectOrderCommand, Result<OrderTransitionResponse>>, RejectOrderCommandHandler>();
+        services.AddScoped<ICommandHandler<StartPreparingOrderCommand, Result<OrderTransitionResponse>>, StartPreparingOrderCommandHandler>();
+        services.AddScoped<ICommandHandler<MarkOrderReadyCommand, Result<OrderTransitionResponse>>, MarkOrderReadyCommandHandler>();
+        services.AddScoped<ICommandHandler<MarkOrderServedCommand, Result<OrderTransitionResponse>>, MarkOrderServedCommandHandler>();
+        services.AddScoped<ICommandHandler<CompleteOrderCommand, Result<OrderTransitionResponse>>, CompleteOrderCommandHandler>();
+        services.AddScoped<ICommandHandler<CancelOrderCommand, Result<OrderTransitionResponse>>, CancelOrderCommandHandler>();
+        services.AddScoped<OrderQueueQueryService>();
+        services.AddScoped<IQueryHandler<GetKitchenQueueQuery, Result<IReadOnlyList<OrderQueueItem>>>, GetKitchenQueueQueryHandler>();
+        services.AddScoped<IQueryHandler<GetCashierQueueQuery, Result<IReadOnlyList<OrderQueueItem>>>, GetCashierQueueQueryHandler>();
+        services.AddScoped<IQueryHandler<GetWaiterQueueQuery, Result<IReadOnlyList<OrderQueueItem>>>, GetWaiterQueueQueryHandler>();
+        services.AddScoped<IQueryHandler<GetOrderTimelineQuery, Result<IReadOnlyList<OrderTimelineEntry>>>, GetOrderTimelineQueryHandler>();
         return services;
     }
 }

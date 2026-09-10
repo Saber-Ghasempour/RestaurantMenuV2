@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using RestaurantMenu.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Application.Abstractions.Data;
 using RestaurantMenu.Restaurants.Domain.Branches;
 using RestaurantMenu.Restaurants.Domain.Restaurants;
+using RestaurantMenu.Restaurants.Domain.Memberships;
 using RestaurantMenu.Restaurants.Infrastructure.Branches;
 using RestaurantMenu.Restaurants.Infrastructure.Database;
 using Testcontainers.PostgreSql;
@@ -123,6 +125,44 @@ public sealed class BranchPersistenceTests : IAsyncLifetime
         var item = Assert.Single(page.Items);
         Assert.Equal(alpha.Id.Value, item.Id);
         Assert.Equal(1, page.TotalCount);
+    }
+
+    [Fact]
+    public async Task BranchMembershipShouldRequireExactTenantRelationshipsAndRejectStaleUpdates()
+    {
+        var options = CreateOptions();
+        var restaurant = CreateRestaurant("Membership Restaurant");
+        var otherRestaurant = CreateRestaurant("Other Restaurant");
+        var branch = CreateBranch(restaurant.Id, "Kitchen", null);
+        const string subject = "staff-user";
+        var restaurantMembership = RestaurantMembership.Create(restaurant.Id, subject,
+            RestaurantMembershipRole.Staff, DateTimeOffset.UtcNow).Value;
+        var branchMembership = BranchMembership.Create(restaurant.Id, branch.Id, subject,
+            BranchMembershipRole.Kitchen, DateTimeOffset.UtcNow).Value;
+
+        await using (var setup = new RestaurantsDbContext(options))
+        {
+            await setup.Database.MigrateAsync();
+            setup.Restaurants.AddRange(restaurant, otherRestaurant);
+            setup.RestaurantMemberships.Add(restaurantMembership);
+            setup.Branches.Add(branch);
+            setup.BranchMemberships.Add(branchMembership);
+            await setup.SaveChangesAsync();
+        }
+
+        await using var first = new RestaurantsDbContext(options);
+        await using var second = new RestaurantsDbContext(options);
+        var firstMembership = await first.BranchMemberships.SingleAsync();
+        var secondMembership = await second.BranchMemberships.SingleAsync();
+        firstMembership.Change(BranchMembershipRole.Manager, BranchMembershipStatus.Active);
+        secondMembership.Change(BranchMembershipRole.Waiter, BranchMembershipStatus.Active);
+        await first.SaveChangesAsync();
+        await Assert.ThrowsAsync<ConcurrencyException>(() => second.SaveChangesAsync());
+
+        await using var invalid = new RestaurantsDbContext(options);
+        invalid.BranchMemberships.Add(BranchMembership.Create(otherRestaurant.Id, branch.Id, subject,
+            BranchMembershipRole.Cashier, DateTimeOffset.UtcNow).Value);
+        await Assert.ThrowsAsync<DbUpdateException>(() => invalid.SaveChangesAsync());
     }
 
     private DbContextOptions<RestaurantsDbContext> CreateOptions() =>
