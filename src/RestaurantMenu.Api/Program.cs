@@ -57,6 +57,7 @@ builder.Logging.AddJsonConsole(
         options.TimestampFormat = "O";
         options.UseUtcTimestamp = true;
     });
+builder.Logging.AddRestaurantMenuTelemetryLogging(builder.Configuration);
 
 var restaurantsConnectionString = builder.Configuration.GetConnectionString(
     "Restaurants")
@@ -204,12 +205,29 @@ builder.Services
         "redis",
         tags: ["ready"])
     .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: ["ready"]);
+builder.Services.AddSingleton<IHealthCheckPublisher, HealthMetricsPublisher>();
+builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+{
+    options.Delay = TimeSpan.FromSeconds(5);
+    options.Period = TimeSpan.FromSeconds(30);
+    options.Predicate = registration => registration.Tags.Contains("ready");
+});
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
+var migrationOnly = args.Contains(
+    "--migrate",
+    StringComparer.OrdinalIgnoreCase);
+
+if (migrationOnly ||
+    app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 {
-    await app.ApplyDatabaseMigrationsAsync();
+    await app.ApplyDatabaseMigrationsAsync(app.Lifetime.ApplicationStopping);
+}
+
+if (migrationOnly)
+{
+    return;
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -231,6 +249,7 @@ if (app.Configuration.GetValue("HttpsRedirection:Enabled", true))
 }
 
 app.UseAuthentication();
+app.UseMiddleware<RequestAuditMiddleware>();
 app.UseAuthorization();
 app.UseRateLimiter();
 

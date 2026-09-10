@@ -22,6 +22,8 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.Property(value => value.AggregateVersion).HasColumnName("aggregate_version").IsRequired();
         builder.Property(value => value.OccurredAtUtc).HasColumnName("occurred_at_utc").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(value => value.Payload).HasColumnName("payload").HasColumnType("jsonb").IsRequired();
+        builder.Property(value => value.TraceParent).HasColumnName("trace_parent").HasMaxLength(55);
+        builder.Property(value => value.TraceState).HasColumnName("trace_state").HasMaxLength(512);
         builder.Property(value => value.AttemptCount).HasColumnName("attempt_count").HasDefaultValue(0).IsRequired();
         builder.Property(value => value.NextAttemptAtUtc).HasColumnName("next_attempt_at_utc").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(value => value.ProcessedAtUtc).HasColumnName("processed_at_utc").HasColumnType("timestamp with time zone");

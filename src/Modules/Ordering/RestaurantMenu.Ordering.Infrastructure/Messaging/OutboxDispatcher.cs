@@ -23,8 +23,7 @@ public sealed class OutboxDispatcher(OrderingDbContext dbContext,
                 await publisher.PublishAsync(message.ToEnvelope(), cancellationToken);
                 message.MarkProcessed(timeProvider.GetUtcNow());
                 await dbContext.SaveChangesAsync(cancellationToken);
-                MessagingTelemetry.OutboxPublished.Add(1,
-                    new KeyValuePair<string, object?>("event.name", message.Name));
+                MessagingTelemetry.RecordOutboxPublished(message.Name);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -38,11 +37,9 @@ public sealed class OutboxDispatcher(OrderingDbContext dbContext,
                 message.MarkFailed(exception.Message, timeProvider.GetUtcNow(),
                     options.MaximumAttempts, delay);
                 await dbContext.SaveChangesAsync(cancellationToken);
-                MessagingTelemetry.OutboxFailures.Add(1,
-                    new KeyValuePair<string, object?>("event.name", message.Name));
+                MessagingTelemetry.RecordOutboxFailure(message.Name);
                 if (message.DeadLetteredAtUtc is not null)
-                    MessagingTelemetry.OutboxDeadLetters.Add(1,
-                        new KeyValuePair<string, object?>("event.name", message.Name));
+                    MessagingTelemetry.RecordOutboxDeadLetter(message.Name);
             }
         }
         return messages.Count;

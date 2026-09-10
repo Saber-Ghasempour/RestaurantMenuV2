@@ -12,6 +12,9 @@ public sealed class InboxProcessor(OrderingDbContext dbContext, MessagingOptions
     public async Task<InboxProcessingOutcome> ProcessAsync(IntegrationEventEnvelope envelope,
         IIntegrationEventConsumer handler, CancellationToken cancellationToken)
     {
+        using var activity = MessagingTelemetry.StartConsumerActivity(
+            envelope,
+            handler.ConsumerName);
         if (!string.Equals(envelope.Name, handler.EventName, StringComparison.Ordinal) ||
             envelope.Version != handler.EventVersion)
             throw new InvalidOperationException("The integration-event contract does not match the handler.");
@@ -25,8 +28,7 @@ public sealed class InboxProcessor(OrderingDbContext dbContext, MessagingOptions
         if (message?.ProcessedAtUtc is not null)
         {
             await transaction.CommitAsync(cancellationToken);
-            MessagingTelemetry.InboxDuplicates.Add(1,
-                new KeyValuePair<string, object?>("consumer", handler.ConsumerName));
+            MessagingTelemetry.RecordInboxDuplicate(handler.ConsumerName);
             return InboxProcessingOutcome.Duplicate;
         }
         if (message?.DeadLetteredAtUtc is not null)
@@ -45,8 +47,7 @@ public sealed class InboxProcessor(OrderingDbContext dbContext, MessagingOptions
             message.MarkProcessed(timeProvider.GetUtcNow());
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            MessagingTelemetry.InboxProcessed.Add(1,
-                new KeyValuePair<string, object?>("consumer", handler.ConsumerName));
+            MessagingTelemetry.RecordInboxProcessed(handler.ConsumerName);
             return InboxProcessingOutcome.Processed;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -70,11 +71,9 @@ public sealed class InboxProcessor(OrderingDbContext dbContext, MessagingOptions
         message.MarkFailed(error, timeProvider.GetUtcNow(), options.MaximumAttempts);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        MessagingTelemetry.InboxFailures.Add(1,
-            new KeyValuePair<string, object?>("consumer", consumer));
+        MessagingTelemetry.RecordInboxFailure(consumer);
         if (message.DeadLetteredAtUtc is not null)
-            MessagingTelemetry.InboxDeadLetters.Add(1,
-                new KeyValuePair<string, object?>("consumer", consumer));
+            MessagingTelemetry.RecordInboxDeadLetter(consumer);
         return message.DeadLetteredAtUtc is null
             ? InboxProcessingOutcome.RetryScheduled
             : InboxProcessingOutcome.DeadLettered;

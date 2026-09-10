@@ -1,4 +1,5 @@
 using System.Text;
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -30,10 +31,15 @@ public sealed class TransactionalMessagingTests : IAsyncLifetime
     {
         var options = Options();
         var order = CreateOrder();
+        string? traceParent;
         await using (var context = new OrderingDbContext(options))
         {
             await context.Database.MigrateAsync();
             Assert.False(context.Database.HasPendingModelChanges());
+            using var requestActivity = new Activity("place-order")
+                .SetIdFormat(ActivityIdFormat.W3C)
+                .Start();
+            traceParent = requestActivity.Id;
             context.Orders.Add(order);
             await context.SaveChangesAsync();
             order.Accept("cashier", DateTimeOffset.UtcNow);
@@ -46,6 +52,7 @@ public sealed class TransactionalMessagingTests : IAsyncLifetime
         Assert.Collection(messages,
             value => { Assert.Equal("ordering.order-placed", value.Name); Assert.Equal(1, value.EventVersion); Assert.Equal(1, value.AggregateVersion); },
             value => { Assert.Equal("ordering.order-status-changed", value.Name); Assert.Equal(1, value.EventVersion); Assert.Equal(2, value.AggregateVersion); });
+        Assert.All(messages, value => Assert.Equal(traceParent, value.TraceParent));
         Assert.All(messages, value => Assert.Contains(order.Id.Value.ToString(), value.Payload, StringComparison.OrdinalIgnoreCase));
 
         var rolledBack = CreateOrder();
@@ -158,6 +165,11 @@ public sealed class TransactionalMessagingTests : IAsyncLifetime
         Assert.Equal(envelope.Name, delivery.BasicProperties.Type);
         Assert.Equal(envelope.Payload, Encoding.UTF8.GetString(delivery.Body.Span));
         Assert.Equal(DeliveryModes.Persistent, delivery.BasicProperties.DeliveryMode);
+        var sentTraceParent = Encoding.UTF8.GetString(
+            Assert.IsType<byte[]>(delivery.BasicProperties.Headers!["traceparent"]));
+        Assert.Contains(envelope.TraceParent![3..35], sentTraceParent, StringComparison.Ordinal);
+        Assert.Equal(envelope.TraceState,
+            Encoding.UTF8.GetString(Assert.IsType<byte[]>(delivery.BasicProperties.Headers["tracestate"])));
     }
 
     [Fact]
@@ -235,7 +247,9 @@ public sealed class TransactionalMessagingTests : IAsyncLifetime
 
     private static IntegrationEventEnvelope Envelope(Order order, Guid id) => new(id,
         "ordering.order-placed", 1, order.Id.Value, order.Version, order.CreatedAtUtc,
-        "{\"event\":\"order-placed\"}");
+        "{\"event\":\"order-placed\"}",
+        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+        "vendor=value");
 
     private static Order CreateOrder(DateTimeOffset? now = null) => Order.Create(OrderId.New(),
         $"M-{Guid.NewGuid():N}"[..20], Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Table",

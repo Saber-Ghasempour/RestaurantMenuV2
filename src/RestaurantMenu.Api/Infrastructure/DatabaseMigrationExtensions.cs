@@ -11,7 +11,8 @@ namespace RestaurantMenu.Api.Infrastructure;
 public static class DatabaseMigrationExtensions
 {
     public static async Task ApplyDatabaseMigrationsAsync(
-        this WebApplication application)
+        this WebApplication application,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(application);
 
@@ -28,10 +29,10 @@ public static class DatabaseMigrationExtensions
         var orderingDbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
         var feedbackDbContext = scope.ServiceProvider.GetRequiredService<FeedbackDbContext>();
 
-        await restaurantsDbContext.Database.MigrateAsync();
-        await catalogDbContext.Database.MigrateAsync();
-        await mediaDbContext.Database.MigrateAsync();
-        await orderingDbContext.Database.MigrateAsync();
-        await feedbackDbContext.Database.MigrateAsync();
+        await restaurantsDbContext.Database.MigrateAsync(cancellationToken);
+        await catalogDbContext.Database.MigrateAsync(cancellationToken);
+        await mediaDbContext.Database.MigrateAsync(cancellationToken);
+        await orderingDbContext.Database.MigrateAsync(cancellationToken);
+        await feedbackDbContext.Database.MigrateAsync(cancellationToken);
     }
 }

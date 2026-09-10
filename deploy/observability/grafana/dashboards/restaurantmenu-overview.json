@@ -1,0 +1,62 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API request rate",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(http_server_request_duration_seconds_count[5m]))", "legendFormat": "requests/s" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "API p95 latency",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket[5m])))", "legendFormat": "p95" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Business mutations",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (operation_outcome) (rate(restaurantmenu_business_operations_total[5m]))", "legendFormat": "{{operation_outcome}}" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Dependencies",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "restaurantmenu_dependencies_health", "legendFormat": "{{dependency}}" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Oldest Outbox message (seconds)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "messaging_outbox_oldest_pending_age_seconds", "legendFormat": "age" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 }
+    },
+    {
+      "type": "stat",
+      "title": "Dead letters",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "messaging_dead_letters", "legendFormat": "{{source}}" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 }
+    },
+    {
+      "type": "logs",
+      "title": "Application logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "expr": "{service_name=\"RestaurantMenu.Api\"}" }],
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 }
+    }
+  ],
+  "schemaVersion": 42,
+  "tags": ["restaurantmenu", "observability"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "RestaurantMenu overview",
+  "uid": "restaurantmenu-overview",
+  "version": 1
+}

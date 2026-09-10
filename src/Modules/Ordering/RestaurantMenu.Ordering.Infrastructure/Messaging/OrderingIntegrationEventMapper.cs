@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Diagnostics;
 using RestaurantMenu.Ordering.Application.Abstractions;
 using RestaurantMenu.Ordering.Domain.Orders;
 using RestaurantMenu.SharedKernel.Domain;
@@ -27,7 +28,10 @@ internal static class OrderingIntegrationEventMapper
         long aggregateVersion, DateTimeOffset occurredAtUtc, Func<Guid, T> factory)
     {
         var id = Guid.CreateVersion7();
+        var activity = Activity.Current;
         return new IntegrationEventEnvelope(id, name, 1, aggregateId, aggregateVersion,
-            occurredAtUtc, JsonSerializer.Serialize(factory(id), JsonOptions));
+            occurredAtUtc, JsonSerializer.Serialize(factory(id), JsonOptions),
+            activity?.IdFormat == ActivityIdFormat.W3C ? activity.Id : null,
+            activity?.IdFormat == ActivityIdFormat.W3C ? activity.TraceStateString : null);
     }
 }

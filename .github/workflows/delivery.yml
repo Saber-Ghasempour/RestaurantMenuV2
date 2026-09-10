@@ -1,0 +1,249 @@
+name: Delivery
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: delivery-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/restaurant-menu
+
+jobs:
+  publish:
+    name: Publish, scan, and attest image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      image: ${{ steps.image.outputs.reference }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Validate delivery contracts
+        shell: pwsh
+        run: ./tests/deployment/DeliveryContract.Tests.ps1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Normalize image name
+        id: name
+        shell: bash
+        run: echo "value=${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and publish immutable image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.name.outputs.value }}:${{ github.ref_name }}
+            ${{ steps.name.outputs.value }}:${{ github.sha }}
+          provenance: false
+
+      - name: Capture digest reference
+        id: image
+        shell: bash
+        run: echo "reference=${{ steps.name.outputs.value }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on high or critical image vulnerabilities
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.image.outputs.reference }}
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.image.outputs.reference }}
+          format: spdx-json
+          output-file: restaurant-menu.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v7
+        with:
+          name: restaurant-menu-sbom
+          path: restaurant-menu.spdx.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Sign image provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: ${{ steps.name.outputs.value }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Sign and attach SBOM attestation
+        uses: actions/attest-sbom@v3
+        with:
+          subject-name: ${{ steps.name.outputs.value }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: restaurant-menu.spdx.json
+          push-to-registry: true
+
+  staging:
+    name: Migrate and deploy staging
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configure cluster credentials
+        shell: bash
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          test -n "$KUBE_CONFIG"
+          printf '%s' "$KUBE_CONFIG" | base64 --decode > "$RUNNER_TEMP/kubeconfig"
+          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Render and validate deployment manifests
+        shell: pwsh
+        run: |
+          ./deploy/scripts/render-manifests.ps1 -ImageReference '${{ needs.publish.outputs.image }}' -Namespace '${{ vars.KUBE_NAMESPACE }}' -OutputDirectory "$env:RUNNER_TEMP/manifests"
+          kubectl apply --dry-run=server -f "$env:RUNNER_TEMP/manifests"
+
+      - name: Capture required rollback metadata
+        id: rollback-metadata
+        shell: pwsh
+        env:
+          FALLBACK_IMAGE: ${{ vars.ROLLBACK_IMAGE }}
+          BACKUP_REFERENCE: ${{ vars.BACKUP_REFERENCE }}
+        run: |
+          $previous = kubectl -n '${{ vars.KUBE_NAMESPACE }}' get deployment restaurant-menu-api -o jsonpath='{.spec.template.spec.containers[0].image}' 2>$null
+          if (-not $previous) { $previous = $env:FALLBACK_IMAGE }
+          ./deploy/scripts/new-rollback-metadata.ps1 -Environment staging -PreviousImage $previous -TargetImage '${{ needs.publish.outputs.image }}' -BackupReference $env:BACKUP_REFERENCE -Migration '${{ github.sha }}' -OutputPath "$env:RUNNER_TEMP/rollback-metadata.json"
+
+      - name: Upload staging rollback metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-rollback-metadata
+          path: ${{ runner.temp }}/rollback-metadata.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Run migration job
+        id: run-migration
+        shell: bash
+        run: |
+          kubectl -n '${{ vars.KUBE_NAMESPACE }}' delete job restaurant-menu-migrate --ignore-not-found
+          kubectl apply -f "$RUNNER_TEMP/manifests/migration-job.yaml"
+          if ! kubectl -n '${{ vars.KUBE_NAMESPACE }}' wait --for=condition=complete job/restaurant-menu-migrate --timeout=10m; then
+            kubectl -n '${{ vars.KUBE_NAMESPACE }}' logs job/restaurant-menu-migrate --tail=100
+            exit 1
+          fi
+
+      - name: Deploy staging
+        shell: bash
+        run: |
+          kubectl apply -f "$RUNNER_TEMP/manifests/api.yaml"
+          kubectl -n '${{ vars.KUBE_NAMESPACE }}' rollout status deployment/restaurant-menu-api --timeout=5m
+
+      - name: Run staging smoke test
+        id: smoke-test
+        shell: pwsh
+        run: ./deploy/scripts/smoke-test.ps1 -BaseUri '${{ vars.BASE_URL }}'
+
+  production:
+    name: Approve and promote production
+    needs:
+      - publish
+      - staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configure cluster credentials
+        shell: bash
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          test -n "$KUBE_CONFIG"
+          printf '%s' "$KUBE_CONFIG" | base64 --decode > "$RUNNER_TEMP/kubeconfig"
+          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Render and validate deployment manifests
+        shell: pwsh
+        run: |
+          ./deploy/scripts/render-manifests.ps1 -ImageReference '${{ needs.publish.outputs.image }}' -Namespace '${{ vars.KUBE_NAMESPACE }}' -OutputDirectory "$env:RUNNER_TEMP/manifests"
+          kubectl apply --dry-run=server -f "$env:RUNNER_TEMP/manifests"
+
+      - name: Capture required rollback metadata
+        id: rollback-metadata
+        shell: pwsh
+        env:
+          FALLBACK_IMAGE: ${{ vars.ROLLBACK_IMAGE }}
+          BACKUP_REFERENCE: ${{ vars.BACKUP_REFERENCE }}
+        run: |
+          $previous = kubectl -n '${{ vars.KUBE_NAMESPACE }}' get deployment restaurant-menu-api -o jsonpath='{.spec.template.spec.containers[0].image}' 2>$null
+          if (-not $previous) { $previous = $env:FALLBACK_IMAGE }
+          ./deploy/scripts/new-rollback-metadata.ps1 -Environment production -PreviousImage $previous -TargetImage '${{ needs.publish.outputs.image }}' -BackupReference $env:BACKUP_REFERENCE -Migration '${{ github.sha }}' -OutputPath "$env:RUNNER_TEMP/rollback-metadata.json"
+
+      - name: Upload production rollback metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-rollback-metadata
+          path: ${{ runner.temp }}/rollback-metadata.json
+          if-no-files-found: error
+          retention-days: 365
+
+      - name: Run migration job
+        id: run-migration
+        shell: bash
+        run: |
+          kubectl -n '${{ vars.KUBE_NAMESPACE }}' delete job restaurant-menu-migrate --ignore-not-found
+          kubectl apply -f "$RUNNER_TEMP/manifests/migration-job.yaml"
+          if ! kubectl -n '${{ vars.KUBE_NAMESPACE }}' wait --for=condition=complete job/restaurant-menu-migrate --timeout=10m; then
+            kubectl -n '${{ vars.KUBE_NAMESPACE }}' logs job/restaurant-menu-migrate --tail=100
+            exit 1
+          fi
+
+      - name: Promote exact staging digest
+        shell: bash
+        run: |
+          kubectl apply -f "$RUNNER_TEMP/manifests/api.yaml"
+          kubectl -n '${{ vars.KUBE_NAMESPACE }}' rollout status deployment/restaurant-menu-api --timeout=5m
+
+      - name: Run production smoke test
+        id: smoke-test
+        shell: pwsh
+        run: ./deploy/scripts/smoke-test.ps1 -BaseUri '${{ vars.BASE_URL }}'

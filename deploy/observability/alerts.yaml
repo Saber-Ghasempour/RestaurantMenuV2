@@ -1,0 +1,43 @@
+groups:
+  - name: restaurantmenu
+    rules:
+      - alert: RestaurantMenuApiHighErrorRate
+        expr: sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m])) / clamp_min(sum(rate(http_server_request_duration_seconds_count[5m])), 1) > 0.01
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: API 5xx rate is above 1% for ten minutes
+          runbook: docs/runbooks/observability.md#api-errors-or-latency
+      - alert: RestaurantMenuApiHighLatency
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket[5m]))) > 0.5
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: API p95 latency is above 500 ms for ten minutes
+          runbook: docs/runbooks/observability.md#api-errors-or-latency
+      - alert: RestaurantMenuDependencyUnhealthy
+        expr: restaurantmenu_dependencies_health < 1
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: A PostgreSQL, Redis, or RabbitMQ readiness dependency is unhealthy
+          runbook: docs/runbooks/observability.md#dependency-unhealthy
+      - alert: RestaurantMenuOutboxBacklogOld
+        expr: messaging_outbox_oldest_pending_age_seconds > 60
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: Oldest pending Outbox message is more than 60 seconds old
+          runbook: docs/runbooks/observability.md#outbox-backlog-or-dead-letter
+      - alert: RestaurantMenuDeadLettersPresent
+        expr: messaging_dead_letters > 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: The durable Outbox or Inbox contains dead-lettered messages
+          runbook: docs/runbooks/observability.md#outbox-backlog-or-dead-letter
