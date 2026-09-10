@@ -10,7 +10,8 @@ public sealed class OrderingLayerDependencyTests
     {
         AssertNoReferences(typeof(RestaurantMenu.Ordering.Domain.AssemblyReference).Assembly,
             ["RestaurantMenu.Ordering.Application", "RestaurantMenu.Ordering.Infrastructure",
-             "RestaurantMenu.Ordering.Presentation", "RestaurantMenu.Api", .. PeerPrefixes]);
+             "RestaurantMenu.Ordering.Presentation", "RestaurantMenu.Notifications",
+             "RestaurantMenu.Api", .. PeerPrefixes]);
         foreach (var peer in PeerAssemblies)
             AssertNoReferences(peer, ["RestaurantMenu.Ordering"]);
     }
@@ -19,17 +20,19 @@ public sealed class OrderingLayerDependencyTests
     public void ApplicationShouldNotReferenceOuterLayersOrPeerModules() => AssertNoReferences(
         typeof(RestaurantMenu.Ordering.Application.AssemblyReference).Assembly,
         ["RestaurantMenu.Ordering.Infrastructure", "RestaurantMenu.Ordering.Presentation",
-         "RestaurantMenu.Api", .. PeerPrefixes]);
+         "RestaurantMenu.Notifications", "RestaurantMenu.Api", .. PeerPrefixes]);
 
     [Fact]
     public void InfrastructureShouldNotReferencePresentationApiOrPeerModules() => AssertNoReferences(
         typeof(RestaurantMenu.Ordering.Infrastructure.AssemblyReference).Assembly,
-        ["RestaurantMenu.Ordering.Presentation", "RestaurantMenu.Api", .. PeerPrefixes]);
+        ["RestaurantMenu.Ordering.Presentation", "RestaurantMenu.Notifications",
+         "RestaurantMenu.Api", .. PeerPrefixes]);
 
     [Fact]
     public void PresentationShouldNotReferenceInfrastructureApiOrPeerModules() => AssertNoReferences(
         typeof(RestaurantMenu.Ordering.Presentation.AssemblyReference).Assembly,
-        ["RestaurantMenu.Ordering.Infrastructure", "RestaurantMenu.Api", .. PeerPrefixes]);
+        ["RestaurantMenu.Ordering.Infrastructure", "RestaurantMenu.Notifications",
+         "RestaurantMenu.Api", .. PeerPrefixes]);
 
     private static void AssertNoReferences(System.Reflection.Assembly source,
         IReadOnlyCollection<string> prefixes)

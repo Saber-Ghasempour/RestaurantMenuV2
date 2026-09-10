@@ -20,6 +20,7 @@ using RestaurantMenu.Media.Domain.Assets;
 using RestaurantMenu.Ordering.Infrastructure.Database;
 using RestaurantMenu.Ordering.Domain.DiningSessions;
 using RestaurantMenu.Ordering.Domain.Orders;
+using RestaurantMenu.Ordering.Infrastructure.DiningSessions;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -215,6 +216,37 @@ public sealed class TestWebApplicationFactory
         dbContext.Orders.Add(order);
         await dbContext.SaveChangesAsync();
         return order;
+    }
+
+    public async Task<(string Token, Order Order)> SeedGuestOrderAsync(Guid restaurantId,
+        Guid branchId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        var tokenGenerator = new CryptographicDiningSessionTokenGenerator();
+        var token = tokenGenerator.Generate();
+        var sessionId = DiningSessionId.New();
+        var now = DateTimeOffset.UtcNow;
+        var session = DiningSession.Create(sessionId, tokenGenerator.Hash(token), restaurantId,
+            branchId, Guid.NewGuid(), now, now.AddHours(2)).Value;
+        var order = Order.Create(OrderId.New(), $"T-{Guid.NewGuid():N}"[..20], restaurantId,
+            branchId, session.DiningTableId, "Table 1", sessionId.Value, null,
+            [new OrderLineSnapshot(Guid.NewGuid(), null, "Soup", null, 5m, "EUR", 1, null)],
+            now).Value;
+        dbContext.DiningSessions.Add(session);
+        dbContext.Orders.Add(order);
+        await dbContext.SaveChangesAsync();
+        return (token, order);
+    }
+
+    public async Task AcceptOrderAsync(Guid orderId)
+    {
+        await using var scope = Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+        var order = await dbContext.Orders.Include(value => value.StatusHistory)
+            .SingleAsync(value => value.Id == new OrderId(orderId));
+        order.Accept("test-reconnect", DateTimeOffset.UtcNow);
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task SeedRestaurantMemberAsync(Guid restaurantId, string subject)

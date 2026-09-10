@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup><FrameworkReference Include="Microsoft.AspNetCore.App" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RestaurantMenu.Notifications.Application\RestaurantMenu.Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\Ordering\RestaurantMenu.Ordering.Application\RestaurantMenu.Ordering.Application.csproj" />
+    <ProjectReference Include="..\..\Ordering\RestaurantMenu.Ordering.Domain\RestaurantMenu.Ordering.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

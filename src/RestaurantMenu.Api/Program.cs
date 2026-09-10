@@ -38,6 +38,8 @@ using RestaurantMenu.Ordering.Presentation.DiningSessions;
 using RestaurantMenu.Ordering.Presentation.Orders;
 using RestaurantMenu.Api.Integrations.Ordering;
 using RestaurantMenu.Ordering.Infrastructure.Messaging;
+using RestaurantMenu.Notifications.Infrastructure;
+using RestaurantMenu.Notifications.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,6 +136,11 @@ builder.Services.AddOrderingInfrastructure(orderingConnectionString,
         builder.Configuration.GetValue("Messaging:InitialRetryDelay", TimeSpan.FromSeconds(1)),
         builder.Configuration.GetValue("Messaging:MaximumAttempts", 10),
         builder.Configuration.GetValue("Messaging:ClaimDuration", TimeSpan.FromMinutes(1))));
+builder.Services.AddNotificationsPresentation();
+builder.Services.AddNotificationsInfrastructure(new NotificationMessagingOptions(
+    builder.Configuration["Notifications:QueueName"] ??
+        NotificationMessagingOptions.DefaultQueueName,
+    builder.Configuration.GetValue("Notifications:RecoveryDelay", TimeSpan.FromSeconds(2))));
 builder.Services.AddScoped<IPublicCodeResolver, DiningSessionPublicCodeResolver>();
 builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotProvider>();
 builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
@@ -216,6 +223,7 @@ app.MapPublicMenuCodeMenuEndpoints();
 app.MapDiningSessionEndpoints();
 app.MapOrderEndpoints();
 app.MapStaffOrderEndpoints();
+app.MapNotificationHubs();
 app.MapHealthChecks(
         "/health/live",
         new HealthCheckOptions

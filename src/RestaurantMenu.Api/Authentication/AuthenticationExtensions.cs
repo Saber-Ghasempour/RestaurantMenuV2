@@ -50,6 +50,18 @@ public static class AuthenticationExtensions
                             ClockSkew = TimeSpan.FromSeconds(30),
                             NameClaimType = "preferred_username"
                         };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var token = context.Request.Query["access_token"];
+                            if (token.Count == 1 &&
+                                context.HttpContext.Request.Path.StartsWithSegments(
+                                    "/hubs/staff-order-notifications"))
+                                context.Token = token[0];
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
         var fallbackPolicy =

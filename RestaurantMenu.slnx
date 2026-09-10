@@ -8,6 +8,11 @@
     <Project Path="src/BuildingBlocks/RestaurantMenu.SharedKernel/RestaurantMenu.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Notifications/">
+    <Project Path="src/Modules/Notifications/RestaurantMenu.Notifications.Application/RestaurantMenu.Notifications.Application.csproj" />
+    <Project Path="src/Modules/Notifications/RestaurantMenu.Notifications.Infrastructure/RestaurantMenu.Notifications.Infrastructure.csproj" />
+    <Project Path="src/Modules/Notifications/RestaurantMenu.Notifications.Presentation/RestaurantMenu.Notifications.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Ordering/">
     <Project Path="src/Modules/Ordering/RestaurantMenu.Ordering.Application/RestaurantMenu.Ordering.Application.csproj" />
     <Project Path="src/Modules/Ordering/RestaurantMenu.Ordering.Domain/RestaurantMenu.Ordering.Domain.csproj" />
@@ -37,6 +42,9 @@
     <Project Path="tests/RestaurantMenu.ArchitectureTests/RestaurantMenu.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Notifications/">
+    <Project Path="tests/Modules/Notifications/RestaurantMenu.Notifications.IntegrationTests/RestaurantMenu.Notifications.IntegrationTests.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/Ordering/">
     <Project Path="tests/Modules/Ordering/RestaurantMenu.Ordering.Application.UnitTests/RestaurantMenu.Ordering.Application.UnitTests.csproj" />
     <Project Path="tests/Modules/Ordering/RestaurantMenu.Ordering.Domain.UnitTests/RestaurantMenu.Ordering.Domain.UnitTests.csproj" />

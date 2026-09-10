@@ -35,6 +35,9 @@
     <ProjectReference Include="..\..\src\Modules\Ordering\RestaurantMenu.Ordering.Application\RestaurantMenu.Ordering.Application.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ordering\RestaurantMenu.Ordering.Infrastructure\RestaurantMenu.Ordering.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Modules\Ordering\RestaurantMenu.Ordering.Presentation\RestaurantMenu.Ordering.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Application\RestaurantMenu.Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Infrastructure\RestaurantMenu.Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\RestaurantMenu.Notifications.Presentation\RestaurantMenu.Notifications.Presentation.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
   </ItemGroup>
