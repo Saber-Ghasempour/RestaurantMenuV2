@@ -21,6 +21,13 @@ COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Domain/RestaurantMenu.Orderi
 COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Application/RestaurantMenu.Ordering.Application.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Application/"]
 COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Infrastructure/RestaurantMenu.Ordering.Infrastructure.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Infrastructure/"]
 COPY ["src/Modules/Ordering/RestaurantMenu.Ordering.Presentation/RestaurantMenu.Ordering.Presentation.csproj", "src/Modules/Ordering/RestaurantMenu.Ordering.Presentation/"]
+COPY ["src/Modules/Notifications/RestaurantMenu.Notifications.Application/RestaurantMenu.Notifications.Application.csproj", "src/Modules/Notifications/RestaurantMenu.Notifications.Application/"]
+COPY ["src/Modules/Notifications/RestaurantMenu.Notifications.Infrastructure/RestaurantMenu.Notifications.Infrastructure.csproj", "src/Modules/Notifications/RestaurantMenu.Notifications.Infrastructure/"]
+COPY ["src/Modules/Notifications/RestaurantMenu.Notifications.Presentation/RestaurantMenu.Notifications.Presentation.csproj", "src/Modules/Notifications/RestaurantMenu.Notifications.Presentation/"]
+COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Domain/RestaurantMenu.Feedback.Domain.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Domain/"]
+COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Application/RestaurantMenu.Feedback.Application.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Application/"]
+COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/RestaurantMenu.Feedback.Infrastructure.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/"]
+COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/RestaurantMenu.Feedback.Presentation.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/"]
 COPY ["src/RestaurantMenu.Api/RestaurantMenu.Api.csproj", "src/RestaurantMenu.Api/"]
 
 RUN dotnet restore "src/RestaurantMenu.Api/RestaurantMenu.Api.csproj"
