@@ -221,7 +221,18 @@ public static class DependencyInjection
         services.AddScoped<IMembershipInvitationRepository, MembershipInvitationRepository>();
         services.AddSingleton<IInvitationTokenGenerator, CryptographicInvitationTokenGenerator>();
         if (keycloakAdminOptions is null) services.AddScoped<IIdentityProvisioner, UnconfiguredIdentityProvisioner>();
-        else { services.AddSingleton(keycloakAdminOptions); services.AddSingleton(new HttpClient()); services.AddScoped<IIdentityProvisioner, KeycloakIdentityProvisioner>(); }
+        else
+        {
+            services.AddSingleton(keycloakAdminOptions);
+            services.AddSingleton(new KeycloakResilienceOptions(3, TimeSpan.FromMilliseconds(200)));
+            services.AddTransient<KeycloakResilienceHandler>();
+            services.AddHttpClient("keycloak-admin", client => client.Timeout = TimeSpan.FromSeconds(10))
+                .AddHttpMessageHandler<KeycloakResilienceHandler>();
+            services.AddScoped<IIdentityProvisioner>(serviceProvider =>
+                new KeycloakIdentityProvisioner(
+                    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("keycloak-admin"),
+                    keycloakAdminOptions));
+        }
         services.AddSingleton(new InvitationOptions(TimeSpan.FromDays(2)));
         services.AddScoped<ICommandHandler<InviteMemberCommand, Result<InvitationResponse>>, InviteMemberCommandHandler>();
         services.AddScoped<ICommandHandler<AcceptInvitationCommand, Result<MemberResponse>>, AcceptInvitationCommandHandler>();

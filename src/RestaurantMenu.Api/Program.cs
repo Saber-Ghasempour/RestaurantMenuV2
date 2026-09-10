@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Http.Timeouts;
 
 using RestaurantMenu.Api.Authentication;
 using RestaurantMenu.Api.Health;
@@ -85,7 +86,16 @@ var redisOperationTimeoutMilliseconds = builder.Configuration.GetValue(
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer((document, _, _) =>
+{
+    document.Info.Version = "1.0";
+    return Task.CompletedTask;
+}));
+builder.Services.AddRequestTimeouts(options => options.DefaultPolicy = new RequestTimeoutPolicy
+{
+    Timeout = builder.Configuration.GetValue("Api:RequestTimeout", TimeSpan.FromSeconds(15)),
+    TimeoutStatusCode = StatusCodes.Status504GatewayTimeout
+});
 builder.Services.AddProblemDetails(
     options =>
         options.CustomizeProblemDetails = context =>
@@ -112,7 +122,7 @@ builder.Services.AddRateLimiter(options => options.AddPolicy("public-menu-code-r
         httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
         { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }))
     .AddPolicy("dining-session-use", httpContext => RateLimitPartition.GetFixedWindowLimiter(
-        httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+        RateLimitPartitionKeys.ReadDiningSessionPartition(httpContext), _ => new FixedWindowRateLimiterOptions
         { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true })));
 builder.Services.AddRestaurantMenuAuthentication(
     builder.Configuration);
@@ -204,6 +214,9 @@ if (app.Configuration.GetValue<bool>("Database:ApplyMigrations"))
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseExceptionHandler();
+app.UseRequestTimeouts();
+app.UseMiddleware<IdempotencyMiddleware>();
+app.UseMiddleware<ApiConcurrencyMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Primitives;
 using RestaurantMenu.Application.Abstractions.Messaging;
 using RestaurantMenu.Ordering.Application.Orders.PlaceOrder;
 using RestaurantMenu.Ordering.Application.Abstractions;
@@ -39,8 +38,11 @@ public static class OrderEndpoints
     {
         var token = DiningSessionEndpoints.ReadToken(context.Request);
         if (token is null) return DiningSessionErrors.InvalidCapability.ToProblem();
-        var key = context.Request.Headers.TryGetValue(IdempotencyHeaderName, out StringValues values) && values.Count == 1
-            ? values[0] ?? string.Empty : string.Empty;
+        if (context.Items.ContainsKey("RestaurantMenu.InvalidIdempotencyKey"))
+            return PlaceOrderErrors.IdempotencyKeyRequired.ToProblem();
+        var key = context.Items.TryGetValue("RestaurantMenu.IdempotencyKey", out var value)
+            ? value as string ?? string.Empty
+            : context.Request.Headers[IdempotencyHeaderName].FirstOrDefault() ?? string.Empty;
         var result = await handler.Handle(new PlaceOrderCommand(token, key, request.CustomerNote,
             request.Lines?.Select(line => new PlaceOrderLine(line.MenuItemId, line.VariantId,
                 line.Quantity, line.Note)).ToArray()), cancellationToken);
