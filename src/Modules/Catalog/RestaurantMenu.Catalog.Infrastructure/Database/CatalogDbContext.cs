@@ -5,6 +5,7 @@ using RestaurantMenu.Catalog.Application.Abstractions.Data;
 using RestaurantMenu.Catalog.Domain.Categories;
 using RestaurantMenu.Catalog.Domain.Items;
 using RestaurantMenu.Catalog.Domain.Publications;
+using RestaurantMenu.Catalog.Domain.Taxation;
 using RestaurantMenu.Catalog.Domain.Variants;
 
 namespace RestaurantMenu.Catalog.Infrastructure.Database;
@@ -32,6 +33,9 @@ public sealed class CatalogDbContext
 
     public DbSet<BranchCategoryPublication> BranchCategoryPublications =>
         Set<BranchCategoryPublication>();
+
+    public DbSet<BranchMenuItemTaxRule> BranchMenuItemTaxRules =>
+        Set<BranchMenuItemTaxRule>();
 
     public override async Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default)

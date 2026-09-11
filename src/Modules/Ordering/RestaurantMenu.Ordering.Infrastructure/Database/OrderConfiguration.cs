@@ -10,7 +10,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
     {
         builder.ToTable("orders", table =>
         {
-            table.HasCheckConstraint("ck_orders_amounts", "subtotal_amount >= 0 AND total_amount >= 0");
+            table.HasCheckConstraint("ck_orders_amounts",
+                "subtotal_amount >= 0 AND tax_amount >= 0 AND total_amount = subtotal_amount + tax_amount");
             table.HasCheckConstraint("ck_orders_currency", "char_length(currency) = 3");
             table.HasCheckConstraint("ck_orders_status", "status IN ('Placed', 'Accepted', 'Preparing', 'Ready', 'Served', 'Completed', 'Rejected', 'Cancelled')");
         });
@@ -25,6 +26,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.Status).HasConversion<string>().HasColumnName("status").HasMaxLength(32).IsRequired();
         builder.Property(order => order.Currency).HasColumnName("currency").HasColumnType("character(3)").IsRequired();
         builder.Property(order => order.SubtotalAmount).HasColumnName("subtotal_amount").HasPrecision(18, 2).IsRequired();
+        builder.Property(order => order.TaxAmount).HasColumnName("tax_amount").HasPrecision(18, 2).IsRequired();
         builder.Property(order => order.TotalAmount).HasColumnName("total_amount").HasPrecision(18, 2).IsRequired();
         builder.Property(order => order.CustomerNote).HasColumnName("customer_note").HasMaxLength(Order.MaxCustomerNoteLength);
         builder.Property(order => order.CreatedAtUtc).HasColumnName("created_at_utc").HasColumnType("timestamp with time zone").IsRequired();

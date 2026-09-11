@@ -13,11 +13,14 @@ public sealed class OrderLine : Entity<OrderLineId>
 
     internal OrderLine(OrderLineId id, OrderId orderId, Guid menuItemId, Guid? variantId,
         string itemName, string? variantName, decimal unitPriceAmount, string currency,
-        int quantity, decimal lineTotalAmount, string? note) : base(id)
+        int quantity, decimal netAmount, decimal taxAmount, decimal lineTotalAmount,
+        int taxRateBasisPoints, TaxBehavior taxBehavior, string? note) : base(id)
     {
         OrderId = orderId; MenuItemId = menuItemId; VariantId = variantId;
         ItemName = itemName; VariantName = variantName; UnitPriceAmount = unitPriceAmount;
-        Currency = currency; Quantity = quantity; LineTotalAmount = lineTotalAmount; Note = note;
+        Currency = currency; Quantity = quantity; NetAmount = netAmount;
+        TaxAmount = taxAmount; LineTotalAmount = lineTotalAmount;
+        TaxRateBasisPoints = taxRateBasisPoints; TaxBehavior = taxBehavior; Note = note;
     }
 
     public OrderId OrderId { get; }
@@ -28,9 +31,14 @@ public sealed class OrderLine : Entity<OrderLineId>
     public decimal UnitPriceAmount { get; }
     public string Currency { get; }
     public int Quantity { get; }
+    public decimal NetAmount { get; }
+    public decimal TaxAmount { get; }
     public decimal LineTotalAmount { get; }
+    public int TaxRateBasisPoints { get; }
+    public TaxBehavior TaxBehavior { get; }
     public string? Note { get; }
 }
 
 public sealed record OrderLineSnapshot(Guid MenuItemId, Guid? VariantId, string ItemName,
-    string? VariantName, decimal UnitPriceAmount, string Currency, int Quantity, string? Note);
+    string? VariantName, decimal UnitPriceAmount, string Currency, int Quantity, string? Note,
+    int TaxRateBasisPoints = 0, TaxBehavior TaxBehavior = TaxBehavior.Exclusive);

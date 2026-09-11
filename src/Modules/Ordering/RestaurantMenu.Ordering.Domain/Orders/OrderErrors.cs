@@ -11,6 +11,7 @@ public static class OrderErrors
     public static readonly ErrorDetail InvalidQuantity = ErrorDetail.Validation("Ordering.InvalidOrderQuantity", $"Quantity must be between 1 and {OrderLine.MaxQuantity}.");
     public static readonly ErrorDetail InvalidPrice = ErrorDetail.Validation("Ordering.InvalidOrderPrice", "A trusted line price must be non-negative with at most two decimal places.");
     public static readonly ErrorDetail InvalidCurrency = ErrorDetail.Validation("Ordering.InvalidOrderCurrency", "Currency must be a three-letter ISO code.");
+    public static readonly ErrorDetail InvalidTax = ErrorDetail.Validation("Ordering.InvalidTax", "The item tax rate or behavior is invalid.");
     public static readonly ErrorDetail MixedCurrencies = ErrorDetail.Validation("Ordering.MixedOrderCurrencies", "All order lines must use the same currency.");
     public static readonly ErrorDetail ItemNameRequired = ErrorDetail.Validation("Ordering.OrderItemNameRequired", "An item snapshot name is required.");
     public static readonly ErrorDetail ItemNameTooLong = ErrorDetail.Validation("Ordering.OrderItemNameTooLong", "An item snapshot name is too long.");

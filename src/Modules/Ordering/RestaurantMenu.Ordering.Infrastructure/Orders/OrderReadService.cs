@@ -48,11 +48,12 @@ public sealed class OrderReadService(OrderingDbContext dbContext) : IOrderReadSe
             .SingleOrDefaultAsync(value => value.Id == orderId && value.RestaurantId == restaurantId &&
                 value.BranchId == branchId && value.DiningSessionId == diningSessionId, cancellationToken);
         return order is null ? null : new GuestOrderDetail(order.Id.Value, order.PublicNumber,
-            order.Status.ToString(), order.TableDisplayName, order.SubtotalAmount, order.TotalAmount,
+            order.Status.ToString(), order.TableDisplayName, order.SubtotalAmount, order.TaxAmount, order.TotalAmount,
             order.Currency, order.CustomerNote, order.CreatedAtUtc, order.Version,
             order.Lines.Select(line => new GuestOrderLine(line.Id.Value, line.MenuItemId, line.VariantId,
                 line.ItemName, line.VariantName, line.UnitPriceAmount, line.Currency,
-                line.Quantity, line.LineTotalAmount, line.Note)).ToArray());
+                line.Quantity, line.NetAmount, line.TaxAmount, line.LineTotalAmount,
+                line.TaxRateBasisPoints, line.TaxBehavior.ToString(), line.Note)).ToArray());
     }
 
     public async Task<OrderFeedbackEligibility?> GetFeedbackEligibilityAsync(Guid restaurantId,

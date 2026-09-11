@@ -9,9 +9,10 @@ public sealed record OrderTimelineEntry(Guid Id, string? FromStatus, string ToSt
     string ChangedByType, string? ChangedBySubject, string? Reason, DateTimeOffset CreatedAtUtc);
 public sealed record GuestOrderLine(Guid OrderLineId, Guid? MenuItemId, Guid? VariantId, string ItemName,
     string? VariantName, decimal UnitPriceAmount, string Currency, int Quantity,
-    decimal LineTotalAmount, string? Note);
+    decimal NetAmount, decimal TaxAmount, decimal LineTotalAmount, int TaxRateBasisPoints,
+    string TaxBehavior, string? Note);
 public sealed record GuestOrderDetail(Guid OrderId, string PublicNumber, string Status,
-    string TableDisplayName, decimal SubtotalAmount, decimal TotalAmount, string Currency,
+    string TableDisplayName, decimal SubtotalAmount, decimal TaxAmount, decimal TotalAmount, string Currency,
     string? CustomerNote, DateTimeOffset CreatedAtUtc, long Version,
     IReadOnlyList<GuestOrderLine> Lines);
 

@@ -29,13 +29,19 @@ public sealed class PlaceOrderEndpointsTests(TestWebApplicationFactory factory)
             $"/api/restaurants/{restaurant.Id.Value}/branches/{branchId}/category-publications",
             new { Publications = new[] { new { CategoryId = category.Id.Value, IsPublished = true, DisplayOrderOverride = (int?)null } } });
         publication.EnsureSuccessStatusCode();
+        using var taxRule = await client.PutAsJsonAsync(
+            $"/api/restaurants/{restaurant.Id.Value}/branches/{branchId}/item-tax-rules/{item.Id.Value}",
+            new { RateBasisPoints = 1000, Behavior = 1, ExpectedVersion = 0 });
+        taxRule.EnsureSuccessStatusCode();
         var token = await StartSessionAsync(client, restaurant.Id.Value, branchId, tableId);
 
         using var firstRequest = CreateRequest(token, "order-key", item.Id.Value, variant.Id.Value, 2);
         using var first = await client.SendAsync(firstRequest);
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         var body = await first.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(17.50m, body.GetProperty("totalAmount").GetDecimal());
+        Assert.Equal(17.50m, body.GetProperty("subtotalAmount").GetDecimal());
+        Assert.Equal(1.75m, body.GetProperty("taxAmount").GetDecimal());
+        Assert.Equal(19.25m, body.GetProperty("totalAmount").GetDecimal());
         Assert.Equal("EUR", body.GetProperty("currency").GetString());
         Assert.False(body.GetProperty("isReplay").GetBoolean());
         var orderId = body.GetProperty("orderId").GetGuid();
@@ -46,6 +52,8 @@ public sealed class PlaceOrderEndpointsTests(TestWebApplicationFactory factory)
         Assert.Equal(tableId, persisted.DiningTableId);
         Assert.Equal("Server burger", persisted.Lines.Single().ItemName);
         Assert.Equal(8.75m, persisted.Lines.Single().UnitPriceAmount);
+        Assert.Equal(1.75m, persisted.Lines.Single().TaxAmount);
+        Assert.Equal(1000, persisted.Lines.Single().TaxRateBasisPoints);
 
         using var replayRequest = CreateRequest(token, "order-key", item.Id.Value, variant.Id.Value, 2);
         using var replay = await client.SendAsync(replayRequest);
@@ -68,7 +76,7 @@ public sealed class PlaceOrderEndpointsTests(TestWebApplicationFactory factory)
         read.Headers.Add(DiningSessionEndpoints.HeaderName, token);
         using var readResponse = await client.SendAsync(read);
         readResponse.EnsureSuccessStatusCode();
-        Assert.Equal(17.50m, (await readResponse.Content.ReadFromJsonAsync<JsonElement>())
+        Assert.Equal(19.25m, (await readResponse.Content.ReadFromJsonAsync<JsonElement>())
             .GetProperty("totalAmount").GetDecimal());
 
         using var cancel = new HttpRequestMessage(HttpMethod.Post, $"/api/public/orders/{orderId}/cancel")
