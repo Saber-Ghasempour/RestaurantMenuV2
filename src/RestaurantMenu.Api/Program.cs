@@ -46,6 +46,12 @@ using RestaurantMenu.Feedback.Application.Abstractions;
 using RestaurantMenu.Feedback.Infrastructure;
 using RestaurantMenu.Feedback.Infrastructure.Database;
 using RestaurantMenu.Feedback.Presentation;
+using RestaurantMenu.Payments.Application.Abstractions;
+using RestaurantMenu.Payments.Infrastructure;
+using RestaurantMenu.Payments.Infrastructure.Database;
+using RestaurantMenu.Payments.Infrastructure.Stripe;
+using RestaurantMenu.Payments.Presentation;
+using RestaurantMenu.Api.Integrations.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +76,7 @@ var catalogConnectionString = builder.Configuration.GetConnectionString("Catalog
 var mediaConnectionString = builder.Configuration.GetConnectionString("Media") ?? catalogConnectionString;
 var orderingConnectionString = builder.Configuration.GetConnectionString("Ordering") ?? restaurantsConnectionString;
 var feedbackConnectionString = builder.Configuration.GetConnectionString("Feedback") ?? orderingConnectionString;
+var paymentsConnectionString = builder.Configuration.GetConnectionString("Payments") ?? orderingConnectionString;
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException(
         "Connection string 'Redis' is not configured.");
@@ -160,6 +167,12 @@ builder.Services.AddOrderingInfrastructure(orderingConnectionString,
         builder.Configuration.GetValue("Messaging:ClaimDuration", TimeSpan.FromMinutes(1))));
 builder.Services.AddFeedbackInfrastructure(feedbackConnectionString,
     builder.Configuration.GetValue("Feedback:SubmissionWindow", TimeSpan.FromDays(7)));
+var stripeSecretKey=builder.Configuration["Stripe:SecretKey"];
+var stripeWebhookSecret=builder.Configuration["Stripe:WebhookSecret"];
+var paymentsEnabled=!string.IsNullOrWhiteSpace(stripeSecretKey)&&!string.IsNullOrWhiteSpace(stripeWebhookSecret);
+builder.Services.AddPaymentsInfrastructure(paymentsConnectionString,new StripeOptions(
+    stripeSecretKey??"disabled",stripeWebhookSecret??"disabled",
+    new Uri(builder.Configuration["Stripe:ApiBaseUrl"]??"https://api.stripe.com/"),TimeSpan.FromSeconds(10)));
 builder.Services.AddNotificationsPresentation();
 builder.Services.AddNotificationsInfrastructure(new NotificationMessagingOptions(
     builder.Configuration["Notifications:QueueName"] ??
@@ -170,6 +183,7 @@ builder.Services.AddScoped<ICatalogOrderSnapshotProvider, CatalogOrderSnapshotPr
 builder.Services.AddScoped<IDiningTableSnapshotProvider, DiningTableSnapshotProvider>();
 builder.Services.AddScoped<IOrderStaffAccessProvider, OrderStaffAccessProvider>();
 builder.Services.AddScoped<IFeedbackEligibilityProvider, FeedbackEligibilityProvider>();
+builder.Services.AddScoped<IPayableOrderProvider, PayableOrderProvider>();
 builder.Services.AddScoped<MediaAssetIntegrationService>();
 builder.Services.AddScoped<RestaurantMenu.Restaurants.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
 builder.Services.AddScoped<RestaurantMenu.Catalog.Application.Abstractions.Media.IMediaAssetValidator>(sp => sp.GetRequiredService<MediaAssetIntegrationService>());
@@ -201,6 +215,7 @@ builder.Services
     .AddDbContextCheck<MediaDbContext>("media-database", tags: ["ready"])
     .AddDbContextCheck<OrderingDbContext>("ordering-database", tags: ["ready"])
     .AddDbContextCheck<FeedbackDbContext>("feedback-database", tags: ["ready"])
+    .AddDbContextCheck<PaymentsDbContext>("payments-database", tags: ["ready"])
     .AddCheck<RedisHealthCheck>(
         "redis",
         tags: ["ready"])
@@ -271,6 +286,7 @@ app.MapDiningSessionEndpoints();
 app.MapOrderEndpoints();
 app.MapStaffOrderEndpoints();
 app.MapFeedbackEndpoints();
+if(paymentsEnabled)app.MapPaymentEndpoints();
 app.MapNotificationHubs();
 app.MapHealthChecks(
         "/health/live",

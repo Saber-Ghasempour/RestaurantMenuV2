@@ -44,6 +44,10 @@
     <ProjectReference Include="..\..\src\Modules\Feedback\RestaurantMenu.Feedback.Presentation\RestaurantMenu.Feedback.Presentation.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Application.Abstractions\RestaurantMenu.Application.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\RestaurantMenu.Presentation.Abstractions\RestaurantMenu.Presentation.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\RestaurantMenu.Payments.Domain\RestaurantMenu.Payments.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\RestaurantMenu.Payments.Application\RestaurantMenu.Payments.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\RestaurantMenu.Payments.Infrastructure\RestaurantMenu.Payments.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\RestaurantMenu.Payments.Presentation\RestaurantMenu.Payments.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

@@ -25,6 +25,12 @@
     <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/RestaurantMenu.Feedback.Infrastructure.csproj" />
     <Project Path="src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/RestaurantMenu.Feedback.Presentation.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Payments/">
+    <Project Path="src/Modules/Payments/RestaurantMenu.Payments.Application/RestaurantMenu.Payments.Application.csproj" />
+    <Project Path="src/Modules/Payments/RestaurantMenu.Payments.Domain/RestaurantMenu.Payments.Domain.csproj" />
+    <Project Path="src/Modules/Payments/RestaurantMenu.Payments.Infrastructure/RestaurantMenu.Payments.Infrastructure.csproj" />
+    <Project Path="src/Modules/Payments/RestaurantMenu.Payments.Presentation/RestaurantMenu.Payments.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Media/">
     <Project Path="src/Modules/Media/RestaurantMenu.Media.Application/RestaurantMenu.Media.Application.csproj" />
     <Project Path="src/Modules/Media/RestaurantMenu.Media.Domain/RestaurantMenu.Media.Domain.csproj" />
@@ -52,6 +58,12 @@
     <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.Application.UnitTests/RestaurantMenu.Feedback.Application.UnitTests.csproj" />
     <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.Domain.UnitTests/RestaurantMenu.Feedback.Domain.UnitTests.csproj" />
     <Project Path="tests/Modules/Feedback/RestaurantMenu.Feedback.IntegrationTests/RestaurantMenu.Feedback.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Modules/Payments/">
+    <Project Path="tests/Modules/Payments/RestaurantMenu.Payments.Application.UnitTests/RestaurantMenu.Payments.Application.UnitTests.csproj" />
+    <Project Path="tests/Modules/Payments/RestaurantMenu.Payments.Domain.UnitTests/RestaurantMenu.Payments.Domain.UnitTests.csproj" />
+    <Project Path="tests/Modules/Payments/RestaurantMenu.Payments.Infrastructure.UnitTests/RestaurantMenu.Payments.Infrastructure.UnitTests.csproj" />
+    <Project Path="tests/Modules/Payments/RestaurantMenu.Payments.IntegrationTests/RestaurantMenu.Payments.IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Notifications/">
     <Project Path="tests/Modules/Notifications/RestaurantMenu.Notifications.IntegrationTests/RestaurantMenu.Notifications.IntegrationTests.csproj" />

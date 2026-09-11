@@ -1,5 +1,8 @@
 # RestaurantMenu deployment runbook
 
+For the one-time GitHub, Kubernetes, environment, and first-release setup, see
+`docs/FIRST_TIME_CD_SETUP.md`.
+
 ## Release contract
 
 The Delivery workflow publishes the API to GHCR with both the release name and
@@ -21,8 +24,9 @@ environment provides:
 
 The `restaurant-menu-runtime` Kubernetes Secret is provisioned by the platform
 secret store, not GitHub Actions or this repository. It contains connection
-strings, JWT/Keycloak configuration, RabbitMQ, Redis, object-storage, and OTLP
-credentials. Rotate it in the source secret store and verify a controlled pod
+strings (including Payments), JWT/Keycloak configuration, RabbitMQ, Redis,
+object-storage, Stripe secret/webhook keys, and OTLP credentials. Rotate it in
+the source secret store and verify a controlled pod
 rollout; never print, commit, or place secret values in deployment metadata.
 
 ## Normal rollout

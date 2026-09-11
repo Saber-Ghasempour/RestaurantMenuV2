@@ -28,6 +28,10 @@ COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Domain/RestaurantMenu.Feedba
 COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Application/RestaurantMenu.Feedback.Application.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Application/"]
 COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/RestaurantMenu.Feedback.Infrastructure.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Infrastructure/"]
 COPY ["src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/RestaurantMenu.Feedback.Presentation.csproj", "src/Modules/Feedback/RestaurantMenu.Feedback.Presentation/"]
+COPY ["src/Modules/Payments/RestaurantMenu.Payments.Domain/RestaurantMenu.Payments.Domain.csproj", "src/Modules/Payments/RestaurantMenu.Payments.Domain/"]
+COPY ["src/Modules/Payments/RestaurantMenu.Payments.Application/RestaurantMenu.Payments.Application.csproj", "src/Modules/Payments/RestaurantMenu.Payments.Application/"]
+COPY ["src/Modules/Payments/RestaurantMenu.Payments.Infrastructure/RestaurantMenu.Payments.Infrastructure.csproj", "src/Modules/Payments/RestaurantMenu.Payments.Infrastructure/"]
+COPY ["src/Modules/Payments/RestaurantMenu.Payments.Presentation/RestaurantMenu.Payments.Presentation.csproj", "src/Modules/Payments/RestaurantMenu.Payments.Presentation/"]
 COPY ["src/RestaurantMenu.Api/RestaurantMenu.Api.csproj", "src/RestaurantMenu.Api/"]
 
 RUN dotnet restore "src/RestaurantMenu.Api/RestaurantMenu.Api.csproj"

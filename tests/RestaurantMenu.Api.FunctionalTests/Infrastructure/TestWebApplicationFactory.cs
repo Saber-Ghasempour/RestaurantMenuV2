@@ -25,6 +25,8 @@ using RestaurantMenu.Ordering.Domain.DiningSessions;
 using RestaurantMenu.Ordering.Domain.Orders;
 using RestaurantMenu.Ordering.Infrastructure.DiningSessions;
 using RestaurantMenu.Feedback.Infrastructure.Database;
+using RestaurantMenu.Payments.Application.Abstractions;
+using RestaurantMenu.Payments.Infrastructure.Database;
 
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
@@ -46,6 +48,8 @@ public sealed class TestWebApplicationFactory
         "ConnectionStrings__Redis";
     private const string RabbitMqConnectionStringVariable =
         "ConnectionStrings__RabbitMq";
+    private const string StripeSecretKeyVariable = "Stripe__SecretKey";
+    private const string StripeWebhookSecretVariable = "Stripe__WebhookSecret";
 
     private static readonly object EnvironmentVariableLock =
         new();
@@ -87,7 +91,9 @@ public sealed class TestWebApplicationFactory
             services =>
             {
                 services.RemoveAll<IIdentityProvisioner>();
+                services.RemoveAll<IPaymentProvider>();
                 services.AddScoped<IIdentityProvisioner, TestIdentityProvisioner>();
+                services.AddSingleton<IPaymentProvider, TestPaymentProvider>();
                 services
                     .AddAuthentication(
                         TestAuthenticationHandler.AuthenticationScheme)
@@ -120,6 +126,8 @@ public sealed class TestWebApplicationFactory
                     RedisConnectionStringVariable);
             var previousRabbitMqConnectionString = Environment.GetEnvironmentVariable(
                 RabbitMqConnectionStringVariable);
+            var previousStripeSecretKey = Environment.GetEnvironmentVariable(StripeSecretKeyVariable);
+            var previousStripeWebhookSecret = Environment.GetEnvironmentVariable(StripeWebhookSecretVariable);
             var connectionString =
                 _postgres.GetConnectionString();
 
@@ -134,6 +142,8 @@ public sealed class TestWebApplicationFactory
                 _redis.GetConnectionString());
             Environment.SetEnvironmentVariable(RabbitMqConnectionStringVariable,
                 _rabbitMq.GetConnectionString());
+            Environment.SetEnvironmentVariable(StripeSecretKeyVariable, "sk_test_functional");
+            Environment.SetEnvironmentVariable(StripeWebhookSecretVariable, "whsec_functional");
 
             try
             {
@@ -152,6 +162,8 @@ public sealed class TestWebApplicationFactory
                     previousRedisConnectionString);
                 Environment.SetEnvironmentVariable(RabbitMqConnectionStringVariable,
                     previousRabbitMqConnectionString);
+                Environment.SetEnvironmentVariable(StripeSecretKeyVariable, previousStripeSecretKey);
+                Environment.SetEnvironmentVariable(StripeWebhookSecretVariable, previousStripeWebhookSecret);
             }
         }
     }
@@ -198,6 +210,33 @@ public sealed class TestWebApplicationFactory
     {
         await using var scope = Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<FeedbackDbContext>().Database.MigrateAsync();
+    }
+
+    public async Task MigratePaymentsDatabaseAsync()
+    {
+        await using var scope = Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<PaymentsDbContext>().Database.MigrateAsync();
+    }
+
+    private sealed class TestPaymentProvider : IPaymentProvider
+    {
+        public Task<ProviderAccount> CreateConnectedAccountAsync(string country, string currency,
+            string idempotencyKey, CancellationToken cancellationToken) =>
+            Task.FromResult(new ProviderAccount("acct_functional"));
+        public Task<ProviderOnboardingLink> CreateOnboardingLinkAsync(string accountId,
+            Uri refreshUrl, Uri returnUrl, CancellationToken cancellationToken) =>
+            Task.FromResult(new ProviderOnboardingLink(new Uri("https://connect.stripe.test/onboard")));
+        public Task<bool> IsAccountReadyAsync(string accountId,
+            CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<ProviderPaymentIntent> CreatePaymentIntentAsync(string accountId,
+            long amountMinor, string currency, long applicationFeeMinor, string idempotencyKey,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ProviderPaymentIntent("pi_functional", "client_secret_functional"));
+        public Task<ProviderRefund> CreateRefundAsync(string accountId, string paymentIntentId,
+            long amountMinor, string idempotencyKey, CancellationToken cancellationToken) =>
+            Task.FromResult(new ProviderRefund("re_functional"));
+        public VerifiedPaymentEvent VerifyWebhook(string payload, string signatureHeader,
+            DateTimeOffset now) => throw new NotSupportedException();
     }
 
     public async Task<DiningSession?> FindDiningSessionAsync(Guid sessionId)
