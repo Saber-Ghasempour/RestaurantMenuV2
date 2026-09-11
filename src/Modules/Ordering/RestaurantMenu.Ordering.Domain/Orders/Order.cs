@@ -20,7 +20,9 @@ public sealed class Order : AggregateRoot<OrderId>
         PublicNumber = publicNumber; RestaurantId = restaurantId; BranchId = branchId;
         DiningTableId = diningTableId; TableDisplayName = tableDisplayName;
         DiningSessionId = diningSessionId; CustomerNote = customerNote; Currency = currency;
-        SubtotalAmount = total; TotalAmount = total; CreatedAtUtc = createdAtUtc; _lines = lines;
+        SubtotalAmount = lines.Sum(line => line.NetAmount);
+        TaxAmount = lines.Sum(line => line.TaxAmount);
+        TotalAmount = total; CreatedAtUtc = createdAtUtc; _lines = lines;
     }
 
     public string PublicNumber { get; }
@@ -32,6 +34,7 @@ public sealed class Order : AggregateRoot<OrderId>
     public OrderStatus Status { get; private set; } = OrderStatus.Placed;
     public string Currency { get; }
     public decimal SubtotalAmount { get; }
+    public decimal TaxAmount { get; }
     public decimal TotalAmount { get; }
     public string? CustomerNote { get; }
     public DateTimeOffset CreatedAtUtc { get; }
@@ -74,16 +77,29 @@ public sealed class Order : AggregateRoot<OrderId>
             if (note?.Length > OrderLine.MaxNoteLength) return Result.Failure<Order>(OrderErrors.LineNoteTooLong);
             if (snapshot.UnitPriceAmount < 0 || decimal.Round(snapshot.UnitPriceAmount, 2) != snapshot.UnitPriceAmount)
                 return Result.Failure<Order>(OrderErrors.InvalidPrice);
+            if (snapshot.TaxRateBasisPoints is < 0 or > 10_000 || !Enum.IsDefined(snapshot.TaxBehavior))
+                return Result.Failure<Order>(OrderErrors.InvalidTax);
             var currency = snapshot.Currency?.Trim().ToUpperInvariant();
             if (currency is null || currency.Length != 3 || !currency.All(char.IsAsciiLetter))
                 return Result.Failure<Order>(OrderErrors.InvalidCurrency);
             if (orderCurrency is not null && orderCurrency != currency)
                 return Result.Failure<Order>(OrderErrors.MixedCurrencies);
             orderCurrency = currency;
-            var lineTotal = checked(snapshot.UnitPriceAmount * snapshot.Quantity);
+            var pricedTotal = checked(snapshot.UnitPriceAmount * snapshot.Quantity);
+            var netAmount = snapshot.TaxBehavior == TaxBehavior.Inclusive
+                ? decimal.Round(pricedTotal * 10_000 / (10_000 + snapshot.TaxRateBasisPoints),
+                    2, MidpointRounding.AwayFromZero)
+                : pricedTotal;
+            var taxAmount = snapshot.TaxBehavior == TaxBehavior.Inclusive
+                ? pricedTotal - netAmount
+                : decimal.Round(pricedTotal * snapshot.TaxRateBasisPoints / 10_000,
+                    2, MidpointRounding.AwayFromZero);
+            var lineTotal = checked(netAmount + taxAmount);
             total = checked(total + lineTotal);
             built.Add(new OrderLine(OrderLineId.New(), id, snapshot.MenuItemId, snapshot.VariantId,
-                itemName, variantName, snapshot.UnitPriceAmount, currency, snapshot.Quantity, lineTotal, note));
+                itemName, variantName, snapshot.UnitPriceAmount, currency, snapshot.Quantity,
+                netAmount, taxAmount, lineTotal, snapshot.TaxRateBasisPoints,
+                snapshot.TaxBehavior, note));
         }
         var order = new Order(id, publicNumber, restaurantId, branchId, diningTableId,
             tableDisplayName, diningSessionId, customerNote, orderCurrency!, total, createdAtUtc, built);

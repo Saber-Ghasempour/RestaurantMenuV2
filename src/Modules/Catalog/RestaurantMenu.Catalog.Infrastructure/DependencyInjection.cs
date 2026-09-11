@@ -36,6 +36,8 @@ using RestaurantMenu.Catalog.Infrastructure.Items;
 using RestaurantMenu.Catalog.Infrastructure.PublicMenus;
 using RestaurantMenu.Catalog.Infrastructure.Publications;
 using RestaurantMenu.Catalog.Infrastructure.Variants;
+using RestaurantMenu.Catalog.Infrastructure.Taxation;
+using RestaurantMenu.Catalog.Application.Taxation;
 using RestaurantMenu.Catalog.Application.Variants;
 using RestaurantMenu.Catalog.Application.Variants.CreateMenuItemVariant;
 using RestaurantMenu.Catalog.Application.Variants.UpdateMenuItemVariant;
@@ -87,6 +89,8 @@ public static class DependencyInjection
             PublicMenuReadService>();
         services.AddScoped<IBranchCategoryPublicationRepository,
             BranchCategoryPublicationRepository>();
+        services.AddScoped<IBranchMenuItemTaxRuleRepository,
+            BranchMenuItemTaxRuleRepository>();
         services.AddScoped<IBranchCatalogReadService,
             BranchCatalogReadService>();
         services.AddSingleton(
@@ -207,6 +211,11 @@ public static class DependencyInjection
             IQueryHandler<GetPublicBranchMenuQuery,
                 Result<PublicBranchMenuResponse>>,
             GetPublicBranchMenuQueryHandler>();
+        services.AddScoped<ICommandHandler<SetBranchMenuItemTaxRuleCommand,
+            Result<BranchMenuItemTaxRuleResponse>>, SetBranchMenuItemTaxRuleCommandHandler>();
+        services.AddScoped<IQueryHandler<ListBranchMenuItemTaxRulesQuery,
+            Result<IReadOnlyList<BranchMenuItemTaxRuleResponse>>>,
+            ListBranchMenuItemTaxRulesQueryHandler>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

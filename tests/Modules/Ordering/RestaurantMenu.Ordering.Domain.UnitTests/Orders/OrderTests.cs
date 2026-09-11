@@ -47,6 +47,25 @@ public sealed class OrderTests
         Assert.Equal(OrderErrors.MixedCurrencies, result.Error);
     }
 
+    [Fact]
+    public void CreateCalculatesDifferentInclusiveAndExclusiveItemTaxes()
+    {
+        var result = Create(
+        [
+            Line(1) with { UnitPriceAmount = 12.30m, TaxRateBasisPoints = 2_300,
+                TaxBehavior = TaxBehavior.Inclusive },
+            Line(1) with { UnitPriceAmount = 10m, TaxRateBasisPoints = 1_000,
+                TaxBehavior = TaxBehavior.Exclusive }
+        ]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(20m, result.Value.SubtotalAmount);
+        Assert.Equal(3.30m, result.Value.TaxAmount);
+        Assert.Equal(23.30m, result.Value.TotalAmount);
+        Assert.Equal(2.30m, result.Value.Lines.First().TaxAmount);
+        Assert.Equal(1m, result.Value.Lines.Last().TaxAmount);
+    }
+
     private static RestaurantMenu.SharedKernel.Results.Result<Order> Create(IReadOnlyCollection<OrderLineSnapshot> lines) =>
         Order.Create(OrderId.New(), "O-123", Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
             "Table 1", Guid.NewGuid(), null, lines, Now);

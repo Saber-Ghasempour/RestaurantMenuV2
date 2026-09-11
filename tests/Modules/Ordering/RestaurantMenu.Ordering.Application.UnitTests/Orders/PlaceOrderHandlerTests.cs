@@ -32,18 +32,22 @@ public sealed class PlaceOrderHandlerTests
         var itemId = Guid.NewGuid(); var variantId = Guid.NewGuid();
         var repository = new FakeStore();
         var handler = new PlaceOrderCommandHandler(new SessionResolver(session),
-            new CatalogProvider(new CatalogOrderLineSnapshot(itemId, variantId, "Server name", "Large", 7.25m, "EUR")),
+            new CatalogProvider(new CatalogOrderLineSnapshot(itemId, variantId, "Server name", "Large",
+                7.25m, "EUR", 1000, TaxBehavior.Exclusive)),
             new TableProvider("Window 7"), repository, repository, new FakeUnitOfWork(), TimeProvider.System);
 
         var result = await handler.Handle(new PlaceOrderCommand("token", "key-1", "note",
             [new PlaceOrderLine(itemId, variantId, 2, null)]), CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(14.50m, result.Value.TotalAmount);
+        Assert.Equal(14.50m, result.Value.SubtotalAmount);
+        Assert.Equal(1.45m, result.Value.TaxAmount);
+        Assert.Equal(15.95m, result.Value.TotalAmount);
         Assert.Equal(session.RestaurantId, repository.Added!.RestaurantId);
         Assert.Equal(session.DiningTableId, repository.Added.DiningTableId);
         Assert.Equal("Window 7", repository.Added.TableDisplayName);
         Assert.Equal("Server name", repository.Added.Lines.Single().ItemName);
+        Assert.Equal(1000, repository.Added.Lines.Single().TaxRateBasisPoints);
     }
 
     [Fact]

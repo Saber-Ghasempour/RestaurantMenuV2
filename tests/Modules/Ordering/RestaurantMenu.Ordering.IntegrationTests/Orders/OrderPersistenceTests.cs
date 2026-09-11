@@ -28,9 +28,16 @@ public sealed class OrderPersistenceTests : IAsyncLifetime
         await using var verify = new OrderingDbContext(options);
         var saved = await verify.Orders.AsNoTracking().Include(value => value.Lines)
             .Include(value => value.StatusHistory).SingleAsync();
+        Assert.Equal(20m, saved.SubtotalAmount);
+        Assert.Equal(1m, saved.TaxAmount);
         Assert.Equal(21m, saved.TotalAmount);
         Assert.Equal("Table 4", saved.TableDisplayName);
-        Assert.Equal(21m, Assert.Single(saved.Lines).LineTotalAmount);
+        var line = Assert.Single(saved.Lines);
+        Assert.Equal(20m, line.NetAmount);
+        Assert.Equal(1m, line.TaxAmount);
+        Assert.Equal(500, line.TaxRateBasisPoints);
+        Assert.Equal(TaxBehavior.Exclusive, line.TaxBehavior);
+        Assert.Equal(21m, line.LineTotalAmount);
         var placed = Assert.Single(saved.StatusHistory);
         Assert.Null(placed.FromStatus);
         Assert.Equal(OrderStatus.Placed, placed.ToStatus);
@@ -90,7 +97,8 @@ public sealed class OrderPersistenceTests : IAsyncLifetime
         new DbContextOptionsBuilder<OrderingDbContext>().UseNpgsql(_postgres.GetConnectionString()).Options;
     private static Order CreateOrder(Guid sessionId, string number) => Order.Create(OrderId.New(), number,
         Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Table 4", sessionId, null,
-        [new OrderLineSnapshot(Guid.NewGuid(), Guid.NewGuid(), "Pasta", "Large", 10.50m, "EUR", 2, null)],
+        [new OrderLineSnapshot(Guid.NewGuid(), Guid.NewGuid(), "Pasta", "Large", 10m, "EUR", 2, null,
+            500, TaxBehavior.Exclusive)],
         DateTimeOffset.UtcNow).Value;
     private static IdempotencyRecord Record(Order order, Guid sessionId, string key) =>
         new(Guid.CreateVersion7(), $"dining-session:{sessionId:N}", key, new string('a', 64),

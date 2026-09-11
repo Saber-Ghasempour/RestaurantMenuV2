@@ -65,7 +65,7 @@ public sealed class PlaceOrderCommandHandler(
         var trustedLines = snapshots.Select((snapshot, index) => new OrderLineSnapshot(
             snapshot.MenuItemId, snapshot.VariantId, snapshot.ItemName, snapshot.VariantName,
             snapshot.UnitPriceAmount, snapshot.Currency, inputLines[index].Quantity,
-            inputLines[index].Note)).ToArray();
+            inputLines[index].Note, snapshot.TaxRateBasisPoints, snapshot.TaxBehavior)).ToArray();
         var orderId = OrderId.New();
         var result = Order.Create(orderId, $"O-{orderId.Value:N}"[..20].ToUpperInvariant(),
             scope.RestaurantId, scope.BranchId, scope.DiningTableId, tableName, scope.SessionId,
@@ -95,7 +95,8 @@ public sealed class PlaceOrderCommandHandler(
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     private static PlaceOrderResponse Map(Order order, bool replay) => new(order.Id.Value,
         order.PublicNumber, order.Status.ToString(), order.Currency, order.SubtotalAmount,
-        order.TotalAmount, order.CreatedAtUtc, order.Lines.Select(line => new PlacedOrderLineResponse(
+        order.TaxAmount, order.TotalAmount, order.CreatedAtUtc, order.Lines.Select(line => new PlacedOrderLineResponse(
             line.Id.Value, line.MenuItemId!.Value, line.VariantId, line.ItemName, line.VariantName,
-            line.UnitPriceAmount, line.Currency, line.Quantity, line.LineTotalAmount, line.Note)).ToArray(), replay);
+            line.UnitPriceAmount, line.Currency, line.Quantity, line.NetAmount, line.TaxAmount,
+            line.LineTotalAmount, line.TaxRateBasisPoints, line.TaxBehavior.ToString(), line.Note)).ToArray(), replay);
 }
